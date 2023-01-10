@@ -1,34 +1,37 @@
-const Contract = require("./utils/Contract");
 const ApiCalls = require("./utils/ApiCalls");
+const Contract = require("./utils/Contract");
+const emitter = require('../events');
+const provider = require('../provider');
 
-// Web3 Provider
-const Web3 = require('web3')
-const Provider = new Web3(new Web3.providers.WebsocketProvider(process.env.PROVIDER_URL))
-
-const YourContract = new Provider.eth.Contract(
-  Contract.getABI('YourContract'),
-  Contract.getAddress('YourContract')
-)
+const ERBankContract = new provider.web3.eth.Contract(
+  Contract.getABI('ERBank'),
+  Contract.getAddress('ERBank')
+);
 
 /*
  * Class
  */
 const Listener = {
   // -- Events -- //
-  eventListenerYourEvent() {
-    return YourContract.events.YourEvent()
+  async eventListenerDeposit() {
+    return await ERBankContract.events.Deposit()
       .on('connected', function (subscriptionId) {
-        console.log('Setting the YourEvent hook: ' + subscriptionId)
+        console.log(`Setting the Deposit hook: ${subscriptionId}`)
       })
       .on('data', async function (event) {
-        console.log('Hook has detected a new YourEvent!: ' + event.returnValues)
+        console.log(`Hook has detected a new Deposit!: ${event.returnValues}`)
         // find corresponding offer
-        await ApiCalls.postSomething(event)
+        try {
+          await ApiCalls.postSomething(event);
+        } catch (error) {
+          console.log(error);
+        }
       })
       .on('error', function (error) {
         console.log(error);
+        emitter.emit('listener-error', error);
       });
   }
-}
+};
 
-module.exports = Listener
+module.exports = Listener;
