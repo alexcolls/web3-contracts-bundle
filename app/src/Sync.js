@@ -1,10 +1,10 @@
-const ApiCalls = require("./utils/ApiCalls");
+const ApiCalls = require("./api/ApiCalls");
 const Contract = require("./utils/Contract");
-const provider = require('../provider');
+const provider = require('./utils/Provider');
 
-const ERBankContract = new provider.web3.eth.Contract(
-  Contract.getABI('ERBank'),
-  Contract.getAddress('ERBank')
+const YourContract = new provider.web3.eth.Contract(
+  Contract.getABI('YourContract'),
+  Contract.getAddress('YourContract')
 );
 
 const blocksOffset = process.env.APP_BLOCKS_OFFSET;
@@ -14,28 +14,22 @@ let parsedTxs = new Set();
 
 const Sync = (() => {
   async function syncPastEvents(eventName, resetSyncCounter = false) {
-    let fromBlock;
-    let toBlock;
     let iterationCurrent = 0;
     let repeat = false;
+    let fromBlock;
+    let toBlock = await provider.web3.eth.getBlockNumber();
 
     if (resetSyncCounter) {
       fromBlock = null;
       iterationCurrent = 0;
+    } else {
+      fromBlock = toBlock;
     }
 
     while (iterationCurrent <= iterationLimit && !repeat) {
       iterationCurrent++;
-
-      if (fromBlock) {
-        // If NOT the first time we subtract blocksOffset from toBlock (as it is null first time)
-        toBlock = (toBlock - blocksOffset);
-      } else {
-        toBlock = Number(await web3.eth.getBlockNumber());
-        fromBlock = toBlock;
-      }
-      fromBlock = (fromBlock - blocksOffset);
-
+      fromBlock = fromBlock - blocksOffset;
+      toBlock = toBlock - blocksOffset;
       const events = await pastEvents(eventName, fromBlock, toBlock);
       repeat = await postEvents(events);
     }
@@ -43,7 +37,7 @@ const Sync = (() => {
 
   async function pastEvents(eventName, fromBlock, toBlock) {
     try {
-      return await ERBankContract.getPastEvents(eventName, {
+      return await YourContract.getPastEvents(eventName, {
         filter: {},
         fromBlock: String(fromBlock),
         toBlock: String(toBlock)

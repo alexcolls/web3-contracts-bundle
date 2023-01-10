@@ -1,25 +1,22 @@
-const ApiCalls = require("./utils/ApiCalls");
+const ApiCalls = require("./api/ApiCalls");
 const Contract = require("./utils/Contract");
-const emitter = require('../events');
-const provider = require('../provider');
+const emitter = require('./utils/events');
+const provider = require('./utils/provider');
 
-const ERBankContract = new provider.web3.eth.Contract(
-  Contract.getABI('ERBank'),
-  Contract.getAddress('ERBank')
+const YourContract = new provider.web3.eth.Contract(
+  Contract.getABI('YourContract'),
+  Contract.getAddress('YourContract')
 );
 
-/*
- * Class
- */
 const Listener = {
   // -- Events -- //
-  async eventListenerDeposit() {
-    return await ERBankContract.events.Deposit()
+  async eventListenerYourEvent() {
+    return await YourContract.events.YourEvent()
       .on('connected', function (subscriptionId) {
-        console.log(`Setting the Deposit hook: ${subscriptionId}`)
+        console.log(`Setting the YourEvent hook: ${subscriptionId}`)
       })
       .on('data', async function (event) {
-        console.log(`Hook has detected a new Deposit!: ${event.returnValues}`)
+        console.log(`Hook has detected a new YourEvent!: ${event.returnValues}`)
         // find corresponding offer
         try {
           await ApiCalls.postSomething(event);

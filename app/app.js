@@ -43,7 +43,7 @@ async function workflow() {
 
 function setEventListeners() {
   console.log('Setting Event Listeners')
-  listeners.push(Listener.eventListenerDeposit())
+  listeners.push(Listener.eventListenerYourEvent())
 }
 
 async function syncPastEvents() {
