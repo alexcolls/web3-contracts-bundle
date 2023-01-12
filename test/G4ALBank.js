@@ -10,7 +10,7 @@ describe("G4ALBank", function () {
   // and reset Hardhat Network to that snapshot in every test.
   async function deployContracts() {
     // Contracts are deployed using the first signer/account by default
-    const [owner, developer, user] = await ethers.getSigners();
+    const [owner, developer, user, emptyDeveloper] = await ethers.getSigners();
 
     // Deploy GGT mocked contract to enable testing
     const ggt = await ethers.getContractFactory("GameGoldToken");
@@ -25,8 +25,9 @@ describe("G4ALBank", function () {
 
     // Whitelist BankConsumer as game by owner
     await bankContract.grantRole(ethers.utils.keccak256(ethers.utils.toUtf8Bytes("SPENDER_ROLE")), developer.address)
+    await bankContract.grantRole(ethers.utils.keccak256(ethers.utils.toUtf8Bytes("SPENDER_ROLE")), emptyDeveloper.address)
 
-    return {owner, developer, user, ggtContract, bankContract};
+    return {owner, developer, user, emptyDeveloper, ggtContract, bankContract};
   }
 
   describe("Deployment", function () {
@@ -60,8 +61,26 @@ describe("G4ALBank", function () {
           "AccessControl: account 0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc is missing role 0x0000000000000000000000000000000000000000000000000000000000000000"
         );
       });
-      // TODO: Should revert if a consumer contract tries to spend non-existing funds
-      // TODO: Should revert if a consumer contract tries to spend funds of other consumers
+      it("Should revert if a consumer contract tries to spend non-existing funds", async function () {
+        const {user, developer, bankContract} = await loadFixture(deployContracts);
+
+        await expect(bankContract.connect(developer).spend(100, user.address)).to.be.revertedWith("Insufficient funds")
+        await expect(await bankContract.getUserBalanceByGame(user.address, developer.address)).to.equal(0)
+      });
+      it("Should revert if a consumer contract tries to spend funds of other developers", async function () {
+        const {user, developer, emptyDeveloper, ggtContract, bankContract} = await loadFixture(deployContracts);
+
+        await ggtContract.connect(user).approve(bankContract.address, 100)
+        await bankContract.connect(user).deposit(100, developer.address)
+
+        await expect(await bankContract.getContractBalance()).to.equal(100)
+        await expect(await bankContract.getUserBalanceByGame(user.address, developer.address)).to.equal(100)
+
+        await expect(bankContract.connect(emptyDeveloper).spend(100, user.address)).to.be.revertedWith("Insufficient funds")
+
+        await expect(await bankContract.getContractBalance()).to.equal(100)
+        await expect(await bankContract.getUserBalanceByGame(user.address, developer.address)).to.equal(100)
+      });
     });
 
     describe("Events", function () {
@@ -126,6 +145,7 @@ describe("G4ALBank", function () {
         await expect(await bankContract.getContractBalance()).to.equal(0)
         await expect(await bankContract.getUserBalanceByGame(user.address, developer.address)).to.equal(0)
       });
+
       it("User should withdraw remaining funds after a consumer spent partial amount", async function () {
         const {user, developer, ggtContract, bankContract} = await loadFixture(deployContracts);
 
