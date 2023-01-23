@@ -13,6 +13,7 @@ const ROYALTIES_IN_BASIS_POINTS = 1000
 // Test the contract's behavior when the whitelist of NFTs is updated and check that it works as expected.
 // Test the contract's behavior when the token for sale is already sold and check that it works as expected.
 // Test the contract's behavior when the contract is paused and check that it works as expected.
+// Test the contract's getters and check that it works as expected. getOnSaleTokenIds(), getRateValue(), getConversionRate()
 // .
 // Optional: Test the contract's behavior when the token for sale is not a valid ERC721 token and check that it works as expected.
 // .
