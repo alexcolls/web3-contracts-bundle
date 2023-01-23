@@ -94,7 +94,13 @@ describe("G4ALMarketplace", function () {
     describe("Validations", function () {
       // TODO: Should revert if an user tries to sell a not-whitelistedNFT.
 
+      // TODO: Should revert if an user tries to sell a not-approved NFT.
+
       // TODO: Should revert if an user tries to buy a not-whitelistedNFT (removed in the meantime).
+
+      // TODO: Should revert if an user tries to buy an NFT which has been disapproved after listing.
+
+      // TODO: Should revert if an user tries to buy an NFT with balance but not approved.
 
       it("Should revert if an user tries to add a collection", async function () {
         const {buyer, g4alMarketplace} = await loadFixture(deployContracts);

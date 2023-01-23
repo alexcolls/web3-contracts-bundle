@@ -62,13 +62,16 @@ contract G4ALMarketplace is Ownable, ReentrancyGuard, Pausable {
 
     // -- Marketplace Methods
 
+    // TODO: require token is already approved, anyway this could change in the future. consider this.
     function sellToken(address contractAddress, uint256 tokenId, uint256 price, bool isDollar) public onlyTradableToken(contractAddress, msg.sender, tokenId) {
         require(price != 0, "Cannot put zero as a price");
+        require(IERC721Enumerable(contractAddress).getApproved(tokenId) == address(this), "NFT has not been approved for spending.");
 
         tokensForSale[contractAddress][tokenId] = Sale(contractAddress, tokenId, msg.sender, price, isDollar, true);
         emit SellToken(contractAddress, tokenId, price, isDollar, msg.sender);
     }
 
+    // TODO: try to exploit removed NFT approval during listing. Or missing ERC20 approval. Would revert the whole function or do something weird like has been reentered?
     function buyToken(address contractAddress, uint256 tokenId) nonReentrant public {
         require(tokensForSale[contractAddress][tokenId].isForSale, "Token is not for sale.");
 
