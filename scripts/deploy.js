@@ -7,19 +7,28 @@
 const hre = require("hardhat");
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
+  const [owner, developer] = await ethers.getSigners()
 
-  const lockedAmount = hre.ethers.utils.parseEther("1");
+  const GameGoldToken = await hre.ethers.getContractFactory("GameGoldToken");
+  const OracleConsumer = await hre.ethers.getContractFactory("OracleConsumer");
+  const ElementalRaidersSkill = await hre.ethers.getContractFactory("ElementalRaidersSkill");
+  const G4ALMarketplace = await hre.ethers.getContractFactory("G4ALMarketplace");
 
-  const Lock = await hre.ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+  const gameGoldToken = await GameGoldToken.deploy();
+  const oracleConsumer = await OracleConsumer.deploy();
+  const elementalRaidersSkill = await ElementalRaidersSkill.deploy(owner.address, developer.address, gameGoldToken.address, "ipfs://");
+  const g4alMarkeplace = await G4ALMarketplace.deploy(oracleConsumer.address, gameGoldToken.address, developer.address, 1000);
 
-  await lock.deployed();
+  await gameGoldToken.deployed();
+  await oracleConsumer.deployed();
+  await elementalRaidersSkill.deployed();
+  await g4alMarkeplace.deployed()
 
   console.log(
-    `Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`
+    `GameGoldToken deployed to ${gameGoldToken.address}`,
+    `OracleConsumer deployed to ${oracleConsumer.address}`,
+    `ElementalRaidersSkill deployed to ${elementalRaidersSkill.address}`
+    `G4ALMarketplace deployed to ${g4alMarkeplace.address}`
   );
 }
 
