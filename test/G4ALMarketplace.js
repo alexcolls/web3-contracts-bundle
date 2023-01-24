@@ -161,6 +161,8 @@ describe("G4ALMarketplace", function () {
       it("Should emit an event RemoveToken on remove from sell a token", async function () {
         const {seller, elementalRaidersSkill, g4alMarketplace} = await loadFixture(deployContracts);
 
+        await elementalRaidersSkill.connect(seller).approve(g4alMarketplace.address, 0)
+
         await g4alMarketplace.connect(seller).sellToken(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("50", "ether"), false)
 
         await expect((await g4alMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[5]).to.equal(true)
@@ -198,6 +200,8 @@ describe("G4ALMarketplace", function () {
       it("Should put a whitelisted collection token for sell in $GGT", async function () {
         const {seller, elementalRaidersSkill, g4alMarketplace} = await loadFixture(deployContracts);
 
+        await elementalRaidersSkill.connect(seller).approve(g4alMarketplace.address, 0)
+
         // he sells it for 50 GGT
         await g4alMarketplace.connect(seller).sellToken(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("50", "ether"), false)
 
@@ -209,6 +213,8 @@ describe("G4ALMarketplace", function () {
       it("Should put a whitelisted collection token for sell in Dollars", async function () {
         const {seller, elementalRaidersSkill, g4alMarketplace} = await loadFixture(deployContracts);
 
+        await elementalRaidersSkill.connect(seller).approve(g4alMarketplace.address, 0)
+
         // he sells it for 5$ that should be converted to 50 GGT
         await g4alMarketplace.connect(seller).sellToken(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("5", "ether"), true)
 
@@ -219,6 +225,8 @@ describe("G4ALMarketplace", function () {
 
       it("Should adjust the price for a token already for sell", async function () {
         const {seller, elementalRaidersSkill, g4alMarketplace} = await loadFixture(deployContracts);
+
+        await elementalRaidersSkill.connect(seller).approve(g4alMarketplace.address, 0)
 
         await g4alMarketplace.connect(seller).sellToken(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("50", "ether"), false)
 
@@ -235,6 +243,8 @@ describe("G4ALMarketplace", function () {
 
       it("Should remove a token from sell", async function () {
         const {seller, elementalRaidersSkill, g4alMarketplace} = await loadFixture(deployContracts);
+
+        await elementalRaidersSkill.connect(seller).approve(g4alMarketplace.address, 0)
 
         await g4alMarketplace.connect(seller).sellToken(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("50", "ether"), false)
 
