@@ -14,11 +14,11 @@ contract OracleConsumer is Ownable {
 
     // Getters
 
-    function getRateValue() external returns (uint256) {
+    function getRateValue() public returns (uint256) {
         return lastTokenRateValue;
     }
 
-    function getConversionRate(uint256 value) external returns (uint256) {
+    function getConversionRate(uint256 value) public returns (uint256) {
         return dollarValue.div(lastTokenRateValue).mul(value); // TODO: Check
     }
 
