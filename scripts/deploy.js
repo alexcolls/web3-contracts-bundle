@@ -7,7 +7,8 @@
 const hre = require("hardhat");
 
 async function main() {
-  const [owner, developer] = await ethers.getSigners()
+  const owner = new ethers.Wallet(process.env.OWNER_PRIVATE_KEY);
+  const developer = new ethers.Wallet(process.env.DEVELOPER_PRIVATE_KEY);
 
   const GameGoldToken = await hre.ethers.getContractFactory("GameGoldToken");
   const OracleConsumer = await hre.ethers.getContractFactory("OracleConsumer");

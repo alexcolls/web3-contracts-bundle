@@ -77,7 +77,7 @@ contract G4ALMarketplace is Ownable, ReentrancyGuard, Pausable {
 
         // Calculating royalties and wanted price
         uint256 price = tokensForSale[contractAddress][tokenId].isDollar == true // if isDollar expressed listing
-            ? getConversionRate(tokensForSale[contractAddress][tokenId].price) // convert from USD to GGT
+            ? OracleConsumer(oracleConsumer).getConversionRate(tokensForSale[contractAddress][tokenId].price) // convert from USD to GGT
             : tokensForSale[contractAddress][tokenId].price; // otherwise already in GGT
         (uint256 amountAfterRoyalties, uint256 royaltiesAmount) = _calculateMarketplaceRoyalties(price);
 
@@ -126,14 +126,6 @@ contract G4ALMarketplace is Ownable, ReentrancyGuard, Pausable {
             }
         }
         return (_onSaleTokenIds, _sellers, _prices);
-    }
-
-    function getRateValue(uint256 dollarPrice) public returns(uint256) {
-        return OracleConsumer(oracleConsumer).getRateValue();
-    }
-
-    function getConversionRate(uint256 dollarPrice) public returns(uint256) {
-        return OracleConsumer(oracleConsumer).getConversionRate(dollarPrice);
     }
 
     // Overwriting this methods for Pause/Unpause the contract

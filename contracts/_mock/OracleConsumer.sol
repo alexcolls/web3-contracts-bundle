@@ -14,18 +14,13 @@ contract OracleConsumer is Ownable {
 
     // Getters
 
-    function getRateValue() public returns (uint256) {
-        return lastTokenRateValue;
-    }
-
-    function getConversionRate(uint256 value) public returns (uint256) {
-        return dollarValue.div(lastTokenRateValue).mul(value); // TODO: Check
+    function getConversionRate(uint256 value) public view returns (uint256) {
+        return dollarValue.div(lastTokenRateValue).mul(value);
     }
 
     // Owner
 
     function updateRateValue(uint256 _lastTokenRateValue) external onlyOwner {
-        // TODO: require something? parsing or validating the value?
         lastTokenRateValue = _lastTokenRateValue;
 
         emit UpdateRate(_lastTokenRateValue);

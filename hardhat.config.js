@@ -1,3 +1,4 @@
+require("dotenv").config()
 require("@nomicfoundation/hardhat-toolbox");
 
 /** @type import('hardhat/config').HardhatUserConfig */
@@ -8,9 +9,9 @@ module.exports = {
     hardhat: {
       chainId: 1337
     },
-    goerli: {
-      url: "https://goerli.infura.io/v3/"+process.env.INFURA_API_ID,
-      //accounts: [process.env.ETHEREUM_ACCOUNT_PRIVATE_KEY] // TODO uncomment this to deploy, is commented to do not throw error if ENV not existing
+    mumbai: {
+      url: process.env.WEB3_HTTP_PROVIDER,
+      accounts: [process.env.OWNER_PRIVATE_KEY]
     }
   },
 
