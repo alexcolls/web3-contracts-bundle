@@ -19,11 +19,14 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, AccessControl {
     string public baseURI;
     address public feeCollector;
 
+    mapping(uint256 => uint256) public prices;
+
     constructor(address _minter, address _collector, address _gameGoldToken, string memory _baseURI) ERC721("ElementalRaidersSkill", "ERSKILL") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, _minter);
         feeCollector = _collector;
         gameGoldToken = _gameGoldToken;
+        baseURI = _baseURI;
     }
 
     // Abstract high-level flow
@@ -34,23 +37,41 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, AccessControl {
     // - Ack -> Game client sends the POST req to Game Server to start the mint, which will try move pre-approved amount and fails if the approval has been hijacked
     // - Web3Provider is going to answer the Promise with a success or error in JSON-RPC format.
     // - Further game handling.
-    function safeMint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
+    function safeMint(address to, uint256 rarity) public onlyRole(MINTER_ROLE) {
         // Transfer $GGTs from the "to" address to the "collector" one
-        // TODO: Price is dynamic based on the Skill Rarity (uncom, rare, epic, legen), choose if pass as arg amount or directly the rarity ENUM, both to validate server-side
-        IERC20(gameGoldToken).transferFrom(to, feeCollector, amount);
+        require(rarity >= 1 && rarity <= 4, "Rarity index out of bound.");
+
+        // Transferring GGT from player wallet to feeCollector. Assuming previous allowance has been given.
+        IERC20(gameGoldToken).transferFrom(to, feeCollector, prices[rarity]);
 
         // Mint flow
-        // TODO: Should this token id mirrors the Firebase one? if exists?
-        // TODO: How would we relate post-minted tokenSkills with pre-minted off-chainSkills?
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
+    }
+
+    // Getters
+
+    function getOwnersByTokens(uint256[] memory tokens) public view returns (address[] memory) {
+        address[] memory response = new address[](tokens.length);
+
+        for (uint256 i = 0; i < tokens.length; i++) {
+            response[i] = ERC721(address(this)).ownerOf(tokens[i]);
+        }
+
+        return response;
     }
 
     // Owner
 
     function updateBaseURI(string memory _baseURI) external onlyRole(MINTER_ROLE) {
         baseURI = _baseURI;
+    }
+
+    function updateMintingPrice(uint256 rarity, uint256 price) external onlyRole(MINTER_ROLE) {
+        require(rarity >= 1 && rarity <= 4, "Rarity index out of bound.");
+
+        prices[rarity] = price; // 50000000000000000000 for 50.00 GGT (50+18 zeros)
     }
 
     // The following functions are overrides required by Solidity.

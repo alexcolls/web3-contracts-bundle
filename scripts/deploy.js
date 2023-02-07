@@ -18,6 +18,7 @@ async function main() {
   const gameGoldToken = await GameGoldToken.deploy();
   const oracleConsumer = await OracleConsumer.deploy();
   const elementalRaidersSkill = await ElementalRaidersSkill.deploy(owner.address, developer.address, gameGoldToken.address, "ipfs://");
+  // TODO: Insert prices for rarities
   const g4alMarkeplace = await G4ALMarketplace.deploy(oracleConsumer.address, gameGoldToken.address, developer.address, 1000);
 
   await gameGoldToken.deployed();
@@ -28,7 +29,7 @@ async function main() {
   console.log(
     `GameGoldToken deployed to ${gameGoldToken.address}`,
     `OracleConsumer deployed to ${oracleConsumer.address}`,
-    `ElementalRaidersSkill deployed to ${elementalRaidersSkill.address}`
+    `ElementalRaidersSkill deployed to ${elementalRaidersSkill.address}`,
     `G4ALMarketplace deployed to ${g4alMarkeplace.address}`
   );
 }

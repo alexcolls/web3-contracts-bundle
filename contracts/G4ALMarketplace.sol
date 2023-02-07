@@ -89,11 +89,14 @@ contract G4ALMarketplace is Ownable, ReentrancyGuard, Pausable {
         // Increasing marketplace volume
         volume += price;
 
+        // Setting token as not for sell
+        tokensForSale[contractAddress][tokenId] = Sale(contractAddress, tokenId, address(0), 0, false, false);
+
         emit BuyToken(contractAddress, tokenId, price, amountAfterRoyalties, royaltiesAmount, tokensForSale[contractAddress][tokenId].seller, msg.sender);
     }
 
     function removeToken(address contractAddress, uint256 tokenId) public onlyTradableToken(contractAddress, msg.sender, tokenId) {
-        tokensForSale[contractAddress][tokenId] = Sale(contractAddress, tokenId, msg.sender, 0, false, false);
+        tokensForSale[contractAddress][tokenId] = Sale(contractAddress, tokenId, address(0), 0, false, false);
         emit RemoveToken(contractAddress, tokenId, msg.sender);
     }
 
@@ -102,12 +105,11 @@ contract G4ALMarketplace is Ownable, ReentrancyGuard, Pausable {
     function _calculateMarketplaceRoyalties(uint256 amount) internal view returns (uint256 amountAfterRoyalties, uint256 royaltiesAmount) {
         royaltiesAmount = amount.mul(royaltiesInBasisPoints).div(10000);
         amountAfterRoyalties = amount.sub(royaltiesAmount);
-
     }
 
     // Getters
 
-    function getOnSaleTokenIds(address contractAddress, uint256 start, uint256 end) public view returns (uint256[] memory tokenIds, address[] memory sellers, uint256[] memory prices) {
+    function getOnSaleTokenIds(address contractAddress, uint256 start, uint256 end) public view returns (uint256[] memory tokenIds, address[] memory sellers, uint256[] memory prices, bool[] memory isDollars) {
         require(end > start, "End must be higher than start");
         uint256 totalSupply = IERC721Enumerable(contractAddress).totalSupply();
         if (end > totalSupply) {
@@ -116,16 +118,18 @@ contract G4ALMarketplace is Ownable, ReentrancyGuard, Pausable {
         uint256[] memory _onSaleTokenIds = new uint[](end - start);
         address[] memory _sellers = new address[](end - start);
         uint256[] memory _prices = new uint256[](end - start);
+        bool[] memory _isDollars = new bool[](end - start);
         uint256 counter = 0;
         for (uint i = start; i < end; i++) {
             if (tokensForSale[contractAddress][i].isForSale) {
                 _onSaleTokenIds[counter] = i;
                 _sellers[counter] = tokensForSale[contractAddress][i].seller;
                 _prices[counter] = tokensForSale[contractAddress][i].price;
+                _isDollars[counter] = tokensForSale[contractAddress][i].isDollar;
                 counter++;
             }
         }
-        return (_onSaleTokenIds, _sellers, _prices);
+        return (_onSaleTokenIds, _sellers, _prices, _isDollars);
     }
 
     // Overwriting this methods for Pause/Unpause the contract

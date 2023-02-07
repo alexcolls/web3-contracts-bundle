@@ -258,6 +258,8 @@ describe("G4ALMarketplace", function () {
         await expect((await g4alMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[5]).to.equal(false)
         await expect((await g4alMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[4]).to.equal(false)
         await expect((await g4alMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[3]).to.equal(ethers.utils.parseUnits("0", "ether"))
+
+        // TODO: Check tokenForSale has been removed from mapping
       });
 
       // TODO: Should allow a seller to removeToken even if un-whitelisted
@@ -286,6 +288,8 @@ describe("G4ALMarketplace", function () {
 
         // Volume increase check
         await expect(await g4alMarketplace.volume()).to.equal(ethers.utils.parseUnits("50", "ether"))
+
+        // TODO: Check tokenForSale has been removed from mapping
       });
 
       it("Should buy a token that is for sell in Dollars", async function () {
