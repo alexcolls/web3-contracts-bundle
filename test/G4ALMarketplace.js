@@ -46,9 +46,15 @@ describe("G4ALMarketplace", function () {
     // Player (future seller) approves spending to game for minting (x2 - 50+50)
     await gameGoldToken.connect(seller).approve(elementalRaidersSkill.address, ethers.utils.parseUnits("100", "ether"))
 
+    // Setting prices for rarity indexes
+    await elementalRaidersSkill.updateMintingPrice(1, ethers.utils.parseUnits("50", "ether"))
+    await elementalRaidersSkill.updateMintingPrice(2, ethers.utils.parseUnits("100", "ether"))
+    await elementalRaidersSkill.updateMintingPrice(3, ethers.utils.parseUnits("150", "ether"))
+    await elementalRaidersSkill.updateMintingPrice(4, ethers.utils.parseUnits("200", "ether"))
+
     // Minting x2 NFT as owner to the seller
-    await elementalRaidersSkill.safeMint(seller.address, ethers.utils.parseUnits("50", "ether"))
-    await elementalRaidersSkill.safeMint(seller.address, ethers.utils.parseUnits("50", "ether"))
+    await elementalRaidersSkill.safeMint(seller.address, 1)
+    await elementalRaidersSkill.safeMint(seller.address, 1)
 
     /**
      * Marketplace test workflow
@@ -175,7 +181,7 @@ describe("G4ALMarketplace", function () {
           .withArgs(elementalRaidersSkill.address, 0, seller.address)
       });
 
-      it("Should emit an event BuyToken buying buy a token", async function () {
+      it("Should emit an event BuyToken buying a token", async function () {
         const {seller, buyer, elementalRaidersSkill, gameGoldToken, g4alMarketplace} = await loadFixture(deployContracts);
 
         await elementalRaidersSkill.connect(seller).approve(g4alMarketplace.address, 0)

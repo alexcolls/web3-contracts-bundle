@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./_mock/OracleConsumer.sol";
 
 // Uncomment this line to use console.log
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 // Uncomment this line, and the import of "hardhat/console.sol", to print a log in your terminal
 // console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
 
@@ -89,10 +89,13 @@ contract G4ALMarketplace is Ownable, ReentrancyGuard, Pausable {
         // Increasing marketplace volume
         volume += price;
 
+        // setting it in memory to emit event afterward
+        address  seller = tokensForSale[contractAddress][tokenId].seller;
+
         // Setting token as not for sell
         tokensForSale[contractAddress][tokenId] = Sale(contractAddress, tokenId, address(0), 0, false, false);
 
-        emit BuyToken(contractAddress, tokenId, price, amountAfterRoyalties, royaltiesAmount, tokensForSale[contractAddress][tokenId].seller, msg.sender);
+        emit BuyToken(contractAddress, tokenId, price, amountAfterRoyalties, royaltiesAmount, seller, msg.sender);
     }
 
     function removeToken(address contractAddress, uint256 tokenId) public onlyTradableToken(contractAddress, msg.sender, tokenId) {
@@ -120,7 +123,7 @@ contract G4ALMarketplace is Ownable, ReentrancyGuard, Pausable {
         uint256[] memory _prices = new uint256[](end - start);
         bool[] memory _isDollars = new bool[](end - start);
         uint256 counter = 0;
-        for (uint i = start; i < end; i++) {
+        for (uint256 i = start; i <= end; i++) {
             if (tokensForSale[contractAddress][i].isForSale) {
                 _onSaleTokenIds[counter] = i;
                 _sellers[counter] = tokensForSale[contractAddress][i].seller;
