@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./_mock/OracleConsumer.sol";
 
 // Uncomment this line to use console.log
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 // Uncomment this line, and the import of "hardhat/console.sol", to print a log in your terminal
 // console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
 
@@ -118,10 +118,10 @@ contract G4ALMarketplace is Ownable, ReentrancyGuard, Pausable {
         if (end > totalSupply) {
             end = totalSupply;
         }
-        uint256[] memory _onSaleTokenIds = new uint[](end - start);
-        address[] memory _sellers = new address[](end - start);
-        uint256[] memory _prices = new uint256[](end - start);
-        bool[] memory _isDollars = new bool[](end - start);
+        uint256[] memory _onSaleTokenIds;
+        address[] memory _sellers;
+        uint256[] memory _prices;
+        bool[] memory _isDollars;
         uint256 counter = 0;
         for (uint256 i = start; i <= end; i++) {
             if (tokensForSale[contractAddress][i].isForSale) {

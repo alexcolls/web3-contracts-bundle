@@ -295,7 +295,21 @@ describe("G4ALMarketplace", function () {
         // Volume increase check
         await expect(await g4alMarketplace.volume()).to.equal(ethers.utils.parseUnits("50", "ether"))
 
-        // TODO: Check tokenForSale has been removed from mapping
+        // Check tokensForSale has been removed from mapping (marked as isForSale false, etc.)
+        const tokensForSale = await g4alMarketplace.tokensForSale(elementalRaidersSkill.address, 0)
+        await expect(tokensForSale.contractAddress).to.equal(elementalRaidersSkill.address)
+        await expect(tokensForSale.tokenId).to.equal(0)
+        await expect(tokensForSale.seller).to.equal('0x0000000000000000000000000000000000000000')
+        await expect(tokensForSale.price).to.equal(ethers.utils.parseUnits("0", "ether"))
+        await expect(tokensForSale.isDollar).to.equal(false)
+        await expect(tokensForSale.isForSale).to.equal(false)
+
+        // Check getOnSaleTokenIds is returning empty arrays after buying the only token listed
+        const getOnSaleTokenIds = await g4alMarketplace.getOnSaleTokenIds(elementalRaidersSkill.address, 0, 1)
+        await expect(getOnSaleTokenIds.tokenIds).to.deep.equal([])
+        await expect(getOnSaleTokenIds.sellers).to.deep.equal([])
+        await expect(getOnSaleTokenIds.prices).to.deep.equal([])
+        await expect(getOnSaleTokenIds.isDollars).to.deep.equal([])
       });
 
       it("Should buy a token that is for sell in Dollars", async function () {
