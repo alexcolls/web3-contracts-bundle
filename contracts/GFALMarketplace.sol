@@ -14,25 +14,25 @@ import "./_mock/OracleConsumer.sol";
 // Uncomment this line, and the import of "hardhat/console.sol", to print a log in your terminal
 // console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
 
-contract G4ALMarketplace is Ownable, ReentrancyGuard, Pausable {
+contract GFALMarketplace is Ownable, ReentrancyGuard, Pausable {
     using SafeMath for uint256;
 
     // Price data feed Oracle contract
     OracleConsumer public oracleConsumer;
     
     // Tokens
-    address public ggtToken;
+    address public gfalToken;
     mapping (address => bool) public whitelistNFTs;
 
     // Marketplace
     mapping (address => mapping(uint256 => Sale)) public tokensForSale;
-    uint256 public volume; // in $GGT all-time-long
+    uint256 public volume; // in $GFAL all-time-long
     uint256 public royaltiesInBasisPoints;
     address public feeCollector;
 
-    constructor(address _oracleConsumer, address _ggtToken, address _feeCollector, uint256 _royaltiesInBasisPoints) {
+    constructor(address _oracleConsumer, address _gfalToken, address _feeCollector, uint256 _royaltiesInBasisPoints) {
         oracleConsumer = OracleConsumer(_oracleConsumer);
-        ggtToken = _ggtToken;
+        gfalToken = _gfalToken;
         feeCollector = _feeCollector;
         royaltiesInBasisPoints = _royaltiesInBasisPoints;
     }
@@ -77,14 +77,14 @@ contract G4ALMarketplace is Ownable, ReentrancyGuard, Pausable {
 
         // Calculating royalties and wanted price
         uint256 price = tokensForSale[contractAddress][tokenId].isDollar == true // if isDollar expressed listing
-            ? OracleConsumer(oracleConsumer).getConversionRate(tokensForSale[contractAddress][tokenId].price) // convert from USD to GGT
-            : tokensForSale[contractAddress][tokenId].price; // otherwise already in GGT
+            ? OracleConsumer(oracleConsumer).getConversionRate(tokensForSale[contractAddress][tokenId].price) // convert from USD to GFAL
+            : tokensForSale[contractAddress][tokenId].price; // otherwise already in GFAL
         (uint256 amountAfterRoyalties, uint256 royaltiesAmount) = _calculateMarketplaceRoyalties(price);
 
         // Transferring NFT, sending funds to seller, and sending fees to marketplaceRoyalties
         IERC721Enumerable(contractAddress).safeTransferFrom(tokensForSale[contractAddress][tokenId].seller, msg.sender, tokenId);
-        IERC20(ggtToken).transferFrom(msg.sender, tokensForSale[contractAddress][tokenId].seller, amountAfterRoyalties);
-        IERC20(ggtToken).transferFrom(msg.sender, feeCollector, royaltiesAmount);
+        IERC20(gfalToken).transferFrom(msg.sender, tokensForSale[contractAddress][tokenId].seller, amountAfterRoyalties);
+        IERC20(gfalToken).transferFrom(msg.sender, feeCollector, royaltiesAmount);
 
         // Increasing marketplace volume
         volume += price;
@@ -143,7 +143,7 @@ contract G4ALMarketplace is Ownable, ReentrancyGuard, Pausable {
     }
 
     function unpause() external onlyOwner {
-        require(ggtToken != address(0x0));
+        require(gfalToken != address(0x0));
         require(address(oracleConsumer) != address(0x0));
         _unpause();
     }
@@ -160,8 +160,8 @@ contract G4ALMarketplace is Ownable, ReentrancyGuard, Pausable {
         whitelistNFTs[_collection] = false;
     }
 
-    function updateGgtToken(address _ggtToken) external onlyOwner {
-        ggtToken = _ggtToken;
+    function updateGgtToken(address _gfalToken) external onlyOwner {
+        gfalToken = _gfalToken;
     }
 
     function updateOracleConsumer(address _oracleConsumer) external onlyOwner {

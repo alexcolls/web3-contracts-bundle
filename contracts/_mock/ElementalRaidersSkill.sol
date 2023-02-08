@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-/// @custom:security-contact security@g4al.com
 contract ElementalRaidersSkill is ERC721, ERC721Enumerable, AccessControl {
     using Counters for Counters.Counter;
 
@@ -15,17 +14,17 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, AccessControl {
 
     Counters.Counter private _tokenIdCounter;
 
-    address public gameGoldToken;
+    address public gfalToken;
     string public baseURI;
     address public feeCollector;
 
     mapping(uint256 => uint256) public prices;
 
-    constructor(address _minter, address _collector, address _gameGoldToken, string memory _baseURI) ERC721("ElementalRaidersSkill", "ERSKILL") {
+    constructor(address _minter, address _collector, address _gfalToken, string memory _baseURI) ERC721("ElementalRaidersSkill", "ERSKILL") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, _minter);
         feeCollector = _collector;
-        gameGoldToken = _gameGoldToken;
+        gfalToken = _gfalToken;
         baseURI = _baseURI;
     }
 
@@ -33,16 +32,16 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, AccessControl {
     // - In-game user on in-game inventory clicks on Mint
     // - Game clients check if the user already gave the approval to this contract, for the required amount
     // - - Yes: Fine! Maybe the user tried before and something failed, or simply did that via User Portal or even chain block explorer!
-    // - - No: The user is prompted to confirm an approval transaction for the required minting amount in GGT
+    // - - No: The user is prompted to confirm an approval transaction for the required minting amount in GFAL
     // - Ack -> Game client sends the POST req to Game Server to start the mint, which will try move pre-approved amount and fails if the approval has been hijacked
     // - Web3Provider is going to answer the Promise with a success or error in JSON-RPC format.
     // - Further game handling.
     function safeMint(address to, uint256 rarity) public onlyRole(MINTER_ROLE) {
-        // Transfer $GGTs from the "to" address to the "collector" one
+        // Transfer $GFALs from the "to" address to the "collector" one
         require(rarity >= 1 && rarity <= 4, "Rarity index out of bound.");
 
-        // Transferring GGT from player wallet to feeCollector. Assuming previous allowance has been given.
-        IERC20(gameGoldToken).transferFrom(to, feeCollector, prices[rarity]);
+        // Transferring GFAL from player wallet to feeCollector. Assuming previous allowance has been given.
+        IERC20(gfalToken).transferFrom(to, feeCollector, prices[rarity]);
 
         // Mint flow
         uint256 tokenId = _tokenIdCounter.current();
@@ -71,7 +70,7 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, AccessControl {
     function updateMintingPrice(uint256 rarity, uint256 price) external onlyRole(MINTER_ROLE) {
         require(rarity >= 1 && rarity <= 4, "Rarity index out of bound.");
 
-        prices[rarity] = price; // 50000000000000000000 for 50.00 GGT (50+18 zeros)
+        prices[rarity] = price; // 50000000000000000000 for 50.00 GFAL (50+18 zeros)
     }
 
     // The following functions are overrides required by Solidity.

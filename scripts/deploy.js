@@ -10,27 +10,27 @@ async function main() {
   const owner = new ethers.Wallet(process.env.OWNER_PRIVATE_KEY);
   const developer = new ethers.Wallet(process.env.DEVELOPER_PRIVATE_KEY);
 
-  const GameGoldToken = await hre.ethers.getContractFactory("GameGoldToken");
+  const GFALToken = await hre.ethers.getContractFactory("GFALToken");
   const OracleConsumer = await hre.ethers.getContractFactory("OracleConsumer");
   const ElementalRaidersSkill = await hre.ethers.getContractFactory("ElementalRaidersSkill");
-  const G4ALMarketplace = await hre.ethers.getContractFactory("G4ALMarketplace");
+  const GFALMarketplace = await hre.ethers.getContractFactory("GFALMarketplace");
 
-  const gameGoldToken = await GameGoldToken.deploy();
+  const gfalToken = await GFALToken.deploy();
   const oracleConsumer = await OracleConsumer.deploy();
-  const elementalRaidersSkill = await ElementalRaidersSkill.deploy(owner.address, developer.address, gameGoldToken.address, "ipfs://");
+  const elementalRaidersSkill = await ElementalRaidersSkill.deploy(owner.address, developer.address, gfalToken.address, "ipfs://");
   // TODO: Insert prices for rarities
-  const g4alMarkeplace = await G4ALMarketplace.deploy(oracleConsumer.address, gameGoldToken.address, developer.address, 1000);
+  const gfalMarkeplace = await GFALMarketplace.deploy(oracleConsumer.address, gfalToken.address, developer.address, 1000);
 
-  await gameGoldToken.deployed();
+  await gfalToken.deployed();
   await oracleConsumer.deployed();
   await elementalRaidersSkill.deployed();
-  await g4alMarkeplace.deployed()
+  await gfalMarkeplace.deployed()
 
   console.log(
-    `GameGoldToken deployed to ${gameGoldToken.address}`,
+    `GFALToken deployed to ${gfalToken.address}`,
     `OracleConsumer deployed to ${oracleConsumer.address}`,
     `ElementalRaidersSkill deployed to ${elementalRaidersSkill.address}`,
-    `G4ALMarketplace deployed to ${g4alMarkeplace.address}`
+    `GFALMarketplace deployed to ${gfalMarkeplace.address}`
   );
 }
 
