@@ -25,18 +25,18 @@ describe("GFALMarketplace", function () {
   // and reset Hardhat Network to that snapshot in every test.
   async function deployContracts() {
     // Contracts are deployed using the first signer/account by default
-    const [owner, developer, seller, buyer] = await ethers.getSigners();
+    const [owner, developer, seller, buyer] = await ethers.getSigners()
 
     // Deploy mock dependency contracts
-    const GFALToken = await ethers.getContractFactory("GFALToken");
-    const gfalToken = await GFALToken.deploy();
-    const OracleConsumer = await ethers.getContractFactory("OracleConsumer");
-    const oracleConsumer = await OracleConsumer.deploy();
-    const ElementalRaidersSkill = await ethers.getContractFactory("ElementalRaidersSkill");
-    const elementalRaidersSkill = await ElementalRaidersSkill.deploy(owner.address, developer.address, gfalToken.address, "ipfs://");
+    const GFALToken = await ethers.getContractFactory("GFALToken")
+    const gfalToken = await GFALToken.deploy()
+    const OracleConsumer = await ethers.getContractFactory("OracleConsumer")
+    const oracleConsumer = await OracleConsumer.deploy()
+    const ElementalRaidersSkill = await ethers.getContractFactory("ElementalRaidersSkill")
+    const elementalRaidersSkill = await ElementalRaidersSkill.deploy(owner.address, developer.address, gfalToken.address, "ipfs://")
 
     // Oracle writes the priceFeed (Mocking external, untested here, workflow)
-    await oracleConsumer.updateRateValue(ethers.utils.parseUnits("0.1", "ether")); // here we are converting the float to wei to work as "intFloat"
+    await oracleConsumer.updateRateValue(ethers.utils.parseUnits("0.1", "ether")) // here we are converting the float to wei to work as "intFloat"
 
     // Transferring $GFAL tokens to seller and buyer
     await gfalToken.approve(owner.address, ethers.utils.parseUnits("200", "ether"))
@@ -61,40 +61,40 @@ describe("GFALMarketplace", function () {
      */
 
     // Deploy testing contract
-    const GFALMarketplace = await ethers.getContractFactory("GFALMarketplace");
-    const gfalMarketplace = await GFALMarketplace.deploy(oracleConsumer.address, gfalToken.address, developer.address, ROYALTIES_IN_BASIS_POINTS);
+    const GFALMarketplace = await ethers.getContractFactory("GFALMarketplace")
+    const gfalMarketplace = await GFALMarketplace.deploy(oracleConsumer.address, gfalToken.address, developer.address, ROYALTIES_IN_BASIS_POINTS)
 
     // Whitelist ElementalRaidersSkill by owner
     await gfalMarketplace.addCollection(elementalRaidersSkill.address)
 
-    return {owner, developer, seller, buyer, gfalToken, oracleConsumer, elementalRaidersSkill, gfalMarketplace};
+    return {owner, developer, seller, buyer, gfalToken, oracleConsumer, elementalRaidersSkill, gfalMarketplace}
   }
 
   describe("Deployment", function () {
     it("Should set the right Oracle contract address", async function () {
-      const {oracleConsumer, gfalMarketplace} = await loadFixture(deployContracts);
+      const {oracleConsumer, gfalMarketplace} = await loadFixture(deployContracts)
 
-      expect(await gfalMarketplace.oracleConsumer()).to.equal(oracleConsumer.address);
-    });
+      expect(await gfalMarketplace.oracleConsumer()).to.equal(oracleConsumer.address)
+    })
 
     it("Should set the right $GFAL contract address", async function () {
-      const {gfalToken, gfalMarketplace} = await loadFixture(deployContracts);
+      const {gfalToken, gfalMarketplace} = await loadFixture(deployContracts)
 
-      expect(await gfalMarketplace.gfalToken()).to.equal(gfalToken.address);
-    });
+      expect(await gfalMarketplace.gfalToken()).to.equal(gfalToken.address)
+    })
 
-    it("Should set the right FeeCollector contract address", async function () {
-      const {developer, gfalMarketplace} = await loadFixture(deployContracts);
+    it("Should set the right royaltiesCollector contract address", async function () {
+      const {developer, gfalMarketplace} = await loadFixture(deployContracts)
 
-      expect(await gfalMarketplace.feeCollector()).to.equal(developer.address);
-    });
+      expect(await gfalMarketplace.royaltiesCollector()).to.equal(developer.address)
+    })
 
     it("Should set the right royaltiesInBasisPoints value", async function () {
-      const {gfalMarketplace} = await loadFixture(deployContracts);
+      const {gfalMarketplace} = await loadFixture(deployContracts)
 
-      expect(await gfalMarketplace.royaltiesInBasisPoints()).to.equal(ROYALTIES_IN_BASIS_POINTS);
-    });
-  });
+      expect(await gfalMarketplace.royaltiesInBasisPoints()).to.equal(ROYALTIES_IN_BASIS_POINTS)
+    })
+  })
 
   describe("Workflow", function () {
     describe("Validations", function () {
@@ -109,63 +109,63 @@ describe("GFALMarketplace", function () {
       // TODO: Should revert if an user tries to buy an NFT with balance but not approved.
 
       it("Should revert if an user tries to add a collection", async function () {
-        const {buyer, gfalMarketplace} = await loadFixture(deployContracts);
+        const {buyer, gfalMarketplace} = await loadFixture(deployContracts)
 
         // Expect to be reverted
         await expect(gfalMarketplace.connect(buyer).addCollection("0x1234567890123456789012345678901234567890"))
           .to.be.reverted
-      });
+      })
 
       it("Should revert if an user tries to remove a collection", async function () {
-        const {buyer, elementalRaidersSkill, gfalMarketplace} = await loadFixture(deployContracts);
+        const {buyer, elementalRaidersSkill, gfalMarketplace} = await loadFixture(deployContracts)
 
         // Expect to find it in the mapping as true
         await expect(gfalMarketplace.connect(buyer).removeCollection(elementalRaidersSkill.address))
           .to.be.reverted
-      });
+      })
 
       it("Should revert if an user tries to updateGgtToken", async function () {
-        const {buyer, gfalMarketplace} = await loadFixture(deployContracts);
+        const {buyer, gfalMarketplace} = await loadFixture(deployContracts)
 
         // Expect to find it in the mapping as true
-        await expect(gfalMarketplace.connect(buyer).updateGgtToken("0x1234567890123456789012345678901234567890"))
+        await expect(gfalMarketplace.connect(buyer).updateGFALToken("0x1234567890123456789012345678901234567890"))
           .to.be.reverted
-      });
+      })
 
       it("Should revert if an user tries to updateOracleConsumer", async function () {
-        const {buyer, gfalMarketplace} = await loadFixture(deployContracts);
+        const {buyer, gfalMarketplace} = await loadFixture(deployContracts)
 
         // Expect to find it in the mapping as true
         await expect(gfalMarketplace.connect(buyer).updateOracleConsumer("0x1234567890123456789012345678901234567890"))
           .to.be.reverted
-      });
+      })
 
       it("Should revert if an user tries to updateRoyaltiesInBasisPoints", async function () {
-        const {buyer, gfalMarketplace} = await loadFixture(deployContracts);
+        const {buyer, gfalMarketplace} = await loadFixture(deployContracts)
 
         // Expect to find it in the mapping as true
         await expect(gfalMarketplace.connect(buyer).updateRoyaltiesInBasisPoints(500))
           .to.be.reverted
-      });
+      })
 
       // TODO: Should revert if an user tries to pause the contract
 
       // TODO: Should revert if an user tries to unpause the contract
-    });
+    })
 
     describe("Events", function () {
       it("Should emit an event SellToken on put for sell a token", async function () {
-        const {seller, buyer, elementalRaidersSkill, gfalToken, gfalMarketplace} = await loadFixture(deployContracts);
+        const {seller, buyer, elementalRaidersSkill, gfalToken, gfalMarketplace} = await loadFixture(deployContracts)
 
         await elementalRaidersSkill.connect(seller).approve(gfalMarketplace.address, 0)
 
         await expect(await gfalMarketplace.connect(seller).sellToken(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("50", "ether"), false))
           .to.emit(gfalMarketplace, "SellToken")
           .withArgs(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("50", "ether"), false, seller.address)
-      });
+      })
 
       it("Should emit an event RemoveToken on remove from sell a token", async function () {
-        const {seller, elementalRaidersSkill, gfalMarketplace} = await loadFixture(deployContracts);
+        const {seller, elementalRaidersSkill, gfalMarketplace} = await loadFixture(deployContracts)
 
         await elementalRaidersSkill.connect(seller).approve(gfalMarketplace.address, 0)
 
@@ -179,10 +179,10 @@ describe("GFALMarketplace", function () {
         await expect(await gfalMarketplace.connect(seller).removeToken(elementalRaidersSkill.address, 0))
           .to.emit(gfalMarketplace, "RemoveToken")
           .withArgs(elementalRaidersSkill.address, 0, seller.address)
-      });
+      })
 
       it("Should emit an event BuyToken buying a token", async function () {
-        const {seller, buyer, elementalRaidersSkill, gfalToken, gfalMarketplace} = await loadFixture(deployContracts);
+        const {seller, buyer, elementalRaidersSkill, gfalToken, gfalMarketplace} = await loadFixture(deployContracts)
 
         await elementalRaidersSkill.connect(seller).approve(gfalMarketplace.address, 0)
 
@@ -199,12 +199,12 @@ describe("GFALMarketplace", function () {
         await expect(await gfalMarketplace.connect(buyer).buyToken(elementalRaidersSkill.address, 0))
           .to.emit(gfalMarketplace, "BuyToken")
           .withArgs(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("50", "ether"), anyValue, anyValue, seller.address, buyer.address)
-      });
-    });
+      })
+    })
 
     describe("Transfers", function () {
       it("Should put a whitelisted collection token for sell in $GFAL", async function () {
-        const {seller, elementalRaidersSkill, gfalMarketplace} = await loadFixture(deployContracts);
+        const {seller, elementalRaidersSkill, gfalMarketplace} = await loadFixture(deployContracts)
 
         await elementalRaidersSkill.connect(seller).approve(gfalMarketplace.address, 0)
 
@@ -214,10 +214,10 @@ describe("GFALMarketplace", function () {
         await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[5]).to.equal(true)
         await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[4]).to.equal(false)
         await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[3]).to.equal(ethers.utils.parseUnits("50", "ether"))
-      });
+      })
 
       it("Should put a whitelisted collection token for sell in Dollars", async function () {
-        const {seller, elementalRaidersSkill, gfalMarketplace} = await loadFixture(deployContracts);
+        const {seller, elementalRaidersSkill, gfalMarketplace} = await loadFixture(deployContracts)
 
         await elementalRaidersSkill.connect(seller).approve(gfalMarketplace.address, 0)
 
@@ -227,10 +227,10 @@ describe("GFALMarketplace", function () {
         await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[5]).to.equal(true)
         await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[4]).to.equal(true)
         await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[3]).to.equal(ethers.utils.parseUnits("5", "ether"))
-      });
+      })
 
       it("Should adjust the price for a token already for sell", async function () {
-        const {seller, elementalRaidersSkill, gfalMarketplace} = await loadFixture(deployContracts);
+        const {seller, elementalRaidersSkill, gfalMarketplace} = await loadFixture(deployContracts)
 
         await elementalRaidersSkill.connect(seller).approve(gfalMarketplace.address, 0)
 
@@ -245,10 +245,10 @@ describe("GFALMarketplace", function () {
         await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[5]).to.equal(true)
         await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[4]).to.equal(true)
         await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[3]).to.equal(ethers.utils.parseUnits("100", "ether"))
-      });
+      })
 
       it("Should remove a token from sell", async function () {
-        const {seller, elementalRaidersSkill, gfalMarketplace} = await loadFixture(deployContracts);
+        const {seller, elementalRaidersSkill, gfalMarketplace} = await loadFixture(deployContracts)
 
         await elementalRaidersSkill.connect(seller).approve(gfalMarketplace.address, 0)
 
@@ -266,12 +266,12 @@ describe("GFALMarketplace", function () {
         await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[3]).to.equal(ethers.utils.parseUnits("0", "ether"))
 
         // TODO: Check tokenForSale has been removed from mapping
-      });
+      })
 
       // TODO: Should allow a seller to removeToken even if un-whitelisted
 
       it("Should buy a token that is for sell in $GFAL", async function () {
-        const {seller, buyer, elementalRaidersSkill, gfalToken, gfalMarketplace} = await loadFixture(deployContracts);
+        const {seller, buyer, elementalRaidersSkill, gfalToken, gfalMarketplace} = await loadFixture(deployContracts)
 
         await elementalRaidersSkill.connect(seller).approve(gfalMarketplace.address, 0)
 
@@ -290,7 +290,7 @@ describe("GFALMarketplace", function () {
         // Seller, buyer and Fee Collector balances checks
         await expect(await gfalToken.balanceOf(seller.address)).to.equal(ethers.utils.parseUnits("45", "ether"))
         await expect(await gfalToken.balanceOf(buyer.address)).to.equal(ethers.utils.parseUnits("50", "ether"))
-        await expect(await gfalToken.balanceOf(await gfalMarketplace.feeCollector())).to.equal(ethers.utils.parseUnits("105", "ether")) // considering previous 50+50 for minting
+        await expect(await gfalToken.balanceOf(await gfalMarketplace.royaltiesCollector())).to.equal(ethers.utils.parseUnits("105", "ether")) // considering previous 50+50 for minting
 
         // Volume increase check
         await expect(await gfalMarketplace.volume()).to.equal(ethers.utils.parseUnits("50", "ether"))
@@ -310,10 +310,10 @@ describe("GFALMarketplace", function () {
         await expect(getOnSaleTokenIds.sellers).to.deep.equal([])
         await expect(getOnSaleTokenIds.prices).to.deep.equal([])
         await expect(getOnSaleTokenIds.isDollars).to.deep.equal([])
-      });
+      })
 
       it("Should buy a token that is for sell in Dollars", async function () {
-        const {seller, buyer, elementalRaidersSkill, gfalToken, gfalMarketplace} = await loadFixture(deployContracts);
+        const {seller, buyer, elementalRaidersSkill, gfalToken, gfalMarketplace} = await loadFixture(deployContracts)
 
         await elementalRaidersSkill.connect(seller).approve(gfalMarketplace.address, 0)
 
@@ -333,65 +333,65 @@ describe("GFALMarketplace", function () {
         // Seller, buyer and Fee Collector balances checks
         await expect(await gfalToken.balanceOf(seller.address)).to.equal(ethers.utils.parseUnits("45", "ether"))
         await expect(await gfalToken.balanceOf(buyer.address)).to.equal(ethers.utils.parseUnits("50", "ether"))
-        await expect(await gfalToken.balanceOf(await gfalMarketplace.feeCollector())).to.equal(ethers.utils.parseUnits("105", "ether"))
+        await expect(await gfalToken.balanceOf(await gfalMarketplace.royaltiesCollector())).to.equal(ethers.utils.parseUnits("105", "ether"))
 
         // Volume increase check
         await expect(await gfalMarketplace.volume()).to.equal(ethers.utils.parseUnits("50", "ether"))
-      });
+      })
 
       it("Owner should be able to add a collection", async function () {
-        const {owner, gfalMarketplace} = await loadFixture(deployContracts);
+        const {owner, gfalMarketplace} = await loadFixture(deployContracts)
 
         // Owner addCollection
         await gfalMarketplace.connect(owner).addCollection("0x1234567890123456789012345678901234567890")
 
         // Expect to find it in the mapping as true
         await expect((await gfalMarketplace.whitelistNFTs("0x1234567890123456789012345678901234567890"))).to.equal(true)
-      });
+      })
 
       it("Owner should be able to remove a collection", async function () {
-        const {owner, elementalRaidersSkill, gfalMarketplace} = await loadFixture(deployContracts);
+        const {owner, elementalRaidersSkill, gfalMarketplace} = await loadFixture(deployContracts)
 
         // Owner addCollection
         await gfalMarketplace.connect(owner).removeCollection(elementalRaidersSkill.address)
 
         // Expect to find it in the mapping as true
         await expect((await gfalMarketplace.whitelistNFTs(elementalRaidersSkill.address))).to.equal(false)
-      });
+      })
 
       it("Owner should be able to update GgtToken", async function () {
-        const {owner, gfalMarketplace} = await loadFixture(deployContracts);
+        const {owner, gfalMarketplace} = await loadFixture(deployContracts)
 
-        // Owner updateGgtToken()
-        await gfalMarketplace.connect(owner).updateGgtToken("0x1234567890123456789012345678901234567890")
+        // Owner updateGFALToken()
+        await gfalMarketplace.connect(owner).updateGFALToken("0x1234567890123456789012345678901234567890")
 
         // Expect to find it in the variable as exact value
         await expect((await gfalMarketplace.gfalToken())).to.equal("0x1234567890123456789012345678901234567890")
-      });
+      })
 
       it("Owner should be able to update OracleConsumer", async function () {
-        const {owner, gfalMarketplace} = await loadFixture(deployContracts);
+        const {owner, gfalMarketplace} = await loadFixture(deployContracts)
 
-        // Owner updateGgtToken()
+        // Owner updateOracleConsumer()
         await gfalMarketplace.connect(owner).updateOracleConsumer("0x1234567890123456789012345678901234567890")
 
         // Expect to find it in the variable as exact value
         await expect((await gfalMarketplace.oracleConsumer())).to.equal("0x1234567890123456789012345678901234567890")
-      });
+      })
 
       it("Owner should be able to update RoyaltiesInBasisPoints", async function () {
-        const {owner, gfalMarketplace} = await loadFixture(deployContracts);
+        const {owner, gfalMarketplace} = await loadFixture(deployContracts)
 
         // Owner updateGgtToken()
         await gfalMarketplace.connect(owner).updateRoyaltiesInBasisPoints(500)
 
         // Expect to find it in the variable as exact value
         await expect((await gfalMarketplace.royaltiesInBasisPoints())).to.equal(500)
-      });
+      })
 
       // TODO: Owner should be able to unpause the contract
 
       // TODO: Owner should be able to pause the contract
-    });
-  });
-});
+    })
+  })
+})

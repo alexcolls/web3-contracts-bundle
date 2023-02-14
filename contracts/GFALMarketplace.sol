@@ -28,12 +28,12 @@ contract GFALMarketplace is Ownable, ReentrancyGuard, Pausable {
     mapping (address => mapping(uint256 => Sale)) public tokensForSale;
     uint256 public volume; // in $GFAL all-time-long
     uint256 public royaltiesInBasisPoints;
-    address public feeCollector;
+    address public royaltiesCollector;
 
-    constructor(address _oracleConsumer, address _gfalToken, address _feeCollector, uint256 _royaltiesInBasisPoints) {
+    constructor(address _oracleConsumer, address _gfalToken, address _royaltiesCollector, uint256 _royaltiesInBasisPoints) {
         oracleConsumer = OracleConsumer(_oracleConsumer);
         gfalToken = _gfalToken;
-        feeCollector = _feeCollector;
+        royaltiesCollector = _royaltiesCollector;
         royaltiesInBasisPoints = _royaltiesInBasisPoints;
     }
 
@@ -84,7 +84,7 @@ contract GFALMarketplace is Ownable, ReentrancyGuard, Pausable {
         // Transferring NFT, sending funds to seller, and sending fees to marketplaceRoyalties
         IERC721Enumerable(contractAddress).safeTransferFrom(tokensForSale[contractAddress][tokenId].seller, msg.sender, tokenId);
         IERC20(gfalToken).transferFrom(msg.sender, tokensForSale[contractAddress][tokenId].seller, amountAfterRoyalties);
-        IERC20(gfalToken).transferFrom(msg.sender, feeCollector, royaltiesAmount);
+        IERC20(gfalToken).transferFrom(msg.sender, royaltiesCollector, royaltiesAmount);
 
         // Increasing marketplace volume
         volume += price;
@@ -160,7 +160,7 @@ contract GFALMarketplace is Ownable, ReentrancyGuard, Pausable {
         whitelistNFTs[_collection] = false;
     }
 
-    function updateGgtToken(address _gfalToken) external onlyOwner {
+    function updateGFALToken(address _gfalToken) external onlyOwner {
         gfalToken = _gfalToken;
     }
 

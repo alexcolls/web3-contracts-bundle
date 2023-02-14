@@ -9,7 +9,7 @@ module.exports = {
     hardhat: {
       chainId: 1337
     },
-    mumbai: {
+    bsc: {
       url: process.env.WEB3_HTTP_PROVIDER,
       accounts: [process.env.OWNER_PRIVATE_KEY]
     }
