@@ -4,13 +4,11 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract ElementalRaidersSkill is ERC721, ERC721Enumerable, AccessControl {
+contract ElementalRaidersSkill is ERC721, ERC721Enumerable, Ownable {
     using Counters for Counters.Counter;
-
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     Counters.Counter private _tokenIdCounter;
 
@@ -20,10 +18,8 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, AccessControl {
 
     mapping(uint256 => uint256) public prices;
 
-    constructor(address _minter, address _collector, address _gfalToken, string memory _baseURI) ERC721("ElementalRaidersSkill", "ERSKILL") {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(MINTER_ROLE, _minter);
-        feeCollector = _collector;
+    constructor(address _gfalToken, string memory _baseURI) ERC721("Elemental Raiders Skill", "ERSKILL") {
+        feeCollector = msg.sender;
         gfalToken = _gfalToken;
         baseURI = _baseURI;
     }
@@ -36,7 +32,7 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, AccessControl {
     // - Ack -> Game client sends the POST req to Game Server to start the mint, which will try move pre-approved amount and fails if the approval has been hijacked
     // - Web3Provider is going to answer the Promise with a success or error in JSON-RPC format.
     // - Further game handling.
-    function safeMint(address to, uint256 rarity) public onlyRole(MINTER_ROLE) {
+    function safeMint(address to, uint256 rarity) public onlyOwner {
         // Transfer $GFALs from the "to" address to the "collector" one
         require(rarity >= 1 && rarity <= 4, "Rarity index out of bound.");
 
@@ -49,7 +45,7 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, AccessControl {
         _safeMint(to, tokenId);
     }
 
-    // Getters
+    // Getters TODO check if useful or not
 
     function getOwnersByTokens(uint256[] memory tokens) public view returns (address[] memory) {
         address[] memory response = new address[](tokens.length);
@@ -63,21 +59,23 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, AccessControl {
 
     // Owner
 
-    function updateBaseURI(string memory _baseURI) external onlyRole(MINTER_ROLE) {
+    function updateBaseURI(string memory _baseURI) external onlyOwner {
         baseURI = _baseURI;
     }
 
-    function updateMintingPrice(uint256 rarity, uint256 price) external onlyRole(MINTER_ROLE) {
+    function updateMintingPrice(uint256 rarity, uint256 price) external onlyOwner {
         require(rarity >= 1 && rarity <= 4, "Rarity index out of bound.");
 
         prices[rarity] = price; // 50000000000000000000 for 50.00 GFAL (50+18 zeros)
     }
 
-    // The following functions are overrides required by Solidity.
+    // Optional overrides
 
     function _baseURI() internal view override returns (string memory) {
         return baseURI;
     }
+
+    // The following functions are overrides required by Solidity.
 
     function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
     internal
@@ -89,7 +87,7 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, AccessControl {
     function supportsInterface(bytes4 interfaceId)
     public
     view
-    override(ERC721, ERC721Enumerable, AccessControl)
+    override(ERC721, ERC721Enumerable)
     returns (bool)
     {
         return super.supportsInterface(interfaceId);

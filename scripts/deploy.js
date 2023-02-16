@@ -8,7 +8,6 @@ const hre = require("hardhat")
 
 async function main() {
   const owner = new ethers.Wallet(process.env.OWNER_PRIVATE_KEY)
-  const developer = new ethers.Wallet(process.env.DEVELOPER_PRIVATE_KEY)
 
   const GFALToken = await hre.ethers.getContractFactory("GFALToken")
   const OracleConsumer = await hre.ethers.getContractFactory("OracleConsumer")
@@ -17,14 +16,21 @@ async function main() {
 
   const gfalToken = await GFALToken.deploy()
   const oracleConsumer = await OracleConsumer.deploy()
-  const elementalRaidersSkill = await ElementalRaidersSkill.deploy(owner.address, developer.address, gfalToken.address, "ipfs://")
-  // TODO: Insert prices for rarities updateRarityPrices([1, 2, 3, 4], [50, 100, 150, 200 to Wei])
-  const gfalMarkeplace = await GFALMarketplace.deploy(oracleConsumer.address, gfalToken.address, developer.address, 1000)
+  const elementalRaidersSkill = await ElementalRaidersSkill.deploy(gfalToken.address, "")
+  const gfalMarkeplace = await GFALMarketplace.deploy(oracleConsumer.address, gfalToken.address, owner.address, 1000)
 
   await gfalToken.deployed()
   await oracleConsumer.deployed()
   await elementalRaidersSkill.deployed()
   await gfalMarkeplace.deployed()
+
+  // Executing functions
+
+  await elementalRaidersSkill.updateBaseURI("https://dev-validator-kypdm5df6a-uc.a.run.app/api/web3/tracker/"+elementalRaidersSkill.address+"/")
+  await elementalRaidersSkill.updateMintingPrice(1, hre.ethers.utils.parseEther('50'))
+  await elementalRaidersSkill.updateMintingPrice(2, hre.ethers.utils.parseEther('100'))
+  await elementalRaidersSkill.updateMintingPrice(3, hre.ethers.utils.parseEther('150'))
+  await elementalRaidersSkill.updateMintingPrice(4, hre.ethers.utils.parseEther('200'))
 
   console.log(
     `GFALToken deployed to ${gfalToken.address}`,

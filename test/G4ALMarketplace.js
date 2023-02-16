@@ -33,7 +33,7 @@ describe("GFALMarketplace", function () {
     const OracleConsumer = await ethers.getContractFactory("OracleConsumer")
     const oracleConsumer = await OracleConsumer.deploy()
     const ElementalRaidersSkill = await ethers.getContractFactory("ElementalRaidersSkill")
-    const elementalRaidersSkill = await ElementalRaidersSkill.deploy(owner.address, developer.address, gfalToken.address, "ipfs://")
+    const elementalRaidersSkill = await ElementalRaidersSkill.deploy(gfalToken.address, "ipfs://")
 
     // Oracle writes the priceFeed (Mocking external, untested here, workflow)
     await oracleConsumer.updateRateValue(ethers.utils.parseUnits("0.1", "ether")) // here we are converting the float to wei to work as "intFloat"
@@ -290,7 +290,7 @@ describe("GFALMarketplace", function () {
         // Seller, buyer and Fee Collector balances checks
         await expect(await gfalToken.balanceOf(seller.address)).to.equal(ethers.utils.parseUnits("45", "ether"))
         await expect(await gfalToken.balanceOf(buyer.address)).to.equal(ethers.utils.parseUnits("50", "ether"))
-        await expect(await gfalToken.balanceOf(await gfalMarketplace.royaltiesCollector())).to.equal(ethers.utils.parseUnits("105", "ether")) // considering previous 50+50 for minting
+        await expect(await gfalToken.balanceOf(await gfalMarketplace.royaltiesCollector())).to.equal(ethers.utils.parseUnits("5", "ether")) // considering previous 50+50 for minting
 
         // Volume increase check
         await expect(await gfalMarketplace.volume()).to.equal(ethers.utils.parseUnits("50", "ether"))
@@ -333,7 +333,7 @@ describe("GFALMarketplace", function () {
         // Seller, buyer and Fee Collector balances checks
         await expect(await gfalToken.balanceOf(seller.address)).to.equal(ethers.utils.parseUnits("45", "ether"))
         await expect(await gfalToken.balanceOf(buyer.address)).to.equal(ethers.utils.parseUnits("50", "ether"))
-        await expect(await gfalToken.balanceOf(await gfalMarketplace.royaltiesCollector())).to.equal(ethers.utils.parseUnits("105", "ether"))
+        await expect(await gfalToken.balanceOf(await gfalMarketplace.royaltiesCollector())).to.equal(ethers.utils.parseUnits("5", "ether"))
 
         // Volume increase check
         await expect(await gfalMarketplace.volume()).to.equal(ethers.utils.parseUnits("50", "ether"))

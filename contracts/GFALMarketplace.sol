@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./_mock/OracleConsumer.sol";
+import "./utils/OracleConsumer.sol";
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
