@@ -21,7 +21,7 @@ describe("ElementalRaidersSkill", function () {
     const ElementalRaidersSkill = await ethers.getContractFactory("ElementalRaidersSkill");
     const elementalRaidersSkill = await ElementalRaidersSkill.deploy(gfalToken.address, "ipfs://");
 
-    await elementalRaidersSkill.updateBaseURI("https://dev-validator-kypdm5df6a-uc.a.run.app/api/web3/tracker/"+elementalRaidersSkill.address+"/")
+    await elementalRaidersSkill.updateBaseURI("https://prod-web3-token-tracker-tqkvar3wjq-uc.a.run.app/metadata/"+elementalRaidersSkill.address+"/")
     await elementalRaidersSkill.updateMintingPrice(1, hre.ethers.utils.parseEther('50'))
     await elementalRaidersSkill.updateMintingPrice(2, hre.ethers.utils.parseEther('100'))
     await elementalRaidersSkill.updateMintingPrice(3, hre.ethers.utils.parseEther('150'))
