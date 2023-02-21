@@ -19,12 +19,15 @@ async function main() {
   const elementalRaidersSkill = await ElementalRaidersSkill.deploy(gfalToken.address, "")
   const gfalMarkeplace = await GFALMarketplace.deploy(oracleConsumer.address, gfalToken.address, owner.address, 1000)
 
+
   await gfalToken.deployed()
   await oracleConsumer.deployed()
   await elementalRaidersSkill.deployed()
   await gfalMarkeplace.deployed()
 
   // Executing functions
+
+  await gfalMarkeplace.addCollection(elementalRaidersSkill.address)
 
   await elementalRaidersSkill.updateBaseURI("https://dev-validator-kypdm5df6a-uc.a.run.app/api/web3/tracker/"+elementalRaidersSkill.address+"/")
   await elementalRaidersSkill.updateMintingPrice(1, hre.ethers.utils.parseEther('50'))
