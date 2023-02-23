@@ -175,13 +175,11 @@ describe("VestingBasic", function () {
         const firstVesting = await vestingBasic.vestingSchedule(0)
         expect(firstVesting.when).to.equal(VESTING_SCHEDULE_SUCCESS.when[0])
         expect(firstVesting.amount).to.equal(VESTING_SCHEDULE_SUCCESS.amount[0])
-        expect(firstVesting.vested).to.equal(false)
 
         // Check the last month - twelve index eleven
         const lastVesting = await vestingBasic.vestingSchedule(VESTING_SCHEDULE_SUCCESS.when.length - 1)
         expect(lastVesting.when).to.equal(VESTING_SCHEDULE_SUCCESS.when[VESTING_SCHEDULE_SUCCESS.when.length - 1])
         expect(lastVesting.amount).to.equal(VESTING_SCHEDULE_SUCCESS.amount[VESTING_SCHEDULE_SUCCESS.when.length - 1])
-        expect(lastVesting.vested).to.equal(false)
 
         // Not existing, reverting, vesting period
         await expect(vestingBasic.vestingSchedule(VESTING_SCHEDULE_SUCCESS.when.length)).to.be.reverted

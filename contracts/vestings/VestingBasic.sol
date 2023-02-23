@@ -23,7 +23,6 @@ contract VestingBasic is AccessControl {
     struct Vesting {
         uint when; // timestamp of when the vesting item is able to be claimed
         uint amount; // amount of tokens to withdraw, in Wei
-        bool vested; // boolean of vesting status
     }
 
     event Withdrawal(uint when, uint amount);
@@ -50,11 +49,9 @@ contract VestingBasic is AccessControl {
         // Foreach vestingSchedule is existing in the array
         for (uint i = nextVestingPeriod; i < vestingSchedule.length; i++) {
             // If the vesting schedule is not vested and is available to vest by timestamp
-            if (vestingSchedule[i].vested == false && vestingSchedule[i].when <= block.timestamp) {
+            if (vestingSchedule[i].when <= block.timestamp) {
                 // Increment the claimable amount
                 claimableAmount = claimableAmount + vestingSchedule[i].amount;
-                // Set the array item as vested
-                vestingSchedule[i].vested = true;
                 // Set the array index of last vested in order to avoid useless iterations next time
                 nextVestingPeriod = i + 1;
                 // Emit the event for each one of them
@@ -76,8 +73,7 @@ contract VestingBasic is AccessControl {
         for (uint i = 0; i < when.length; i++) {
             Vesting memory currentVesting = Vesting(
                 when[i],
-                amount[i],
-                false
+                amount[i]
             );
             vestingSchedule.push(currentVesting);
         }
