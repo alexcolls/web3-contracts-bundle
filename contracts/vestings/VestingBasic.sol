@@ -62,7 +62,7 @@ contract VestingBasic is AccessControl {
         require(claimableAmount > 0, "You cannot vest zero amount");
 
         // Transfer the amount from the contract to the vestingCollector
-        IERC20(vestingToken).transfer(vestingCollector, claimableAmount);
+        IERC20(vestingToken).safeTransfer(vestingCollector, claimableAmount);
     }
 
     function setVestingSchedule(uint[] memory when, uint[] memory amount) public onlyRole(DEFAULT_ADMIN_ROLE) {

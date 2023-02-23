@@ -61,14 +61,13 @@ describe("VestingBasic", function () {
     const accounts = await ethers.getSigners();
     const owner = accounts[0]
     const vester = accounts[1]
-    const collector = accounts[2]
-    const stranger = accounts[3]
+    const stranger = accounts[2]
 
     const GFALToken = await ethers.getContractFactory("GFALToken");
     const gfalToken = await GFALToken.deploy();
 
     const VestingBasic = await ethers.getContractFactory("VestingBasic")
-    const vestingBasic = await VestingBasic.deploy(gfalToken.address, collector.address, UNLOCK_TIME);
+    const vestingBasic = await VestingBasic.deploy(gfalToken.address, vester.address, UNLOCK_TIME);
 
     let totalVestingAmount = ethers.utils.parseEther(String(0))
     for (let i = 0; i < VESTING_SCHEDULE_SUCCESS.amount.length; i++) {
@@ -77,7 +76,7 @@ describe("VestingBasic", function () {
 
     await gfalToken.transfer(vestingBasic.address, totalVestingAmount)
 
-    return {gfalToken, vestingBasic, owner, vester, collector, stranger};
+    return {gfalToken, vestingBasic, owner, vester, stranger};
   }
 
   describe("Deployment", function () {
@@ -88,9 +87,9 @@ describe("VestingBasic", function () {
     });
 
     it("Should set the right vestingCollector", async function () {
-      const {vestingBasic, collector} = await loadFixture(deployContracts);
+      const {vestingBasic, vester} = await loadFixture(deployContracts);
 
-      await expect(await vestingBasic.vestingCollector()).to.equal(collector.address);
+      await expect(await vestingBasic.vestingCollector()).to.equal(vester.address);
     });
 
     it("Should set the right unlockTime", async function () {
@@ -123,7 +122,7 @@ describe("VestingBasic", function () {
       it("Should revert if a stranger tries to grant a role", async function () {
         const {vestingBasic, stranger, vester} = await loadFixture(deployContracts);
 
-        await expect(vestingBasic.connect(stranger).grantRole(VESTER_ROLE, vester.address)).to.be.revertedWith('AccessControl: account 0x90f79bf6eb2c4f870365e785982e1f101e93b906 is missing role 0x0000000000000000000000000000000000000000000000000000000000000000')
+        await expect(vestingBasic.connect(stranger).grantRole(VESTER_ROLE, vester.address)).to.be.revertedWith('AccessControl: account 0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc is missing role 0x0000000000000000000000000000000000000000000000000000000000000000')
       });
     });
 
