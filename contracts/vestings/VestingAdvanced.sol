@@ -12,17 +12,13 @@ contract VestingAdvanced is Ownable {
     using SafeERC20 for IERC20;
 
     address public vestingToken;
-    mapping(address => Collector) public collectors;
+    mapping(address => uint256) public collectors;
     address[] public collectorsList; // This keep track of the addresses keys of "collectors" mapping, in order to iterate it for _getVestingAmount(x) calculation
     uint256 public unlockTime; // it must be future, imagine that -> 13rd March 11h am UTC -> 1678705200
 
     Vesting[] public vestingSchedule;
     mapping(address => uint256) public nextVestingPeriods;
-
-    struct Collector {
-        bool allowed;
-        uint256 tier;
-    }
+    mapping(address => uint256) public blacklistingPeriod;
 
     struct Vesting {
         uint256 when; // timestamp of when the vesting item is able to be claimed
@@ -36,11 +32,8 @@ contract VestingAdvanced is Ownable {
         for (uint256 i = 0; i < _collectorsAddresses.length; i++) {
             require(_collectorsAddresses[i] != address(0), "Vesting collector address should be a valid address");
             require(_collectorsTiers[i] != 0, "Vesting collector tier should be a valid tier");
-            Collector memory currentCollector = Collector(
-                true,
-                _collectorsTiers[i]
-            );
-            collectors[_collectorsAddresses[i]] = currentCollector;
+
+            collectors[_collectorsAddresses[i]] = _collectorsTiers[i];
             collectorsList.push(_collectorsAddresses[i]);
         }
         require(block.timestamp < _unlockTime, "Unlock time should be in the future");
@@ -50,17 +43,19 @@ contract VestingAdvanced is Ownable {
     }
 
     function withdraw() public {
-        require(collectors[msg.sender].allowed == true, "Sender must be whitelisted");
+        require(collectors[msg.sender] != 0, "Sender must be whitelisted");
+        require(blacklistingPeriod[msg.sender] == 0 || blacklistingPeriod[msg.sender] > nextVestingPeriods[msg.sender], "Sender must be not blacklisted");
         require(block.timestamp >= unlockTime, "Vesting schedule should be after unlockTime");
         require(nextVestingPeriods[msg.sender] < vestingSchedule.length, "All vesting periods have been claimed");
         uint256 claimableAmount;
 
         // Foreach vestingSchedule is existing in the array
         for (uint256 i = nextVestingPeriods[msg.sender]; i < vestingSchedule.length; i++) {
-            // If the vesting schedule is not vested and is available to vest by timestamp
+            // If the vesting schedule is not vested and is available to vest by timestamp && is not blacklisted for this period and beyond
+            //if (vestingSchedule[i].when <= block.timestamp && (blacklistingPeriod[msg.sender] == 0 || blacklistingPeriod[msg.sender] > i)) {
             if (vestingSchedule[i].when <= block.timestamp) {
                 // Increment the claimable amount
-                claimableAmount += _getVestingAmount(vestingSchedule[i].amount);
+                claimableAmount += _getVestingAmount(vestingSchedule[i].amount, i);
                 // Set the array index of last vested in order to avoid useless iterations next time
                 nextVestingPeriods[msg.sender] = i + 1;
                 // Emit the event for each one of them
@@ -74,16 +69,16 @@ contract VestingAdvanced is Ownable {
         IERC20(vestingToken).safeTransfer(msg.sender, claimableAmount);
     }
 
-    function _getVestingAmount(uint256 amount) private view returns (uint256) {
+    function _getVestingAmount(uint256 amount, uint256 vestingPeriod) private view returns (uint256) {
         uint256 collectorsTierSum;
 
         for (uint256 i = 0; i < collectorsList.length; i++) {
-            if (collectors[collectorsList[i]].allowed == true) {
-                collectorsTierSum += collectors[collectorsList[i]].tier;
+            if (blacklistingPeriod[collectorsList[i]] == 0 || blacklistingPeriod[collectorsList[i]] > vestingPeriod) {
+                collectorsTierSum += collectors[collectorsList[i]];
             }
         }
 
-        uint256 relativeAmount = (amount / collectorsTierSum) * collectors[msg.sender].tier;
+        uint256 relativeAmount = (amount / collectorsTierSum) * collectors[msg.sender];
 
         return relativeAmount;
     }
@@ -102,19 +97,19 @@ contract VestingAdvanced is Ownable {
         }
     }
 
-    function setVesterAddresses(address[] memory _collectors, bool[] memory _allowances, uint256[] memory _tiers) public {
-        require(_collectors.length == _allowances.length, "Arrays length must be the same");
+    function setVesterAddresses(address[] memory _collectors, uint256[] memory _tiers) public {
         require(_collectors.length == _tiers.length, "Arrays length must be the same");
 
         for (uint256 i = 0; i < _collectors.length; i++) {
             require(_collectors[i] != address(0), "Vesting collector address should be a valid address");
             require(_tiers[i] != 0, "Vesting collector tier should be a valid tier");
-            Collector memory currentCollector = Collector(
-                _allowances[i],
-                _tiers[i]
-            );
-            collectors[_collectors[i]] = currentCollector;
+
+            collectors[_collectors[i]] = _tiers[i];
             collectorsList.push(_collectors[i]);
         }
+    }
+
+    function blacklistVesterAddress(address collector) public onlyOwner {
+        blacklistingPeriod[collector] = nextVestingPeriods[msg.sender] + 1;
     }
 }

@@ -107,8 +107,7 @@ describe("VestingAdvanced", function () {
 
       for (let i = 0; i < vesterAddresses.length; i++) {
         const currentCollector = await vestingAdvanced.collectors(vesterAddresses[i])
-        expect(currentCollector.allowed).to.equal(true);
-        expect(currentCollector.tier).to.equal(vesterTiers[i]);
+        expect(currentCollector).to.equal(vesterTiers[i]);
       }
     });
 
@@ -292,61 +291,61 @@ describe("VestingAdvanced", function () {
         }
       });
 
-      // it("Should transfer the funds to ALL the collectors for single period claim blacklisting collectors before finishing the full schedule", async function () {
-      //   const {gfalToken, vestingAdvanced, vesterAccounts, vesterTiers} = await loadFixture(deployContracts);
-      //   await vestingAdvanced.setVestingSchedule(VESTING_SCHEDULE_SUCCESS.when, VESTING_SCHEDULE_SUCCESS.amount)
-      //
-      //   // Let as it will change in this test case
-      //   let collectorsTierSum = vesterTiers.reduce((sum, int) => sum + int, 0);
-      //
-      //   let blackListedAddresses = []
-      //   for (let i = 0; i < VESTING_SCHEDULE_SUCCESS.when.length; i++) {
-      //     console.log('----- Vesting Schedule ->', i)
-      //     // fast-forward to unlock time
-      //     await time.increaseTo(VESTING_SCHEDULE_SUCCESS.when[i]);
-      //
-      //     // Start blacklisting
-      //     if ((i !== 0 && i !== vesterAccounts.length-1) && i % 2 === 0) {
-      //       const accountIndex = (i/2)-1
-      //       const addressToBlacklist = vesterAccounts[accountIndex].address
-      //       await vestingAdvanced.setVesterAddresses([addressToBlacklist], [false], [vesterTiers[accountIndex]])
-      //       console.log('----- Blacklisting Account ->', accountIndex)
-      //       blackListedAddresses.push(addressToBlacklist)
-      //       // Subtract the not anymore allowed tier from the blacklisted account
-      //       collectorsTierSum -= vesterTiers[accountIndex]
-      //     }
-      //     // Stop blacklisting
-      //
-      //     for (let z = 0; z < vesterAccounts.length; z++) {
-      //       if (!blackListedAddresses.includes(vesterAccounts[z].address)) {
-      //         const beforeBalanceContract = await gfalToken.balanceOf(vestingAdvanced.address)
-      //         const beforeBalanceCollector = await gfalToken.balanceOf(vesterAccounts[z].address)
-      //
-      //         console.log('Account:', z)
-      //         await vestingAdvanced.connect(vesterAccounts[z]).withdraw()
-      //
-      //         const afterBalanceContract = await gfalToken.balanceOf(vestingAdvanced.address)
-      //         const afterBalanceCollector = await gfalToken.balanceOf(vesterAccounts[z].address)
-      //         console.log('Claimed:', ethers.utils.formatEther(afterBalanceCollector.sub(beforeBalanceCollector)))
-      //
-      //         // Expectations
-      //         const relativeAmount = (VESTING_SCHEDULE_SUCCESS.amount[i].div(collectorsTierSum)).mul(vesterTiers[z])
-      //         expect(afterBalanceContract).to.equal(beforeBalanceContract.sub(relativeAmount))
-      //         expect(afterBalanceCollector).to.equal(beforeBalanceCollector.add(relativeAmount))
-      //       }
-      //     }
-      //   }
-      //
-      //   // Post vesting expectations
-      //   const totalVestingSupply = VESTING_SCHEDULE_SUCCESS.amount.reduce((sum, int) => int.add(sum), 0);
-      //   const contractBalance = await gfalToken.balanceOf(vestingAdvanced.address)
-      //   expect(contractBalance).to.be.approximately(0, 100) // TODO: Check if dusting is fine
-      //   for (let w = 0; w < vesterAccounts.length; w++) {
-      //     const vesterBalance = await gfalToken.balanceOf(vesterAccounts[w].address)
-      //     const expectedBalance = (totalVestingSupply.div(collectorsTierSum)).mul(vesterTiers[w])
-      //     expect(vesterBalance).to.be.approximately(expectedBalance, expectedBalance.sub(100)) // TODO: Check if dusting is fine
-      //   }
-      // });
+      it("Should transfer the funds to ALL the collectors for single period claim blacklisting collectors before finishing the full schedule", async function () {
+        const {gfalToken, vestingAdvanced, vesterAccounts, vesterTiers} = await loadFixture(deployContracts);
+        await vestingAdvanced.setVestingSchedule(VESTING_SCHEDULE_SUCCESS.when, VESTING_SCHEDULE_SUCCESS.amount)
+
+        // Let as it will change in this test case
+        let collectorsTierSum = vesterTiers.reduce((sum, int) => sum + int, 0);
+
+        let blackListedAddresses = []
+        for (let i = 0; i < VESTING_SCHEDULE_SUCCESS.when.length; i++) {
+          console.log('----- Vesting Schedule ->', i)
+          // fast-forward to unlock time
+          await time.increaseTo(VESTING_SCHEDULE_SUCCESS.when[i]);
+
+          // Start blacklisting
+          if ((i !== 0 && i !== vesterAccounts.length-1) && i % 2 === 0) {
+            const accountIndex = (i/2)-1
+            const addressToBlacklist = vesterAccounts[accountIndex].address
+            await vestingAdvanced.blacklistVesterAddress(addressToBlacklist)
+            console.log('----- Blacklisting Account ->', accountIndex)
+            blackListedAddresses.push(addressToBlacklist)
+            // Subtract the not anymore allowed tier from the blacklisted account
+            collectorsTierSum -= vesterTiers[accountIndex]
+          }
+          // Stop blacklisting
+
+          for (let z = 0; z < vesterAccounts.length; z++) {
+            if (!blackListedAddresses.includes(vesterAccounts[z].address)) {
+              const beforeBalanceContract = await gfalToken.balanceOf(vestingAdvanced.address)
+              const beforeBalanceCollector = await gfalToken.balanceOf(vesterAccounts[z].address)
+
+              console.log('Account:', z)
+              await vestingAdvanced.connect(vesterAccounts[z]).withdraw()
+
+              const afterBalanceContract = await gfalToken.balanceOf(vestingAdvanced.address)
+              const afterBalanceCollector = await gfalToken.balanceOf(vesterAccounts[z].address)
+              console.log('Claimed:', ethers.utils.formatEther(afterBalanceCollector.sub(beforeBalanceCollector)))
+
+              // Expectations
+              const relativeAmount = (VESTING_SCHEDULE_SUCCESS.amount[i].div(collectorsTierSum)).mul(vesterTiers[z])
+              expect(afterBalanceContract).to.equal(beforeBalanceContract.sub(relativeAmount))
+              expect(afterBalanceCollector).to.equal(beforeBalanceCollector.add(relativeAmount))
+            }
+          }
+        }
+
+        // Post vesting expectations
+        const totalVestingSupply = VESTING_SCHEDULE_SUCCESS.amount.reduce((sum, int) => int.add(sum), 0);
+        const contractBalance = await gfalToken.balanceOf(vestingAdvanced.address)
+        expect(contractBalance).to.be.approximately(0, 100) // TODO: Check if dusting is fine
+        for (let w = 0; w < vesterAccounts.length; w++) {
+          const vesterBalance = await gfalToken.balanceOf(vesterAccounts[w].address)
+          const expectedBalance = (totalVestingSupply.div(collectorsTierSum)).mul(vesterTiers[w])
+          expect(vesterBalance).to.be.approximately(expectedBalance, expectedBalance.sub(100)) // TODO: Check if dusting is fine
+        }
+      });
 
       it("Should transfer the funds to ALL the collectors for single period claim blacklisting collectors before finishing the full schedule, at mid periods", async function () {
         const {gfalToken, vestingAdvanced, vesterAccounts, vesterTiers} = await loadFixture(deployContracts);
@@ -366,7 +365,7 @@ describe("VestingAdvanced", function () {
             if (i !== 0 && i % 2 === 0 && z % 2 === 0 && !blackListedAddresses.includes(vesterAccounts[z].address) && lastBlacklistedDuringPeriod !== i) {
               lastBlacklistedDuringPeriod = i
               const addressToBlacklist = vesterAccounts[z].address
-              await vestingAdvanced.setVesterAddresses([addressToBlacklist], [false], [vesterTiers[z]])
+              await vestingAdvanced.blacklistVesterAddress(addressToBlacklist)
               console.log('----- Blacklisting Account ->', z)
               blackListedAddresses.push(addressToBlacklist)
               // Subtract the not anymore allowed tier from the blacklisted account
@@ -374,7 +373,7 @@ describe("VestingAdvanced", function () {
             }
             // Stop blacklisting
 
-            if (!blackListedAddresses.includes(vesterAccounts[z].address)) {
+            if (await vestingAdvanced.blacklistingPeriod(vesterAccounts[z].address) < i) {
               const beforeBalanceContract = await gfalToken.balanceOf(vestingAdvanced.address)
               const beforeBalanceCollector = await gfalToken.balanceOf(vesterAccounts[z].address)
 
