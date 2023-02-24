@@ -48,7 +48,7 @@ contract VestingBasic is AccessControl {
             // If the vesting schedule is not vested and is available to vest by timestamp
             if (vestingSchedule[i].when <= block.timestamp) {
                 // Increment the claimable amount
-                claimableAmount = claimableAmount + vestingSchedule[i].amount;
+                claimableAmount += vestingSchedule[i].amount;
                 // Set the array index of last vested in order to avoid useless iterations next time
                 nextVestingPeriod = i + 1;
                 // Emit the event for each one of them
