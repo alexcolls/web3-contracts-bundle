@@ -130,13 +130,13 @@ async function main() {
 
   // Updating prices for minting BY TOKEN ID (erc1155)
   for (let item of ERC1155) {
-    await elementalRaidersSkin.updateMintingPrice(item.tokenId, ethers.utils.parseUnits(item.price, "ether"))
+    await elementalRaidersSkin.updateMintingPrice(item.tokenId, ethers.utils.parseUnits(String(item.price), "ether"))
     await elementalRaidersSkin.updateMintingMaxSupply(item.tokenId, item.maxSupply)
   }
 
   console.log(
-    `ElementalRaidersSkill deployed to ${elementalRaidersSkill.address}`
-      `ElementalRaidersSkin deployed to ${elementalRaidersSkin.address}`
+    `ElementalRaidersSkill deployed to ${elementalRaidersSkill.address}`,
+    `ElementalRaidersSkin deployed to ${elementalRaidersSkin.address}`
   )
 }
 
