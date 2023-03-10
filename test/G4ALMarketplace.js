@@ -3,8 +3,11 @@ const {
 } = require("@nomicfoundation/hardhat-network-helpers");
 const {anyValue} = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const {expect} = require("chai");
+const {BigNumber} = require('ethers');
 
 const ROYALTIES_IN_BASIS_POINTS = 1000
+const ERC721 = 0
+const ERC1155 = 1
 
 //TODO
 // Important: Test the contract's behavior when the contract is trying to be reentrant and check that it works as expected.
@@ -25,7 +28,7 @@ describe("GFALMarketplace", function () {
   // and reset Hardhat Network to that snapshot in every test.
   async function deployContracts() {
     // Contracts are deployed using the first signer/account by default
-    const [owner, developer, seller, buyer] = await ethers.getSigners()
+    const [owner, developer, seller, buyer, seller2] = await ethers.getSigners()
 
     // Deploy mock dependency contracts
     const GFALToken = await ethers.getContractFactory("GFALToken")
@@ -33,18 +36,19 @@ describe("GFALMarketplace", function () {
     const OracleConsumer = await ethers.getContractFactory("OracleConsumer")
     const oracleConsumer = await OracleConsumer.deploy()
     const ElementalRaidersSkill = await ethers.getContractFactory("ElementalRaidersSkill")
-    const elementalRaidersSkill = await ElementalRaidersSkill.deploy(gfalToken.address, "ipfs://")
+    const elementalRaidersSkill = await ElementalRaidersSkill.deploy(gfalToken.address, oracleConsumer.address, "ipfs://")
+    const ElementalRaidersSkin = await ethers.getContractFactory("ElementalRaidersSkin")
+    const elementalRaidersSkin = await ElementalRaidersSkin.deploy(gfalToken.address, oracleConsumer.address)
 
     // Oracle writes the priceFeed (Mocking external, untested here, workflow)
     await oracleConsumer.updateRateValue(ethers.utils.parseUnits("0.1", "ether")) // here we are converting the float to wei to work as "intFloat"
 
     // Transferring $GFAL tokens to seller and buyer
-    await gfalToken.approve(owner.address, ethers.utils.parseUnits("200", "ether"))
-    await gfalToken.transferFrom(owner.address, seller.address, ethers.utils.parseUnits("100", "ether"))
-    await gfalToken.transferFrom(owner.address, buyer.address, ethers.utils.parseUnits("100", "ether"))
+    await gfalToken.approve(owner.address, ethers.utils.parseUnits("1100", "ether"))
+    await gfalToken.transfer(seller.address, ethers.utils.parseUnits("1000", "ether"))
+    await gfalToken.transfer(buyer.address, ethers.utils.parseUnits("100", "ether"))
 
-    // Player (future seller) approves spending to game for minting (x2 - 50+50)
-    await gfalToken.connect(seller).approve(elementalRaidersSkill.address, ethers.utils.parseUnits("100", "ether"))
+    // SETUP CONFIG ERC721 CONTACT
 
     // Setting prices for rarity indexes
     await elementalRaidersSkill.updateMintingPrice(1, ethers.utils.parseUnits("50", "ether"))
@@ -53,21 +57,43 @@ describe("GFALMarketplace", function () {
     await elementalRaidersSkill.updateMintingPrice(4, ethers.utils.parseUnits("200", "ether"))
 
     // Minting x2 NFT as owner to the seller
+    // Player (future seller) approves spending to game for minting (x2 - 50+50)
+    await gfalToken.connect(seller).approve(elementalRaidersSkill.address, ethers.utils.parseUnits("1000", "ether"))
     await elementalRaidersSkill.safeMint(seller.address, 1)
     await elementalRaidersSkill.safeMint(seller.address, 1)
+
+    // SETUP CONFIG ERC1155 CONTACT
+
+    // Minting x1 supply of tokenId to seller
+    // Player (future seller) approves spending to game for minting (x2 - 50+50)
+    await elementalRaidersSkin.mint(seller.address, 0, 1)
+    // Minting x1 supply of tokenId to seller2, this will be used to test same tokenId sell from different sellers
+    await elementalRaidersSkin.mint(seller2.address, 0, 1)
 
     /**
      * Marketplace test workflow
      */
 
-    // Deploy testing contract
+      // Deploy testing contract
     const GFALMarketplace = await ethers.getContractFactory("GFALMarketplace")
     const gfalMarketplace = await GFALMarketplace.deploy(oracleConsumer.address, gfalToken.address, developer.address, ROYALTIES_IN_BASIS_POINTS)
 
     // Whitelist ElementalRaidersSkill by owner
-    await gfalMarketplace.addCollection(elementalRaidersSkill.address)
+    await gfalMarketplace.updateCollection(elementalRaidersSkill.address, ERC721, true)
+    await gfalMarketplace.updateCollection(elementalRaidersSkin.address, ERC1155, true)
 
-    return {owner, developer, seller, buyer, gfalToken, oracleConsumer, elementalRaidersSkill, gfalMarketplace}
+    return {
+      owner,
+      developer,
+      seller,
+      seller2,
+      buyer,
+      gfalToken,
+      oracleConsumer,
+      elementalRaidersSkill,
+      elementalRaidersSkin,
+      gfalMarketplace
+    }
   }
 
   describe("Deployment", function () {
@@ -112,7 +138,7 @@ describe("GFALMarketplace", function () {
         const {buyer, gfalMarketplace} = await loadFixture(deployContracts)
 
         // Expect to be reverted
-        await expect(gfalMarketplace.connect(buyer).addCollection("0x1234567890123456789012345678901234567890"))
+        await expect(gfalMarketplace.connect(buyer).updateCollection("0x1234567890123456789012345678901234567890", ERC721, true))
           .to.be.reverted
       })
 
@@ -120,7 +146,7 @@ describe("GFALMarketplace", function () {
         const {buyer, elementalRaidersSkill, gfalMarketplace} = await loadFixture(deployContracts)
 
         // Expect to find it in the mapping as true
-        await expect(gfalMarketplace.connect(buyer).removeCollection(elementalRaidersSkill.address))
+        await expect(gfalMarketplace.connect(buyer).updateCollection(elementalRaidersSkill.address, ERC721, true))
           .to.be.reverted
       })
 
@@ -147,10 +173,6 @@ describe("GFALMarketplace", function () {
         await expect(gfalMarketplace.connect(buyer).updateRoyaltiesInBasisPoints(500))
           .to.be.reverted
       })
-
-      // TODO: Should revert if an user tries to pause the contract
-
-      // TODO: Should revert if an user tries to unpause the contract
     })
 
     describe("Events", function () {
@@ -171,9 +193,9 @@ describe("GFALMarketplace", function () {
 
         await gfalMarketplace.connect(seller).sellToken(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("50", "ether"), false)
 
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[5]).to.equal(true)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[4]).to.equal(false)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[3]).to.equal(ethers.utils.parseUnits("50", "ether"))
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isForSale).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isDollar).to.equal(false)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).price).to.equal(ethers.utils.parseUnits("50", "ether"))
 
         // Removes it
         await expect(await gfalMarketplace.connect(seller).removeToken(elementalRaidersSkill.address, 0))
@@ -181,22 +203,22 @@ describe("GFALMarketplace", function () {
           .withArgs(elementalRaidersSkill.address, 0, seller.address)
       })
 
-      it("Should emit an event BuyToken buying a token", async function () {
+      it("Should emit an event BuyToken buying a token ERC721", async function () {
         const {seller, buyer, elementalRaidersSkill, gfalToken, gfalMarketplace} = await loadFixture(deployContracts)
 
         await elementalRaidersSkill.connect(seller).approve(gfalMarketplace.address, 0)
 
         await gfalMarketplace.connect(seller).sellToken(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("50", "ether"), false)
 
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[5]).to.equal(true)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[4]).to.equal(false)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[3]).to.equal(ethers.utils.parseUnits("50", "ether"))
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isForSale).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isDollar).to.equal(false)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).price).to.equal(ethers.utils.parseUnits("50", "ether"))
 
         // Buyer approves the marketplace contract for spending GFAL to buy NFT afterward
         await gfalToken.connect(buyer).approve(gfalMarketplace.address, ethers.utils.parseUnits("50", "ether"))
 
         // Buyer buys NFTs from seller
-        await expect(await gfalMarketplace.connect(buyer).buyToken(elementalRaidersSkill.address, 0))
+        await expect(await gfalMarketplace.connect(buyer).buyToken(elementalRaidersSkill.address, 0, seller.address))
           .to.emit(gfalMarketplace, "BuyToken")
           .withArgs(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("50", "ether"), anyValue, anyValue, seller.address, buyer.address)
       })
@@ -211,9 +233,12 @@ describe("GFALMarketplace", function () {
         // he sells it for 50 GFAL
         await gfalMarketplace.connect(seller).sellToken(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("50", "ether"), false)
 
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[5]).to.equal(true)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[4]).to.equal(false)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[3]).to.equal(ethers.utils.parseUnits("50", "ether"))
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isForSale).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isDollar).to.equal(false)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).price).to.equal(ethers.utils.parseUnits("50", "ether"))
+
+        await expect(await gfalMarketplace.sellersList(0)).to.equal(seller.address)
+        await expect(await gfalMarketplace.knownSellers(seller.address)).to.equal(true)
       })
 
       it("Should put a whitelisted collection token for sell in Dollars", async function () {
@@ -224,9 +249,12 @@ describe("GFALMarketplace", function () {
         // he sells it for 5$ that should be converted to 50 GFAL
         await gfalMarketplace.connect(seller).sellToken(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("5", "ether"), true)
 
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[5]).to.equal(true)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[4]).to.equal(true)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[3]).to.equal(ethers.utils.parseUnits("5", "ether"))
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isForSale).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isDollar).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).price).to.equal(ethers.utils.parseUnits("5", "ether"))
+
+        await expect(await gfalMarketplace.sellersList(0)).to.equal(seller.address)
+        await expect(await gfalMarketplace.knownSellers(seller.address)).to.equal(true)
       })
 
       it("Should adjust the price for a token already for sell", async function () {
@@ -236,15 +264,21 @@ describe("GFALMarketplace", function () {
 
         await gfalMarketplace.connect(seller).sellToken(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("50", "ether"), false)
 
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[5]).to.equal(true)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[4]).to.equal(false)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[3]).to.equal(ethers.utils.parseUnits("50", "ether"))
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isForSale).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isDollar).to.equal(false)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).price).to.equal(ethers.utils.parseUnits("50", "ether"))
+
+        await expect(await gfalMarketplace.sellersList(0)).to.equal(seller.address)
+        await expect(await gfalMarketplace.knownSellers(seller.address)).to.equal(true)
 
         await gfalMarketplace.connect(seller).sellToken(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("100", "ether"), true)
 
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[5]).to.equal(true)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[4]).to.equal(true)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[3]).to.equal(ethers.utils.parseUnits("100", "ether"))
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isForSale).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isDollar).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).price).to.equal(ethers.utils.parseUnits("100", "ether"))
+
+        await expect(await gfalMarketplace.sellersList(0)).to.equal(seller.address)
+        await expect(await gfalMarketplace.knownSellers(seller.address)).to.equal(true)
       })
 
       it("Should remove a token from sell", async function () {
@@ -254,38 +288,50 @@ describe("GFALMarketplace", function () {
 
         await gfalMarketplace.connect(seller).sellToken(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("50", "ether"), false)
 
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[5]).to.equal(true)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[4]).to.equal(false)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[3]).to.equal(ethers.utils.parseUnits("50", "ether"))
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isForSale).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isDollar).to.equal(false)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).price).to.equal(ethers.utils.parseUnits("50", "ether"))
+
+        await expect(await gfalMarketplace.sellersList(0)).to.equal(seller.address)
+        await expect(await gfalMarketplace.knownSellers(seller.address)).to.equal(true)
 
         // Removes it
         await gfalMarketplace.connect(seller).removeToken(elementalRaidersSkill.address, 0)
 
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[5]).to.equal(false)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[4]).to.equal(false)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[3]).to.equal(ethers.utils.parseUnits("0", "ether"))
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isForSale).to.equal(false)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isDollar).to.equal(false)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).price).to.equal(ethers.utils.parseUnits("0", "ether"))
 
-        // TODO: Check tokenForSale has been removed from mapping
+        await expect(await gfalMarketplace.sellersList(0)).to.equal(seller.address)
+        await expect(await gfalMarketplace.knownSellers(seller.address)).to.equal(true)
       })
 
       // TODO: Should allow a seller to removeToken even if un-whitelisted
 
-      it("Should buy a token that is for sell in $GFAL", async function () {
+      it("Should buy a token ERC721 that is for sell in $GFAL", async function () {
         const {seller, buyer, elementalRaidersSkill, gfalToken, gfalMarketplace} = await loadFixture(deployContracts)
 
         await elementalRaidersSkill.connect(seller).approve(gfalMarketplace.address, 0)
 
         await gfalMarketplace.connect(seller).sellToken(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("50", "ether"), false)
 
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[5]).to.equal(true)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[4]).to.equal(false)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[3]).to.equal(ethers.utils.parseUnits("50", "ether"))
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isForSale).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isDollar).to.equal(false)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).price).to.equal(ethers.utils.parseUnits("50", "ether"))
 
         // Buyer approves the marketplace contract for spending GFAL to buy NFT afterward
         await gfalToken.connect(buyer).approve(gfalMarketplace.address, ethers.utils.parseUnits("50", "ether"))
 
+        // NFT balance
+        await expect(await elementalRaidersSkill.balanceOf(seller.address)).to.equal(2)
+        await expect(await elementalRaidersSkill.balanceOf(buyer.address)).to.equal(0)
+
         // Buyer buys NFTs from seller
-        await gfalMarketplace.connect(buyer).buyToken(elementalRaidersSkill.address, 0)
+        await gfalMarketplace.connect(buyer).buyToken(elementalRaidersSkill.address, 0, seller.address)
+
+        // NFT balance
+        await expect(await elementalRaidersSkill.balanceOf(seller.address)).to.equal(1)
+        await expect(await elementalRaidersSkill.balanceOf(buyer.address)).to.equal(1)
 
         // Seller, buyer and Fee Collector balances checks
         await expect(await gfalToken.balanceOf(seller.address)).to.equal(ethers.utils.parseUnits("45", "ether"))
@@ -296,23 +342,19 @@ describe("GFALMarketplace", function () {
         await expect(await gfalMarketplace.volume()).to.equal(ethers.utils.parseUnits("50", "ether"))
 
         // Check tokensForSale has been removed from mapping (marked as isForSale false, etc.)
-        const tokensForSale = await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0)
-        await expect(tokensForSale.contractAddress).to.equal(elementalRaidersSkill.address)
-        await expect(tokensForSale.tokenId).to.equal(0)
-        await expect(tokensForSale.seller).to.equal('0x0000000000000000000000000000000000000000')
+        const tokensForSale = await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)
         await expect(tokensForSale.price).to.equal(ethers.utils.parseUnits("0", "ether"))
         await expect(tokensForSale.isDollar).to.equal(false)
         await expect(tokensForSale.isForSale).to.equal(false)
 
         // Check getOnSaleTokenIds is returning empty arrays after buying the only token listed
-        const getOnSaleTokenIds = await gfalMarketplace.getOnSaleTokenIds(elementalRaidersSkill.address, 0, 1)
-        await expect(getOnSaleTokenIds.tokenIds).to.deep.equal([])
-        await expect(getOnSaleTokenIds.sellers).to.deep.equal([])
-        await expect(getOnSaleTokenIds.prices).to.deep.equal([])
-        await expect(getOnSaleTokenIds.isDollars).to.deep.equal([])
+        const getOnSaleTokenIds = await gfalMarketplace.getOnSaleTokenIds(elementalRaidersSkill.address, seller.address, 0, 1)
+        await expect(getOnSaleTokenIds.tokenIds).to.deep.equal([BigNumber.from(0)])
+        await expect(getOnSaleTokenIds.sellers).to.deep.equal(['0x0000000000000000000000000000000000000000'])
+        await expect(getOnSaleTokenIds.prices).to.deep.equal([BigNumber.from(0)])
       })
 
-      it("Should buy a token that is for sell in Dollars", async function () {
+      it("Should buy a token ERC721 that is for sell in Dollars", async function () {
         const {seller, buyer, elementalRaidersSkill, gfalToken, gfalMarketplace} = await loadFixture(deployContracts)
 
         await elementalRaidersSkill.connect(seller).approve(gfalMarketplace.address, 0)
@@ -320,15 +362,23 @@ describe("GFALMarketplace", function () {
         // he sells it for 5$ that should be converted to 50 GFAL
         await gfalMarketplace.connect(seller).sellToken(elementalRaidersSkill.address, 0, ethers.utils.parseUnits("5", "ether"), true)
 
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[5]).to.equal(true)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[4]).to.equal(true)
-        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0))[3]).to.equal(ethers.utils.parseUnits("5", "ether")) // considering previous 50+50 for minting
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isForSale).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).isDollar).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkill.address, 0, seller.address)).price).to.equal(ethers.utils.parseUnits("5", "ether")) // considering previous 50+50 for minting
 
         // Buyer approves the marketplace contract for spending GFAL to buy NFT afterward
         await gfalToken.connect(buyer).approve(gfalMarketplace.address, ethers.utils.parseUnits("50", "ether"))
 
+        // NFT balance
+        await expect(await elementalRaidersSkill.balanceOf(seller.address)).to.equal(2)
+        await expect(await elementalRaidersSkill.balanceOf(buyer.address)).to.equal(0)
+
         // Buyer buys NFTs from seller
-        await gfalMarketplace.connect(buyer).buyToken(elementalRaidersSkill.address, 0)
+        await gfalMarketplace.connect(buyer).buyToken(elementalRaidersSkill.address, 0, seller.address)
+
+        // NFT balance
+        await expect(await elementalRaidersSkill.balanceOf(seller.address)).to.equal(1)
+        await expect(await elementalRaidersSkill.balanceOf(buyer.address)).to.equal(1)
 
         // Seller, buyer and Fee Collector balances checks
         await expect(await gfalToken.balanceOf(seller.address)).to.equal(ethers.utils.parseUnits("45", "ether"))
@@ -337,26 +387,184 @@ describe("GFALMarketplace", function () {
 
         // Volume increase check
         await expect(await gfalMarketplace.volume()).to.equal(ethers.utils.parseUnits("50", "ether"))
+
+        // Check getOnSaleTokenIds is returning empty arrays after buying the only token listed
+        const getOnSaleTokenIds = await gfalMarketplace.getOnSaleTokenIds(elementalRaidersSkill.address, seller.address, 0, 1)
+        await expect(getOnSaleTokenIds.tokenIds).to.deep.equal([BigNumber.from(0)])
+        await expect(getOnSaleTokenIds.sellers).to.deep.equal(['0x0000000000000000000000000000000000000000'])
+        await expect(getOnSaleTokenIds.prices).to.deep.equal([BigNumber.from(0)])
+      })
+
+      it("Should buy a tokens ERC1155 with same IDs that are for sell in $GFAL", async function () {
+        const {
+          seller,
+          seller2,
+          buyer,
+          elementalRaidersSkin,
+          gfalToken,
+          gfalMarketplace
+        } = await loadFixture(deployContracts)
+
+        // Seller 1 workflow
+        await elementalRaidersSkin.connect(seller).setApprovalForAll(gfalMarketplace.address, true)
+        await gfalMarketplace.connect(seller).sellToken(elementalRaidersSkin.address, 0, ethers.utils.parseUnits("50", "ether"), false)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkin.address, 0, seller.address)).isForSale).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkin.address, 0, seller.address)).isDollar).to.equal(false)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkin.address, 0, seller.address)).price).to.equal(ethers.utils.parseUnits("50", "ether"))
+
+        // Seller 2 workflow
+        await elementalRaidersSkin.connect(seller2).setApprovalForAll(gfalMarketplace.address, true)
+        await gfalMarketplace.connect(seller2).sellToken(elementalRaidersSkin.address, 0, ethers.utils.parseUnits("50", "ether"), false)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkin.address, 0, seller2.address)).isForSale).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkin.address, 0, seller2.address)).isDollar).to.equal(false)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkin.address, 0, seller2.address)).price).to.equal(ethers.utils.parseUnits("50", "ether"))
+
+        // NFT balance
+        await expect(await elementalRaidersSkin.balanceOf(seller.address, 0)).to.equal(1)
+        await expect(await elementalRaidersSkin.balanceOf(seller2.address, 0)).to.equal(1)
+        await expect(await elementalRaidersSkin.balanceOf(buyer.address, 0)).to.equal(0)
+
+        // Buyer approves the marketplace contract for spending GFAL to buy NFT afterward
+        await gfalToken.connect(buyer).approve(gfalMarketplace.address, ethers.utils.parseUnits("100", "ether"))
+
+        // Buyer buys NFTs from seller
+        await gfalMarketplace.connect(buyer).buyToken(elementalRaidersSkin.address, 0, seller.address)
+        await gfalMarketplace.connect(buyer).buyToken(elementalRaidersSkin.address, 0, seller2.address)
+
+        // NFT balance
+        await expect(await elementalRaidersSkin.balanceOf(seller.address, 0)).to.equal(0)
+        await expect(await elementalRaidersSkin.balanceOf(seller2.address, 0)).to.equal(0)
+        await expect(await elementalRaidersSkin.balanceOf(buyer.address, 0)).to.equal(2)
+
+        // Seller, buyer and Fee Collector balances checks
+        await expect(await gfalToken.balanceOf(seller.address)).to.equal(ethers.utils.parseUnits("45", "ether"))
+        await expect(await gfalToken.balanceOf(seller2.address)).to.equal(ethers.utils.parseUnits("45", "ether"))
+        await expect(await gfalToken.balanceOf(buyer.address)).to.equal(ethers.utils.parseUnits("0", "ether"))
+        await expect(await gfalToken.balanceOf(await gfalMarketplace.royaltiesCollector())).to.equal(ethers.utils.parseUnits("10", "ether")) // considering previous 50+50 for minting
+
+        // Volume increase check
+        await expect(await gfalMarketplace.volume()).to.equal(ethers.utils.parseUnits("100", "ether"))
+
+        // Check tokensForSale from Seller1 has been removed from mapping (marked as isForSale false, etc.)
+        const tokensForSale1 = await gfalMarketplace.tokensForSale(elementalRaidersSkin.address, 0, seller.address)
+        await expect(tokensForSale1.price).to.equal(ethers.utils.parseUnits("0", "ether"))
+        await expect(tokensForSale1.isDollar).to.equal(false)
+        await expect(tokensForSale1.isForSale).to.equal(false)
+
+        // Check tokensForSale has been removed from mapping (marked as isForSale false, etc.)
+        const tokensForSale2 = await gfalMarketplace.tokensForSale(elementalRaidersSkin.address, 0, seller2.address)
+        await expect(tokensForSale2.price).to.equal(ethers.utils.parseUnits("0", "ether"))
+        await expect(tokensForSale2.isDollar).to.equal(false)
+        await expect(tokensForSale2.isForSale).to.equal(false)
+
+        // Check getOnSaleTokenIds is returning empty arrays after buying the only token listed
+        const getOnSaleTokenIds = await gfalMarketplace.getOnSaleTokenIds(elementalRaidersSkin.address, seller.address, 0, 1)
+        await expect(getOnSaleTokenIds.tokenIds).to.deep.equal([BigNumber.from(0)])
+        await expect(getOnSaleTokenIds.sellers).to.deep.equal(['0x0000000000000000000000000000000000000000'])
+        await expect(getOnSaleTokenIds.prices).to.deep.equal([BigNumber.from(0)])
+
+        // Check getOnSaleTokenIds is returning empty arrays after buying the only token listed
+        const getOnSaleTokenIds2 = await gfalMarketplace.getOnSaleTokenIds(elementalRaidersSkin.address, seller.address, 0, 1)
+        await expect(getOnSaleTokenIds2.tokenIds).to.deep.equal([BigNumber.from(0)])
+        await expect(getOnSaleTokenIds2.sellers).to.deep.equal(['0x0000000000000000000000000000000000000000'])
+        await expect(getOnSaleTokenIds2.prices).to.deep.equal([BigNumber.from(0)])
+      })
+
+      it("Should buy a tokens ERC1155 with same IDs that are for sell in Dollars", async function () {
+        const {
+          seller,
+          seller2,
+          buyer,
+          elementalRaidersSkin,
+          gfalToken,
+          gfalMarketplace
+        } = await loadFixture(deployContracts)
+
+        // Seller 1 workflow
+        await elementalRaidersSkin.connect(seller).setApprovalForAll(gfalMarketplace.address, true)
+        await gfalMarketplace.connect(seller).sellToken(elementalRaidersSkin.address, 0, ethers.utils.parseUnits("5", "ether"), true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkin.address, 0, seller.address)).isForSale).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkin.address, 0, seller.address)).isDollar).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkin.address, 0, seller.address)).price).to.equal(ethers.utils.parseUnits("5", "ether"))
+
+        // Seller 2 workflow
+        await elementalRaidersSkin.connect(seller2).setApprovalForAll(gfalMarketplace.address, true)
+        await gfalMarketplace.connect(seller2).sellToken(elementalRaidersSkin.address, 0, ethers.utils.parseUnits("5", "ether"), true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkin.address, 0, seller2.address)).isForSale).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkin.address, 0, seller2.address)).isDollar).to.equal(true)
+        await expect((await gfalMarketplace.tokensForSale(elementalRaidersSkin.address, 0, seller2.address)).price).to.equal(ethers.utils.parseUnits("5", "ether"))
+
+        // NFT balance
+        await expect(await elementalRaidersSkin.balanceOf(seller.address, 0)).to.equal(1)
+        await expect(await elementalRaidersSkin.balanceOf(seller2.address, 0)).to.equal(1)
+        await expect(await elementalRaidersSkin.balanceOf(buyer.address, 0)).to.equal(0)
+
+        // Buyer approves the marketplace contract for spending GFAL to buy NFT afterward
+        await gfalToken.connect(buyer).approve(gfalMarketplace.address, ethers.utils.parseUnits("100", "ether"))
+
+        // Buyer buys NFTs from seller
+        await gfalMarketplace.connect(buyer).buyToken(elementalRaidersSkin.address, 0, seller.address)
+        await gfalMarketplace.connect(buyer).buyToken(elementalRaidersSkin.address, 0, seller2.address)
+
+        // NFT balance
+        await expect(await elementalRaidersSkin.balanceOf(seller.address, 0)).to.equal(0)
+        await expect(await elementalRaidersSkin.balanceOf(seller2.address, 0)).to.equal(0)
+        await expect(await elementalRaidersSkin.balanceOf(buyer.address, 0)).to.equal(2)
+
+        // Seller, buyer and Fee Collector balances checks
+        await expect(await gfalToken.balanceOf(seller.address)).to.equal(ethers.utils.parseUnits("45", "ether"))
+        await expect(await gfalToken.balanceOf(seller2.address)).to.equal(ethers.utils.parseUnits("45", "ether"))
+        await expect(await gfalToken.balanceOf(buyer.address)).to.equal(ethers.utils.parseUnits("0", "ether"))
+        await expect(await gfalToken.balanceOf(await gfalMarketplace.royaltiesCollector())).to.equal(ethers.utils.parseUnits("10", "ether")) // considering previous 50+50 for minting
+
+        // Volume increase check
+        await expect(await gfalMarketplace.volume()).to.equal(ethers.utils.parseUnits("100", "ether"))
+
+        // Check tokensForSale from Seller1 has been removed from mapping (marked as isForSale false, etc.)
+        const tokensForSale1 = await gfalMarketplace.tokensForSale(elementalRaidersSkin.address, 0, seller.address)
+        await expect(tokensForSale1.price).to.equal(ethers.utils.parseUnits("0", "ether"))
+        await expect(tokensForSale1.isDollar).to.equal(false)
+        await expect(tokensForSale1.isForSale).to.equal(false)
+
+        // Check tokensForSale has been removed from mapping (marked as isForSale false, etc.)
+        const tokensForSale2 = await gfalMarketplace.tokensForSale(elementalRaidersSkin.address, 0, seller2.address)
+        await expect(tokensForSale2.price).to.equal(ethers.utils.parseUnits("0", "ether"))
+        await expect(tokensForSale2.isDollar).to.equal(false)
+        await expect(tokensForSale2.isForSale).to.equal(false)
+
+        // Check getOnSaleTokenIds is returning empty arrays after buying the only token listed
+        const getOnSaleTokenIds1 = await gfalMarketplace.getOnSaleTokenIds(elementalRaidersSkin.address, seller.address, 0, 1)
+        await expect(getOnSaleTokenIds1.tokenIds).to.deep.equal([BigNumber.from(0)])
+        await expect(getOnSaleTokenIds1.sellers).to.deep.equal(['0x0000000000000000000000000000000000000000'])
+        await expect(getOnSaleTokenIds1.prices).to.deep.equal([BigNumber.from(0)])
+
+        // Check getOnSaleTokenIds is returning empty arrays after buying the only token listed
+        const getOnSaleTokenIds2 = await gfalMarketplace.getOnSaleTokenIds(elementalRaidersSkin.address, seller2.address, 0, 1)
+        await expect(getOnSaleTokenIds2.tokenIds).to.deep.equal([BigNumber.from(0)])
+        await expect(getOnSaleTokenIds2.sellers).to.deep.equal(['0x0000000000000000000000000000000000000000'])
+        await expect(getOnSaleTokenIds2.prices).to.deep.equal([BigNumber.from(0)])
       })
 
       it("Owner should be able to add a collection", async function () {
         const {owner, gfalMarketplace} = await loadFixture(deployContracts)
 
         // Owner addCollection
-        await gfalMarketplace.connect(owner).addCollection("0x1234567890123456789012345678901234567890")
+        await gfalMarketplace.connect(owner).updateCollection("0x1234567890123456789012345678901234567890", ERC721, true)
 
         // Expect to find it in the mapping as true
-        await expect((await gfalMarketplace.whitelistNFTs("0x1234567890123456789012345678901234567890"))).to.equal(true)
+        await expect((await gfalMarketplace.whitelistNFTs("0x1234567890123456789012345678901234567890")).tokenStandard).to.equal(0)
+        await expect((await gfalMarketplace.whitelistNFTs("0x1234567890123456789012345678901234567890")).allowed).to.equal(true)
       })
 
       it("Owner should be able to remove a collection", async function () {
         const {owner, elementalRaidersSkill, gfalMarketplace} = await loadFixture(deployContracts)
 
         // Owner addCollection
-        await gfalMarketplace.connect(owner).removeCollection(elementalRaidersSkill.address)
+        await gfalMarketplace.connect(owner).updateCollection(elementalRaidersSkill.address, ERC721, false)
 
         // Expect to find it in the mapping as true
-        await expect((await gfalMarketplace.whitelistNFTs(elementalRaidersSkill.address))).to.equal(false)
+        await expect((await gfalMarketplace.whitelistNFTs(elementalRaidersSkill.address)).tokenStandard).to.equal(0)
+        await expect((await gfalMarketplace.whitelistNFTs(elementalRaidersSkill.address)).allowed).to.equal(false)
       })
 
       it("Owner should be able to update GgtToken", async function () {
@@ -388,10 +596,6 @@ describe("GFALMarketplace", function () {
         // Expect to find it in the variable as exact value
         await expect((await gfalMarketplace.royaltiesInBasisPoints())).to.equal(500)
       })
-
-      // TODO: Owner should be able to unpause the contract
-
-      // TODO: Owner should be able to pause the contract
     })
   })
 })

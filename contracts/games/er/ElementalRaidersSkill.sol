@@ -2,12 +2,16 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "../../utils/OracleConsumer.sol";
 
-contract ElementalRaidersSkill is ERC721, ERC721Enumerable, Ownable {
+contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
+    using SafeERC20 for IERC20;
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
@@ -15,12 +19,16 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, Ownable {
     address public gfalToken;
     string public baseURI;
     address public feeCollector;
-
     mapping(uint256 => uint256) public prices;
+    // Price data feed Oracle contract
+    OracleConsumer public oracleConsumer;
 
-    constructor(address _gfalToken, string memory _baseURI) ERC721("Elemental Raiders Skill", "ERSKILL") {
+    event Mint(address from, address to, uint256 tokenId, uint256 price);
+
+    constructor(address _gfalToken, address _oracleConsumer, string memory _baseURI) ERC721("Elemental Raiders Skill", "ERSKILL") {
         feeCollector = msg.sender;
         gfalToken = _gfalToken;
+        oracleConsumer = OracleConsumer(_oracleConsumer);
         baseURI = _baseURI;
     }
 
@@ -35,17 +43,21 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, Ownable {
     function safeMint(address to, uint256 rarity) public onlyOwner {
         // Transfer $GFALs from the "to" address to the "collector" one
         require(rarity >= 1 && rarity <= 4, "Rarity index out of bound.");
+        require(prices[rarity] != 0, "Minting 0 price tokens is not allowed");
 
         // Transferring GFAL from player wallet to feeCollector. Assuming previous allowance has been given.
-        IERC20(gfalToken).transferFrom(to, feeCollector, prices[rarity]);
+        uint256 tokenPrice = OracleConsumer(oracleConsumer).getConversionRate(prices[rarity]);
+        IERC20(gfalToken).safeTransferFrom(to, feeCollector, tokenPrice);
 
         // Mint flow
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
+
+        emit Mint(address(0), to, tokenId, tokenPrice);
     }
 
-    // Getters TODO check if useful or not
+    // Getters
 
     function getOwnersByTokens(uint256[] memory tokens) public view returns (address[] memory) {
         address[] memory response = new address[](tokens.length);
@@ -55,6 +67,16 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, Ownable {
         }
 
         return response;
+    }
+
+    function getMintingPricesByRarity(uint256[] memory rarities) public view returns (uint256[] memory) {
+        uint256[] memory rarityPrices = new uint256[](rarities.length);
+
+        for (uint256 i = 0; i < rarities.length; i++) {
+            rarityPrices[i] = OracleConsumer(oracleConsumer).getConversionRate(prices[rarities[i]]);
+        }
+
+        return rarityPrices;
     }
 
     // Owner

@@ -9,8 +9,8 @@ const {ethers} = require("hardhat");
 
 // Constants
 
-const GFAL_TOKEN = "0x0"
-const ORACLE_CONSUMER = "0x0"
+const GFAL_TOKEN = process.env.GFAL_TOKEN
+const ORACLE_CONSUMER = process.env.ORACLE_CONSUMER
 const NFT_METADATA_BASEURI = "https://prod-web3-token-tracker-tqkvar3wjq-uc.a.run.app/metadata/"
 
 // TODO fill this before deploying on mainnet
@@ -136,7 +136,7 @@ async function main() {
 
   console.log(
     `ElementalRaidersSkill deployed to ${elementalRaidersSkill.address}`
-    `ElementalRaidersSkin deployed to ${elementalRaidersSkin.address}`
+      `ElementalRaidersSkin deployed to ${elementalRaidersSkin.address}`
   )
 }
 

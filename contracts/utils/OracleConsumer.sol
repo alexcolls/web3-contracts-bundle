@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+// Uncomment this line to use console.log
+import "hardhat/console.sol";
+
 contract OracleConsumer is Ownable {
     using SafeMath for uint256;
 
