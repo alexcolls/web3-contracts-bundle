@@ -20,7 +20,7 @@ constructor(address _vestingToken, address _vestingCollector, uint256 _unlockTim
 
 function setVestingSchedule(uint256[] memory when, uint256[] memory amount)
 
-- withdraw: Allows vesters to withdraw their vested tokens. The function will only allow withdrawals after the unlock time and will only allow vesters to withdraw their tokens in accordance with the defined vesting schedule.
+- withdraw: Allows vesters to withdraw their vested tokens. The function will only allow withdrawals after the unlock time and will only allow vesters to withdraw their tokens in accordance with the defined vesting schedule. The vested token amount will be sent to the vestingCollector address.
 
 function withdraw() public onlyRole(VESTER_ROLE)
 

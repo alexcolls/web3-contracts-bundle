@@ -98,6 +98,12 @@ describe("VestingBasic", function () {
       await expect(await vestingBasic.unlockTime()).to.equal(UNLOCK_TIME);
     });
 
+    it("Should set the right vestingScheduleMaxLength", async function () {
+      const {vestingBasic} = await loadFixture(deployContracts);
+
+      await expect(await vestingBasic.vestingScheduleMaxLength()).to.equal(250);
+    });
+
     it("Should set the right DEFAULT_ADMIN_ROLE", async function () {
       const {vestingBasic, owner} = await loadFixture(deployContracts);
 
@@ -182,6 +188,15 @@ describe("VestingBasic", function () {
 
         // Not existing, reverting, vesting period
         await expect(vestingBasic.vestingSchedule(VESTING_SCHEDULE_SUCCESS.when.length)).to.be.reverted
+      });
+
+      it("Should update the vesting collector as expected", async function () {
+        const {vestingBasic} = await loadFixture(deployContracts);
+
+        await vestingBasic.updateVestingCollector("0x0000000000000000000000000000000000000001")
+
+        // Check the last month - twelve index eleven
+        expect(await vestingBasic.vestingCollector()).to.equal("0x0000000000000000000000000000000000000001")
       });
     });
   });

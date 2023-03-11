@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.17;
+pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -11,11 +11,12 @@ contract VestingBasic is AccessControl {
     bytes32 public constant VESTER_ROLE = keccak256("VESTER_ROLE");
 
     address public vestingToken;
-    address public vestingCollector;
+    address public vestingCollector; // the address who collect the vested amount when VESTER_ROLE withdraws
     uint256 public unlockTime; // it must be future, imagine that -> 13rd March 11h am UTC -> 1678705200
 
     Vesting[] public vestingSchedule;
     uint256 public nextVestingPeriod;
+    uint256 public vestingScheduleMaxLength;
 
     struct Vesting {
         uint256 when; // timestamp of when the vesting item is able to be claimed
@@ -28,11 +29,13 @@ contract VestingBasic is AccessControl {
         require(_vestingToken != address(0), "Vesting token should be a valid address");
         require(_vestingCollector != address(0), "Vesting collector should be a valid address");
         require(block.timestamp < _unlockTime, "Unlock time should be in the future");
+        require(vestingScheduleMaxLength <= 250, "Vesting schedule max length exceeded");
 
         // Unlock variables initialization
         vestingToken = _vestingToken;
         vestingCollector = _vestingCollector;
         unlockTime = _unlockTime;
+        vestingScheduleMaxLength = 250;
 
         // Granting default role
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -64,6 +67,7 @@ contract VestingBasic is AccessControl {
 
     function setVestingSchedule(uint256[] memory when, uint256[] memory amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(block.timestamp < unlockTime, "Setting vesting schedule should be before unlockTime");
+        require(vestingSchedule.length <= vestingScheduleMaxLength, "Setting vesting schedule not permitted after first setup");
         require(vestingSchedule.length == 0, "Setting vesting schedule not permitted after first setup");
         require(when.length == amount.length, "When.length length must be the same as Amount.length");
 
@@ -74,5 +78,10 @@ contract VestingBasic is AccessControl {
             );
             vestingSchedule.push(currentVesting);
         }
+    }
+
+    function updateVestingCollector(address _vestingCollector) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_vestingCollector != address(0), "Address 0 cannot be the vesting collector");
+        vestingCollector = _vestingCollector;
     }
 }
