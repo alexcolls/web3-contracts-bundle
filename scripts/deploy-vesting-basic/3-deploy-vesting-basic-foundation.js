@@ -9,9 +9,10 @@ const {ethers} = require("hardhat");
 
 // Constants
 const VESTER_ROLE = "0x64ed6499e2f5a7ea55dfd56da361bf9d48064843bb3891c36f1dabd9ba246135"
-const UNLOCK_TIME = 1713016800
+const UNLOCK_TIME = 1710338400
 const VESTING_SCHEDULE = {
   when: [
+    1710338400, //03/13/2024 14:00:00 UTC
     1713016800, //04/13/2024 14:00:00 UTC
     1715608800, //05/13/2024 14:00:00 UTC
     1718287200, //06/13/2024 14:00:00 UTC
@@ -59,7 +60,6 @@ const VESTING_SCHEDULE = {
     1828706400, //12/13/2027 14:00:00 UTC
     1831384800, //01/13/2028 14:00:00 UTC
     1834063200, //02/13/2028 14:00:00 UTC
-    1836568800, //03/13/2028 14:00:00 UTC
   ],
   amount: [
     ethers.utils.parseEther(String(31250000)),
