@@ -41,6 +41,15 @@ contract VestingBasic is AccessControl {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
+    /**
+     * @dev Withdraws the available vested tokens.
+     *      Must be called by an account with VESTER_ROLE.
+     *      Tokens will be transferred to the vestingCollector address.
+     *      Emits a Withdrawal event for each vesting item claimed.
+     *      Reverts if all vesting periods have already been claimed.
+     *      Reverts if called before the unlockTime.
+     *      Reverts if the claimable amount is zero.
+     */
     function withdraw() public onlyRole(VESTER_ROLE) {
         require(block.timestamp >= unlockTime, "Vesting schedule should be after unlockTime");
         require(nextVestingPeriod < vestingSchedule.length, "All vesting periods have been claimed");
@@ -65,6 +74,16 @@ contract VestingBasic is AccessControl {
         IERC20(vestingToken).safeTransfer(vestingCollector, claimableAmount);
     }
 
+    /**
+     * @dev Sets the vesting schedule for the contract.
+     *      Must be called by an account with DEFAULT_ADMIN_ROLE.
+     *      Reverts if called after the first setup.
+     *      Reverts if called after the unlockTime.
+     *      Reverts if the vesting schedule length exceeds the max length.
+     *      Reverts if the length of the `when` array is different from the length of the `amount` array.
+     * @param when An array of timestamps representing the vesting times for each item.
+     * @param amount An array of amounts representing the vesting amounts for each item, in wei.
+     */
     function setVestingSchedule(uint256[] memory when, uint256[] memory amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(block.timestamp < unlockTime, "Setting vesting schedule should be before unlockTime");
         require(vestingSchedule.length <= vestingScheduleMaxLength, "Setting vesting schedule not permitted after first setup");
@@ -80,6 +99,12 @@ contract VestingBasic is AccessControl {
         }
     }
 
+    /**
+     * @dev Updates the vesting collector address.
+     *      Must be called by an account with DEFAULT_ADMIN_ROLE.
+     *      Reverts if the new vesting collector address is the zero address.
+     * @param _vestingCollector The new address to set as the vesting collector.
+     */
     function updateVestingCollector(address _vestingCollector) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_vestingCollector != address(0), "Address 0 cannot be the vesting collector");
         vestingCollector = _vestingCollector;
