@@ -184,11 +184,12 @@ const TRANSFERS_PAYLOAD = {
   ]
 }
 
-const GFAL_TOKEN = process.env.GFAL_TOKEN_MAINNET
+const GFAL_TOKEN = process.env.GFAL_TOKEN
 
 async function main() {
   // Create a new provider
-  const provider = new ethers.providers.JsonRpcProvider();
+  let provider = new ethers.providers.JsonRpcProvider(process.env.WEB3_HTTP_PROVIDER);
+
   // Create a new instance of the contract using the provider
   const gfalToken = new ethers.Contract(GFAL_TOKEN, GFALTokenArtifact.abi, provider);
 
@@ -198,15 +199,31 @@ async function main() {
   }
 
   // Sender from private key
-  const sender = new ethers.Wallet(process.env.UTILS_SENDER_PRIVATE_KEY)
+  const signer = new ethers.Wallet(process.env.OWNER_PRIVATE_KEY)
+  const nonce = await provider.getTransactionCount(signer.address);
 
   // Executing transactions and saving results
   let results = []
   for (let i = 0; i < TRANSFERS_PAYLOAD.address.length; i++) {
-    results.push(await gfalToken.connect(sender).safeTransfer(TRANSFERS_PAYLOAD.address[i], TRANSFERS_PAYLOAD.amount[i]))
+    const gasPrice = await provider.getGasPrice();
+    const gasLimit = await gfalToken.estimateGas.transfer(TRANSFERS_PAYLOAD.address[i], TRANSFERS_PAYLOAD.amount[i], {from: signer.address});
+
+    // Construct the transaction
+    const tx = {
+      from: signer.address, // specify the sender
+      to: gfalToken.address,
+      gasLimit,
+      gasPrice,
+      nonce: nonce + i,
+      data: gfalToken.interface.encodeFunctionData('transfer', [TRANSFERS_PAYLOAD.address[i], TRANSFERS_PAYLOAD.amount[i]]),
+    };
+    const signedTx = await signer.signTransaction(tx);
+    const transactionResponse = await provider.sendTransaction(signedTx);
+    results.push(transactionResponse)
   }
+
   console.log(
-    `TransferByAddressAmount script executed:`,
+    `TransferByAddressAmountKols script executed:`,
     results
   )
 }

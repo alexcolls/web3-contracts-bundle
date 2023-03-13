@@ -6,7 +6,7 @@
 // global scope, and execute the script.
 const hre = require("hardhat")
 const {ethers} = require("hardhat");
-const DeployVestingUtils = require("_deploy_vesting_utils")
+const DeployVestingUtils = require("./_deploy_vesting_utils")
 
 // Constants
 const VESTER_ROLE = "0x64ed6499e2f5a7ea55dfd56da361bf9d48064843bb3891c36f1dabd9ba246135"
