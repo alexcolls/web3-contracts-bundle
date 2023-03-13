@@ -120,7 +120,7 @@ async function main() {
   const vester = new ethers.Wallet(process.env.VESTER_PRIVATE_KEY_MAINNET)
 
   const VestingBasic = await hre.ethers.getContractFactory("VestingBasic")
-  const vestingBasic = await VestingBasic.deploy(GFAL_TOKEN, "0x0", UNLOCK_TIME)
+  const vestingBasic = await VestingBasic.deploy(GFAL_TOKEN, "0x202813F8b64B14062005973b793c5BC86DE9FF21", UNLOCK_TIME)
 
   await vestingBasic.deployed()
 
