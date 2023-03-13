@@ -145,6 +145,10 @@ contract GFALMarketplace is Ownable, ReentrancyGuard {
 
     // Getters
 
+    function getSellersList() public view returns (address[] memory) {
+        return sellersList;
+    }
+
     function getOnSaleTokenIds(address contractAddress, address seller, uint256 start, uint256 end) public view returns (uint256[] memory tokenIds, address[] memory sellers, uint256[] memory prices) {
         require(end > start, "End must be higher than start");
 

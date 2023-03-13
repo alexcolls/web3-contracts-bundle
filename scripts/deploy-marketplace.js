@@ -11,17 +11,20 @@ const ORACLE_CONSUMER = process.env.ORACLE_CONSUMER
 const ER_SKILL = process.env.ER_SKILL
 const ER_SKIN = process.env.ER_SKIN
 
+const ERC721 = 0
+const ERC1155 = 1
+
 async function main() {
   const owner = new ethers.Wallet(process.env.OWNER_PRIVATE_KEY)
 
   const GFALMarketplace = await hre.ethers.getContractFactory("GFALMarketplace")
-  const gfalMarkeplace = await GFALMarketplace.deploy(ORACLE_CONSUMER, GFAL_TOKEN, owner.address, 1000)
+  const gfalMarkeplace = await GFALMarketplace.deploy(ORACLE_CONSUMER, GFAL_TOKEN, owner.address, 480)
   await gfalMarkeplace.deployed()
 
   // Executing functions
 
-  await gfalMarkeplace.addCollection(ER_SKILL, "ERC721")
-  await gfalMarkeplace.addCollection(ER_SKIN, "ERC1155")
+  await gfalMarkeplace.updateCollection(ER_SKILL, ERC721, true)
+  await gfalMarkeplace.updateCollection(ER_SKIN, ERC1155, true)
 
   console.log(
     `GFALMarketplace deployed to ${gfalMarkeplace.address}`

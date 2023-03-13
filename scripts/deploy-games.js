@@ -130,8 +130,12 @@ async function main() {
 
   // Updating prices for minting BY TOKEN ID (erc1155)
   for (let item of ERC1155) {
-    await elementalRaidersSkin.updateMintingPrice(item.tokenId, ethers.utils.parseUnits(String(item.price), "ether"))
-    await elementalRaidersSkin.updateMintingMaxSupply(item.tokenId, item.maxSupply)
+    if (item.price) {
+      await elementalRaidersSkin.updateMintingPrice(item.tokenId, ethers.utils.parseUnits(String(item.price), "ether"))
+    }
+    if (item.maxSupply) {
+      await elementalRaidersSkin.updateMintingMaxSupply(item.tokenId, item.maxSupply)
+    }
   }
 
   console.log(
