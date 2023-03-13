@@ -130,6 +130,12 @@ describe("VestingBasic", function () {
 
         await expect(vestingBasic.connect(stranger).grantRole(VESTER_ROLE, vester.address)).to.be.revertedWith('AccessControl: account 0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc is missing role 0x0000000000000000000000000000000000000000000000000000000000000000')
       });
+
+      it("Should revert if a stranger tries to change the vestingCollector address", async function () {
+        const {vestingBasic, stranger} = await loadFixture(deployContracts);
+
+        await expect(vestingBasic.connect(stranger).updateVestingCollector(stranger.address)).to.be.revertedWith('AccessControl: account 0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc is missing role 0x0000000000000000000000000000000000000000000000000000000000000000')
+      });
     });
 
     describe("Workflow", function () {
@@ -147,19 +153,15 @@ describe("VestingBasic", function () {
     describe("Validations", function () {
       it("Should revert with the right error if called after unlockTime", async function () {
         const {vestingBasic} = await loadFixture(deployContracts);
-
         // fast-forward to unlock time
         await time.increaseTo(UNLOCK_TIME);
-
 
         await expect(vestingBasic.setVestingSchedule(VESTING_SCHEDULE_SUCCESS.when, VESTING_SCHEDULE_SUCCESS.amount)).to.be.revertedWith('Setting vesting schedule should be before unlockTime')
       })
 
       it("Should revert with the right error if called twice", async function () {
         const {vestingBasic} = await loadFixture(deployContracts);
-
         await vestingBasic.setVestingSchedule(VESTING_SCHEDULE_SUCCESS.when, VESTING_SCHEDULE_SUCCESS.amount)
-
         await expect(vestingBasic.setVestingSchedule(VESTING_SCHEDULE_SUCCESS.when, VESTING_SCHEDULE_SUCCESS.amount)).to.be.revertedWith('Setting vesting schedule not permitted after first setup')
       })
 
@@ -241,17 +243,7 @@ describe("VestingBasic", function () {
 
     describe("Events", function () {
       it("Should emit an event on withdrawals", async function () {
-        // TODO: Test this
-      });
-
-      it("Should emit more then one event on cumulative withdrawals", async function () {
-        // TODO: Test this
-      });
-    });
-
-    describe("Workflow", function () {
-      it("Should transfer the funds to the vestingCollector for single claim", async function () {
-        const {gfalToken, vestingBasic, vester} = await loadFixture(deployContracts);
+        const {vestingBasic, vester} = await loadFixture(deployContracts);
 
         // Start - Already tested required things
         await vestingBasic.grantRole(VESTER_ROLE, vester.address)
@@ -261,30 +253,26 @@ describe("VestingBasic", function () {
         for (let i = 0; i < VESTING_SCHEDULE_SUCCESS.when.length; i++) {
           // fast-forward to unlock time
           await time.increaseTo(VESTING_SCHEDULE_SUCCESS.when[i]);
-
-          const beforeBalanceContract = await gfalToken.balanceOf(vestingBasic.address)
-          const beforeBalanceCollector = await gfalToken.balanceOf(await vestingBasic.vestingCollector())
-
-          await vestingBasic.connect(vester).withdraw()
-
-          const afterBalanceContract = await gfalToken.balanceOf(vestingBasic.address)
-          const afterBalanceCollector = await gfalToken.balanceOf(await vestingBasic.vestingCollector())
-
-          expect(afterBalanceContract).to.equal(beforeBalanceContract.sub(VESTING_SCHEDULE_SUCCESS.amount[i]))
-          expect(afterBalanceCollector).to.equal(beforeBalanceCollector.add(VESTING_SCHEDULE_SUCCESS.amount[i]))
+          await expect(await vestingBasic.connect(vester).withdraw())
+            .to.emit(vestingBasic, "Withdrawal")
+            .withArgs(VESTING_SCHEDULE_SUCCESS.when[i]+1, VESTING_SCHEDULE_SUCCESS.amount[i])
         }
       });
+    });
+  });
 
-      it("Should transfer the funds to the vestingCollector for cumulative claim", async function () {
-        const {gfalToken, vestingBasic, vester} = await loadFixture(deployContracts);
+  describe("Workflow", function () {
+    it("Should transfer the funds to the vestingCollector for single claim", async function () {
+      const {gfalToken, vestingBasic, vester} = await loadFixture(deployContracts);
 
-        // Start - Already tested required things
-        await vestingBasic.grantRole(VESTER_ROLE, vester.address)
-        await vestingBasic.setVestingSchedule(VESTING_SCHEDULE_SUCCESS.when, VESTING_SCHEDULE_SUCCESS.amount)
-        // End - Already tested required things
+      // Start - Already tested required things
+      await vestingBasic.grantRole(VESTER_ROLE, vester.address)
+      await vestingBasic.setVestingSchedule(VESTING_SCHEDULE_SUCCESS.when, VESTING_SCHEDULE_SUCCESS.amount)
+      // End - Already tested required things
 
+      for (let i = 0; i < VESTING_SCHEDULE_SUCCESS.when.length; i++) {
         // fast-forward to unlock time
-        await time.increaseTo(VESTING_SCHEDULE_SUCCESS.when[1]);
+        await time.increaseTo(VESTING_SCHEDULE_SUCCESS.when[i]);
 
         const beforeBalanceContract = await gfalToken.balanceOf(vestingBasic.address)
         const beforeBalanceCollector = await gfalToken.balanceOf(await vestingBasic.vestingCollector())
@@ -294,31 +282,55 @@ describe("VestingBasic", function () {
         const afterBalanceContract = await gfalToken.balanceOf(vestingBasic.address)
         const afterBalanceCollector = await gfalToken.balanceOf(await vestingBasic.vestingCollector())
 
-        expect(afterBalanceContract).to.equal(beforeBalanceContract.sub(VESTING_SCHEDULE_SUCCESS.amount[0]).sub(VESTING_SCHEDULE_SUCCESS.amount[1]))
-        expect(afterBalanceCollector).to.equal(beforeBalanceCollector.add(VESTING_SCHEDULE_SUCCESS.amount[0]).add(VESTING_SCHEDULE_SUCCESS.amount[1]))
+        expect(afterBalanceContract).to.equal(beforeBalanceContract.sub(VESTING_SCHEDULE_SUCCESS.amount[i]))
+        expect(afterBalanceCollector).to.equal(beforeBalanceCollector.add(VESTING_SCHEDULE_SUCCESS.amount[i]))
+      }
+    });
 
-        // expiring time to the last claim
+    it("Should transfer the funds to the vestingCollector for cumulative claim", async function () {
+      const {gfalToken, vestingBasic, vester} = await loadFixture(deployContracts);
 
-        await time.increaseTo(VESTING_SCHEDULE_SUCCESS.when[VESTING_SCHEDULE_SUCCESS.when.length - 1]);
+      // Start - Already tested required things
+      await vestingBasic.grantRole(VESTER_ROLE, vester.address)
+      await vestingBasic.setVestingSchedule(VESTING_SCHEDULE_SUCCESS.when, VESTING_SCHEDULE_SUCCESS.amount)
+      // End - Already tested required things
 
-        let beforeBalanceContractEnd = await gfalToken.balanceOf(vestingBasic.address)
-        let beforeBalanceCollectorEnd = await gfalToken.balanceOf(await vestingBasic.vestingCollector())
+      // fast-forward to unlock time
+      await time.increaseTo(VESTING_SCHEDULE_SUCCESS.when[1]);
 
-        await vestingBasic.connect(vester).withdraw()
+      const beforeBalanceContract = await gfalToken.balanceOf(vestingBasic.address)
+      const beforeBalanceCollector = await gfalToken.balanceOf(await vestingBasic.vestingCollector())
 
-        const afterBalanceContractEnd = await gfalToken.balanceOf(vestingBasic.address)
-        const afterBalanceCollectorEnd = await gfalToken.balanceOf(await vestingBasic.vestingCollector())
+      await vestingBasic.connect(vester).withdraw()
 
-        // Iterating increase of bigNumber
-        for (let i = 2; i < VESTING_SCHEDULE_SUCCESS.amount.length; i++) {
-          beforeBalanceContractEnd = beforeBalanceContractEnd.sub(VESTING_SCHEDULE_SUCCESS.amount[i])
-          beforeBalanceCollectorEnd = beforeBalanceCollectorEnd.add(VESTING_SCHEDULE_SUCCESS.amount[i])
-        }
+      const afterBalanceContract = await gfalToken.balanceOf(vestingBasic.address)
+      const afterBalanceCollector = await gfalToken.balanceOf(await vestingBasic.vestingCollector())
 
-        expect(beforeBalanceContractEnd).to.equal(0) // just to ensure, hardcoded value
-        expect(afterBalanceContractEnd).to.equal(beforeBalanceContractEnd)
-        expect(afterBalanceCollectorEnd).to.equal(beforeBalanceCollectorEnd)
-      });
+      expect(afterBalanceContract).to.equal(beforeBalanceContract.sub(VESTING_SCHEDULE_SUCCESS.amount[0]).sub(VESTING_SCHEDULE_SUCCESS.amount[1]))
+      expect(afterBalanceCollector).to.equal(beforeBalanceCollector.add(VESTING_SCHEDULE_SUCCESS.amount[0]).add(VESTING_SCHEDULE_SUCCESS.amount[1]))
+
+      // expiring time to the last claim
+
+      await time.increaseTo(VESTING_SCHEDULE_SUCCESS.when[VESTING_SCHEDULE_SUCCESS.when.length - 1]);
+
+      let beforeBalanceContractEnd = await gfalToken.balanceOf(vestingBasic.address)
+      let beforeBalanceCollectorEnd = await gfalToken.balanceOf(await vestingBasic.vestingCollector())
+
+      await vestingBasic.connect(vester).withdraw()
+
+      const afterBalanceContractEnd = await gfalToken.balanceOf(vestingBasic.address)
+      const afterBalanceCollectorEnd = await gfalToken.balanceOf(await vestingBasic.vestingCollector())
+
+      // Iterating increase of bigNumber
+      for (let i = 2; i < VESTING_SCHEDULE_SUCCESS.amount.length; i++) {
+        beforeBalanceContractEnd = beforeBalanceContractEnd.sub(VESTING_SCHEDULE_SUCCESS.amount[i])
+        beforeBalanceCollectorEnd = beforeBalanceCollectorEnd.add(VESTING_SCHEDULE_SUCCESS.amount[i])
+      }
+
+      expect(beforeBalanceContractEnd).to.equal(0) // just to ensure, hardcoded value
+      expect(afterBalanceContractEnd).to.equal(beforeBalanceContractEnd)
+      expect(afterBalanceCollectorEnd).to.equal(beforeBalanceCollectorEnd)
     });
   });
 });
+;
