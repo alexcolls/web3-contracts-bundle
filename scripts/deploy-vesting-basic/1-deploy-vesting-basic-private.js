@@ -6,7 +6,7 @@
 // global scope, and execute the script.
 const hre = require("hardhat")
 const {ethers} = require("hardhat");
-const DeployVestingUtils = require("_deploy_vesting_utils")
+const DeployVestingUtils = require("./_deploy_vesting_utils")
 
 // Constants
 const VESTER_ROLE = "0x64ed6499e2f5a7ea55dfd56da361bf9d48064843bb3891c36f1dabd9ba246135"
@@ -48,7 +48,7 @@ async function main() {
   const vester = new ethers.Wallet(process.env.VESTER_PRIVATE_KEY_MAINNET)
 
   const VestingBasic = await hre.ethers.getContractFactory("VestingBasic")
-  const vestingBasic = await VestingBasic.deploy(GFAL_TOKEN, "0x0", UNLOCK_TIME)
+  const vestingBasic = await VestingBasic.deploy(GFAL_TOKEN, "0xCDcE15FB96295773e305130D58D4cd6BE6704A16", UNLOCK_TIME)
 
   await vestingBasic.deployed()
 
