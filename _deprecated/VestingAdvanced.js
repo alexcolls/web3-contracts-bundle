@@ -92,7 +92,7 @@ describe("VestingAdvanced", function () {
 
     await gfalToken.transfer(vestingAdvanced.address, totalVestingAmount)
 
-    return {gfalToken, vestingAdvanced, owner, vesterAccounts, vesterTiers, vesterAddresses, stranger };
+    return {gfalToken, vestingAdvanced, owner, vesterAccounts, vesterTiers, vesterAddresses, stranger};
   }
 
   describe("Deployment", function () {
@@ -305,8 +305,8 @@ describe("VestingAdvanced", function () {
           await time.increaseTo(VESTING_SCHEDULE_SUCCESS.when[i]);
 
           // Start blacklisting
-          if ((i !== 0 && i !== vesterAccounts.length-1) && i % 2 === 0) {
-            const accountIndex = (i/2)-1
+          if ((i !== 0 && i !== vesterAccounts.length - 1) && i % 2 === 0) {
+            const accountIndex = (i / 2) - 1
             const addressToBlacklist = vesterAccounts[accountIndex].address
             await vestingAdvanced.blacklistVesterAddress(addressToBlacklist)
             console.log('----- Blacklisting Account ->', accountIndex)

@@ -41,17 +41,14 @@ const VESTING_SCHEDULE = {
   ]
 }
 
+const GFAL_TOKEN = process.env.GFAL_TOKEN
+
 async function main() {
-  const owner = new ethers.Wallet(process.env.OWNER_PRIVATE_KEY)
   const vester = new ethers.Wallet(process.env.VESTER_PRIVATE_KEY)
 
-  const GFALToken = await hre.ethers.getContractFactory("GFALToken")
-  const gfalToken = await GFALToken.deploy()
-
   const VestingBasic = await hre.ethers.getContractFactory("VestingBasic")
-  const vestingBasic = await VestingBasic.deploy(gfalToken.address, vester.address, UNLOCK_TIME)
+  const vestingBasic = await VestingBasic.deploy(GFAL_TOKEN, vester.address, UNLOCK_TIME)
 
-  await gfalToken.deployed()
   await vestingBasic.deployed()
 
   // Executing functions
@@ -61,12 +58,10 @@ async function main() {
     totalVestingAmount = totalVestingAmount.add(VESTING_SCHEDULE.amount[i])
   }
 
-  await gfalToken.transfer(vestingBasic.address, totalVestingAmount)
   await vestingBasic.grantRole(VESTER_ROLE, vester.address)
   await vestingBasic.setVestingSchedule(VESTING_SCHEDULE.when, VESTING_SCHEDULE.amount)
 
   console.log(
-    `GFALToken deployed to ${gfalToken.address}`,
     `VestingBasic deployed to ${vestingBasic.address}`
   )
 }

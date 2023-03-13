@@ -7,8 +7,7 @@ const {ethers} = require("hardhat");
 const hre = require("hardhat");
 
 const NFT_METADATA_BASEURI = "https://prod-web3-token-tracker-tqkvar3wjq-uc.a.run.app/metadata/"
-
-describe("ElementalRaidersSkill", function () {
+describe("ElementalRaidersSkin", function () {
   // We define a fixture to reuse the same setup in every test.
   // We use loadFixture to run this setup once, snapshot that state,
   // and reset Hardhat Network to that snapshot in every test.
@@ -19,14 +18,9 @@ describe("ElementalRaidersSkill", function () {
     const GFALToken = await ethers.getContractFactory("GFALToken");
     const gfalToken = await GFALToken.deploy();
     await gfalToken.transfer(user.address, hre.ethers.utils.parseEther('10000000000'))
-    const OracleConsumer = await ethers.getContractFactory("OracleConsumer")
-    const oracleConsumer = await OracleConsumer.deploy()
-
-    // Oracle writes the priceFeed (Mocking external, untested here, workflow)
-    await oracleConsumer.updateRateValue(ethers.utils.parseUnits("0.1", "ether")) // here we are converting the float to wei to work as "intFloat"
 
     const ElementalRaidersSkill = await ethers.getContractFactory("ElementalRaidersSkill");
-    const elementalRaidersSkill = await ElementalRaidersSkill.deploy(gfalToken.address, oracleConsumer.address, "ipfs://");
+    const elementalRaidersSkill = await ElementalRaidersSkill.deploy(gfalToken.address, "ipfs://");
 
     await elementalRaidersSkill.updateBaseURI(NFT_METADATA_BASEURI + elementalRaidersSkill.address + "/")
     await elementalRaidersSkill.updateMintingPrice(1, hre.ethers.utils.parseEther('50'))
@@ -69,6 +63,7 @@ describe("ElementalRaidersSkill", function () {
     });
 
     describe("Events", function () {
+      // TODO Polish this
       // it("Should emit an event UpdateRate on updating the rate", async function () {
       //   const {elementalRaidersSkill, owner} = await loadFixture(deployContracts);
       //
@@ -83,14 +78,14 @@ describe("ElementalRaidersSkill", function () {
         const {gfalToken, elementalRaidersSkill, owner, user} = await loadFixture(deployContracts);
 
         // User approve spending
-        await gfalToken.connect(user).approve(elementalRaidersSkill.address, hre.ethers.utils.parseEther('500'))
+        await gfalToken.connect(user).approve(elementalRaidersSkill.address, hre.ethers.utils.parseEther('50'))
 
         // Owner mints
         await elementalRaidersSkill.safeMint(user.address, 1);
 
         await expect(await elementalRaidersSkill.totalSupply()).to.equal(1)
         await expect(await elementalRaidersSkill.balanceOf(user.address)).to.equal(1)
-        await expect(await gfalToken.balanceOf(owner.address)).to.equal(hre.ethers.utils.parseEther('500'))
+        await expect(await gfalToken.balanceOf(owner.address)).to.equal(hre.ethers.utils.parseEther('50'))
 
         // TokenURI
         const tokenURI = await elementalRaidersSkill.tokenURI(0)

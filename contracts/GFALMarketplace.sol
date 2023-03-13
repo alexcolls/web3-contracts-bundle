@@ -2,31 +2,30 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./utils/OracleConsumer.sol";
 
-// Uncomment this line to use console.log
-// import "hardhat/console.sol";
-// Uncomment this line, and the import of "hardhat/console.sol", to print a log in your terminal
-// console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
-
-contract GFALMarketplace is Ownable, ReentrancyGuard, Pausable {
+contract GFALMarketplace is Ownable, ReentrancyGuard {
+    using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
     // Price data feed Oracle contract
     OracleConsumer public oracleConsumer;
-    
+
     // Tokens
     address public gfalToken;
-    mapping (address => bool) public whitelistNFTs;
+    mapping(address => Whitelist) public whitelistNFTs;
 
     // Marketplace
-    mapping (address => mapping(uint256 => Sale)) public tokensForSale;
-    uint256 public volume; // in $GFAL all-time-long
+    mapping(address => mapping(uint256 => mapping(address => Sale))) public tokensForSale; // collectionAddress => (tokenId => (sellerAddress => Sale))
+    address[] public sellersList; // to allow iterating in order to get on sale tokens for contractAddress and sellerAddress
+    mapping(address => bool) public knownSellers; // to avoid repeated sellersList.push(sellerAddress)
+    uint256 public volume; // $GFAL all-time-volume
     uint256 public royaltiesInBasisPoints;
     address public royaltiesCollector;
 
@@ -39,12 +38,18 @@ contract GFALMarketplace is Ownable, ReentrancyGuard, Pausable {
 
     // Structures
     struct Sale {
-        address contractAddress;
-        uint256 tokenId;
-        address seller;
         uint256 price;
         bool isDollar;
         bool isForSale;
+    }
+
+    struct Whitelist {
+        bool allowed;
+        TokenStandard tokenStandard;
+    }
+    enum TokenStandard {
+        ERC721,
+        ERC1155
     }
 
     // Events
@@ -55,51 +60,79 @@ contract GFALMarketplace is Ownable, ReentrancyGuard, Pausable {
     // Modifiers
 
     modifier onlyTradableToken (address contractAddress, address from, uint256 tokenId) {
-        require(whitelistNFTs[contractAddress] == true, "You can sell only tokens about whitelisted collections.");
-        require(IERC721Enumerable(contractAddress).ownerOf(tokenId) == from, "Token does not belong to user or not existing.");
+        Whitelist memory collection = whitelistNFTs[contractAddress];
+        require(collection.allowed == true, "You can sell only tokens about whitelisted collections.");
+        // Ownership check for ERC721 and ERC1155 based on whitelisted information
+        if (collection.tokenStandard == TokenStandard.ERC721) {
+            require(IERC721Enumerable(contractAddress).ownerOf(tokenId) == from, "Token does not belong to user or not existing 721.");
+        } else {
+            require(IERC1155(contractAddress).balanceOf(msg.sender, tokenId) != 0, "Token does not belong to user or not existing 1155.");
+        }
         _;
     }
 
     // -- Marketplace Methods
 
-    // TODO: require token is already approved, anyway this could change in the future. consider this.
     function sellToken(address contractAddress, uint256 tokenId, uint256 price, bool isDollar) public onlyTradableToken(contractAddress, msg.sender, tokenId) {
         require(price != 0, "Cannot put zero as a price");
-        require(IERC721Enumerable(contractAddress).getApproved(tokenId) == address(this), "NFT has not been approved for spending.");
 
-        tokensForSale[contractAddress][tokenId] = Sale(contractAddress, tokenId, msg.sender, price, isDollar, true);
+        // If the seller is unknown, push it to the sellersList array
+        if (knownSellers[msg.sender] == false) {
+            knownSellers[msg.sender] = true;
+            sellersList.push(msg.sender);
+        }
+
+        // Check on TokenStandard.ERC721 or ERC1155 in order to look for specific approval
+        if (whitelistNFTs[contractAddress].tokenStandard == TokenStandard.ERC721) {
+            require(IERC721Enumerable(contractAddress).getApproved(tokenId) == address(this), "NFT has not been approved for spending 721.");
+        } else {
+            require(IERC1155(contractAddress).isApprovedForAll(msg.sender, address(this)) == true, "NFT has not been approved for spending 1155.");
+        }
+
+        tokensForSale[contractAddress][tokenId][msg.sender] = Sale(price, isDollar, true);
+
         emit SellToken(contractAddress, tokenId, price, isDollar, msg.sender);
     }
 
-    // TODO: try to exploit removed NFT approval during listing. Or missing ERC20 approval. Would revert the whole function or do something weird like has been reentered?
-    function buyToken(address contractAddress, uint256 tokenId) nonReentrant public {
-        require(tokensForSale[contractAddress][tokenId].isForSale, "Token is not for sale.");
+    function buyToken(address contractAddress, uint256 tokenId, address seller) nonReentrant public {
+        // TODO: Check token collection is allowed and not blacklisted in the meantime were listed
+
+        Sale memory sale = tokensForSale[contractAddress][tokenId][seller];
+        require(sale.isForSale, "Token is not for sale.");
 
         // Calculating royalties and wanted price
-        uint256 price = tokensForSale[contractAddress][tokenId].isDollar == true // if isDollar expressed listing
-            ? OracleConsumer(oracleConsumer).getConversionRate(tokensForSale[contractAddress][tokenId].price) // convert from USD to GFAL
-            : tokensForSale[contractAddress][tokenId].price; // otherwise already in GFAL
+        uint256 price = sale.isDollar == true // if isDollar expressed listing
+        ? OracleConsumer(oracleConsumer).getConversionRate(sale.price) // convert from USD to GFAL
+        : sale.price;
+        // otherwise already in GFAL
         (uint256 amountAfterRoyalties, uint256 royaltiesAmount) = _calculateMarketplaceRoyalties(price);
 
+        // Check ERC20 allowance for buyer
+        require(IERC20(gfalToken).allowance(msg.sender, address(this)) >= price, "GFAL has not been approved for spending.");
+
+        // Check NFT type and transfer it accordingly
+        if (whitelistNFTs[contractAddress].tokenStandard == TokenStandard.ERC721) {
+            IERC721Enumerable(contractAddress).safeTransferFrom(seller, msg.sender, tokenId);
+        } else {
+            // Treating ERC1155 as it is 721 via hardcoded amount of 1
+            IERC1155(contractAddress).safeTransferFrom(seller, msg.sender, tokenId, 1, "");
+        }
+
         // Transferring NFT, sending funds to seller, and sending fees to marketplaceRoyalties
-        IERC721Enumerable(contractAddress).safeTransferFrom(tokensForSale[contractAddress][tokenId].seller, msg.sender, tokenId);
-        IERC20(gfalToken).transferFrom(msg.sender, tokensForSale[contractAddress][tokenId].seller, amountAfterRoyalties);
-        IERC20(gfalToken).transferFrom(msg.sender, royaltiesCollector, royaltiesAmount);
+        IERC20(gfalToken).safeTransferFrom(msg.sender, seller, amountAfterRoyalties);
+        IERC20(gfalToken).safeTransferFrom(msg.sender, royaltiesCollector, royaltiesAmount);
 
         // Increasing marketplace volume
         volume += price;
 
-        // setting it in memory to emit event afterward
-        address  seller = tokensForSale[contractAddress][tokenId].seller;
-
         // Setting token as not for sell
-        tokensForSale[contractAddress][tokenId] = Sale(contractAddress, tokenId, address(0), 0, false, false);
+        tokensForSale[contractAddress][tokenId][seller] = Sale(0, false, false);
 
         emit BuyToken(contractAddress, tokenId, price, amountAfterRoyalties, royaltiesAmount, seller, msg.sender);
     }
 
     function removeToken(address contractAddress, uint256 tokenId) public onlyTradableToken(contractAddress, msg.sender, tokenId) {
-        tokensForSale[contractAddress][tokenId] = Sale(contractAddress, tokenId, address(0), 0, false, false);
+        tokensForSale[contractAddress][tokenId][msg.sender] = Sale(0, false, false);
         emit RemoveToken(contractAddress, tokenId, msg.sender);
     }
 
@@ -112,52 +145,39 @@ contract GFALMarketplace is Ownable, ReentrancyGuard, Pausable {
 
     // Getters
 
-    function getOnSaleTokenIds(address contractAddress, uint256 start, uint256 end) public view returns (uint256[] memory tokenIds, address[] memory sellers, uint256[] memory prices, bool[] memory isDollars) {
+    function getSellersList() public view returns (address[] memory) {
+        return sellersList;
+    }
+
+    function getOnSaleTokenIds(address contractAddress, address seller, uint256 start, uint256 end) public view returns (uint256[] memory tokenIds, address[] memory sellers, uint256[] memory prices) {
         require(end > start, "End must be higher than start");
-        uint256 totalSupply = IERC721Enumerable(contractAddress).totalSupply();
-        if (end > totalSupply) {
-            end = totalSupply;
-        }
-        uint256[] memory _onSaleTokenIds = new uint[](end - start);
+
+        uint256[] memory _tokenIds = new uint256[](end - start);
         address[] memory _sellers = new address[](end - start);
         uint256[] memory _prices = new uint256[](end - start);
-        bool[] memory _isDollars = new bool[](end - start);
+
         uint256 counter = 0;
         for (uint256 i = start; i <= end; i++) {
-            if (tokensForSale[contractAddress][i].isForSale) {
-                _onSaleTokenIds[counter] = i;
-                _sellers[counter] = tokensForSale[contractAddress][i].seller;
-                _prices[counter] = tokensForSale[contractAddress][i].price;
-                _isDollars[counter] = tokensForSale[contractAddress][i].isDollar;
+            Sale memory currentSale = tokensForSale[contractAddress][i][seller];
+            if (currentSale.isForSale) {
+                _tokenIds[counter] = i;
+                _sellers[counter] = seller;
+                _prices[counter] = currentSale.isDollar
+                ? OracleConsumer(oracleConsumer).getConversionRate(currentSale.price) // if isDollar we convert it to GFAL
+                : currentSale.price;
                 counter++;
             }
         }
-        return (_onSaleTokenIds, _sellers, _prices, _isDollars);
-    }
-
-    // Overwriting this methods for Pause/Unpause the contract
-
-    // TODO: Choose if pausable contract is needed. If yes, implement whenNotPaused() modifier on desired pausable functions.
-    function pause() external onlyOwner {
-        _pause();
-    }
-
-    function unpause() external onlyOwner {
-        require(gfalToken != address(0x0));
-        require(address(oracleConsumer) != address(0x0));
-        _unpause();
+        return (_tokenIds, _sellers, _prices);
     }
 
     // Owner functions
 
-    function addCollection(address _collection) external onlyOwner {
-        whitelistNFTs[_collection] = true;
-    }
-
-    function removeCollection(address _collection) external onlyOwner {
-        require(whitelistNFTs[_collection] == true, "Collection not existing in mapping");
-
-        whitelistNFTs[_collection] = false;
+    function updateCollection(address _collectionAddress, TokenStandard _tokenStandard, bool _allowed) external onlyOwner {
+        whitelistNFTs[_collectionAddress] = Whitelist(
+            _allowed,
+            _tokenStandard
+        );
     }
 
     function updateGFALToken(address _gfalToken) external onlyOwner {
