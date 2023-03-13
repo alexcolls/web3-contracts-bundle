@@ -35,7 +35,7 @@ contract VestingBasic is AccessControl {
         vestingToken = _vestingToken;
         vestingCollector = _vestingCollector;
         unlockTime = _unlockTime;
-        vestingScheduleMaxLength = 250;
+        vestingScheduleMaxLength = 150;
 
         // Granting default role
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -86,8 +86,8 @@ contract VestingBasic is AccessControl {
      */
     function setVestingSchedule(uint256[] memory when, uint256[] memory amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(block.timestamp < unlockTime, "Setting vesting schedule should be before unlockTime");
-        require(vestingSchedule.length <= vestingScheduleMaxLength, "Setting vesting schedule not permitted after first setup");
-        require(vestingSchedule.length == 0, "Setting vesting schedule not permitted after first setup");
+        require(vestingSchedule.length + when.length <= vestingScheduleMaxLength, "Setting vesting schedule total maximum length exceeded");
+        require(when.length <= 25, "Maximum amount per single setVestingSchedule exceeded");
         require(when.length == amount.length, "When.length length must be the same as Amount.length");
 
         for (uint256 i = 0; i < when.length; i++) {
