@@ -6,11 +6,10 @@
 // global scope, and execute the script.
 const hre = require("hardhat")
 const {ethers} = require("hardhat");
-const DeployVestingUtils = require("./_deploy_vesting_utils");
+const DeployVestingUtils = require("../deploy-vesting-basic/_deploy_vesting_utils");
 
+const VBArtifact = require('../../artifacts/contracts/vestings/VestingBasic.sol/VestingBasic.json')
 // Constants
-const VESTER_ROLE = "0x64ed6499e2f5a7ea55dfd56da361bf9d48064843bb3891c36f1dabd9ba246135"
-const UNLOCK_TIME = 1686664800
 const VESTING_SCHEDULE = {
   when: [
     1686664800, //06/13/2023 14:00:00 UTC
@@ -107,33 +106,49 @@ const VESTING_SCHEDULE = {
     ethers.utils.parseEther(String(11111116)),
   ]
 }
-
-console.log(VESTING_SCHEDULE.when)
-console.log(VESTING_SCHEDULE.amount)
-
-return
-const GFAL_TOKEN = process.env.GFAL_TOKEN_MAINNET
+const VB_ADDR = "0xb18771af81eFEd73911Bfe95389F0A28e946592d"
 
 async function main() {
-  const vester = new ethers.Wallet(process.env.VESTER_PRIVATE_KEY_MAINNET)
+  // Create a new provider
+  let provider = new ethers.providers.JsonRpcProvider(process.env.WEB3_HTTP_PROVIDER);
 
-  const VestingBasic = await hre.ethers.getContractFactory("VestingBasic")
-  const vestingBasic = await VestingBasic.deploy(GFAL_TOKEN, "0x1CF48D58cF0FA61F8153ACF3f685aF02069A26A3", UNLOCK_TIME)
+  // Create a new instance of the contract using the provider
+  const vestingBasic = new ethers.Contract(VB_ADDR, VBArtifact.abi, provider);
 
-  await vestingBasic.deployed()
+  // Validate correct length of arrays
+  if (VESTING_SCHEDULE.when.length !== VESTING_SCHEDULE.amount.length) {
+    throw Error('Array lengths mismatch')
+  }
 
-  // Executing functions
+  // Sender from private key
+  const signer = new ethers.Wallet(process.env.OWNER_PRIVATE_KEY)
+  const nonce = await provider.getTransactionCount(signer.address);
 
-  await vestingBasic.grantRole(VESTER_ROLE, vester.address)
 
   let vestingExecutions = DeployVestingUtils.splitVestingSchedule(VESTING_SCHEDULE.when, VESTING_SCHEDULE.amount)
   // Iterate through each batch and call setVestingSchedules() function
+  let results = []
   for (let i = 0; i < vestingExecutions.length; i++) {
-    await vestingBasic.setVestingSchedule(vestingExecutions[i].when, vestingExecutions[i].amount)
+    const gasPrice = await provider.getGasPrice();
+    const gasLimit = await vestingBasic.estimateGas.setVestingSchedule(vestingExecutions[i].when, vestingExecutions[i].amount, {from: signer.address});
+
+    // Construct the transaction
+    const tx = {
+      from: signer.address, // specify the sender
+      to: vestingBasic.address,
+      gasLimit,
+      gasPrice,
+      nonce: nonce + i,
+      data: vestingBasic.interface.encodeFunctionData('setVestingSchedule', [vestingExecutions[i].when, vestingExecutions[i].amount]),
+    };
+    const signedTx = await signer.signTransaction(tx);
+    const transactionResponse = await provider.sendTransaction(signedTx);
+    results.push(transactionResponse)
   }
 
   console.log(
-    `VestingBasic "Developers" allocation deployed to ${vestingBasic.address}`
+    `SetVestingScheduleDevelopers script executed:`,
+    results
   )
 }
 

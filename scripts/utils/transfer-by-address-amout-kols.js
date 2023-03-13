@@ -184,7 +184,7 @@ const TRANSFERS_PAYLOAD = {
   ]
 }
 
-const GFAL_TOKEN = process.env.GFAL_TOKEN
+const GFAL_TOKEN = process.env.GFAL_TOKEN_MAINNET
 
 async function main() {
   // Create a new provider
