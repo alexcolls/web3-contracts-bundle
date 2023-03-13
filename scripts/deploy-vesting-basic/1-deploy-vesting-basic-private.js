@@ -6,6 +6,7 @@
 // global scope, and execute the script.
 const hre = require("hardhat")
 const {ethers} = require("hardhat");
+const DeployVestingUtils = require("_deploy_vesting_utils")
 
 // Constants
 const VESTER_ROLE = "0x64ed6499e2f5a7ea55dfd56da361bf9d48064843bb3891c36f1dabd9ba246135"
@@ -53,13 +54,13 @@ async function main() {
 
   // Executing functions
 
-  let totalVestingAmount = ethers.utils.parseEther(String(0))
-  for (let i = 0; i < VESTING_SCHEDULE.amount.length; i++) {
-    totalVestingAmount = totalVestingAmount.add(VESTING_SCHEDULE.amount[i])
-  }
-
   await vestingBasic.grantRole(VESTER_ROLE, vester.address)
-  await vestingBasic.setVestingSchedule(VESTING_SCHEDULE.when, VESTING_SCHEDULE.amount)
+
+  let vestingExecutions = DeployVestingUtils.splitVestingSchedule(VESTING_SCHEDULE.when, VESTING_SCHEDULE.amount)
+  // Iterate through each batch and call setVestingSchedules() function
+  for (let i = 0; i < vestingExecutions.length; i++) {
+    await vestingBasic.setVestingSchedule(vestingExecutions[i].when, vestingExecutions[i].amount)
+  }
 
   console.log(
     `VestingBasic "Private" allocation deployed to ${vestingBasic.address}`
