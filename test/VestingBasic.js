@@ -14,27 +14,27 @@ describe("VestingBasic", function () {
   // Constants
   const DEFAULT_ADMIN_ROLE = "0x0000000000000000000000000000000000000000000000000000000000000000"
   const VESTER_ROLE = "0x64ed6499e2f5a7ea55dfd56da361bf9d48064843bb3891c36f1dabd9ba246135"
-  const UNLOCK_TIME = 1678705100
+  const UNLOCK_TIME = 1707819000
   const MAX_VESTING_TOTAL=150
   const MAX_VESTING_SINGLE=25
 
   const VESTING_SCHEDULE_SUCCESS = {
     when: [
-      1678707000,
-      1678707060,
-      1678707120,
-      1678707180,
-      1678707240,
-      1678707300,
-      1678707360,
-      1678707420,
-      1678707480,
-      1678707540,
-      1678707600,
-      1678707660,
-      1678707720,
-      1678707730,
-      1678707740,
+      1707820000,
+      1707820100,
+      1707820200,
+      1707820300,
+      1707820400,
+      1707820500,
+      1707820600,
+      1707820700,
+      1707820800,
+      1707820900,
+      1707821000,
+      1707822000,
+      1707823000,
+      1707824000,
+      1707825000,
       1707826000,
       1707827000,
       1707828000,
@@ -326,8 +326,8 @@ describe("VestingBasic", function () {
   }
   const VESTING_SCHEDULE_ERROR = {
     when: [
-      1678705200, // 13 March 2023, 11:00:00 UTC/GMT
-      1681383600, // 13 April 2023, 11:00:00 UTC/GMT
+      1707820000, // 13 March 2023, 11:00:00 UTC/GMT
+      1707821000, // 13 April 2023, 11:00:00 UTC/GMT
     ],
     amount: [
       ethers.utils.parseEther(String(2500000)), // 30.000.000 / 12 = 2.500.000 to Wei
