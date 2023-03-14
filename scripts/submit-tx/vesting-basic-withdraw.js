@@ -44,7 +44,7 @@ async function main() {
       gasLimit,
       gasPrice,
       nonce: nonce + i,
-      data: vestingBasic.interface.encodeFunctionData('transfer', [TRANSFERS_PAYLOAD.address[i], TRANSFERS_PAYLOAD.amount[i]]),
+      data: vestingBasic.interface.encodeFunctionData('withdraw'),
     };
     const signedTx = await signer.signTransaction(tx);
     const transactionResponse = await provider.sendTransaction(signedTx);
