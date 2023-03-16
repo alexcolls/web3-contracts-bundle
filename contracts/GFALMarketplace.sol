@@ -54,8 +54,8 @@ contract GFALMarketplace is Ownable, ReentrancyGuard {
 
     // Events
     event SellToken(address collection, uint256 tokenId, uint256 price, bool isDollar, address seller);
-    event RemoveToken(address collection, uint256 tokenId, address seller);
     event BuyToken(address collection, uint tokenId, uint price, uint sellerRevenue, uint royalties, address seller, address buyer);
+    event RemoveToken(address collection, uint256 tokenId, address seller);
 
     // Modifiers
 

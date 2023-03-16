@@ -9,8 +9,12 @@ module.exports = {
     hardhat: {
       chainId: 1337
     },
-    bsc: {
-      url: process.env.WEB3_HTTP_PROVIDER,
+    bsctest: {
+      url: process.env.WEB3_HTTP_PROVIDER_TEST,
+      accounts: [process.env.OWNER_PRIVATE_KEY]
+    },
+    bscmain: {
+      url: process.env.WEB3_HTTP_PROVIDER_MAIN,
       accounts: [process.env.OWNER_PRIVATE_KEY]
     }
   },
