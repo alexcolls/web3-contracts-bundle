@@ -3,6 +3,7 @@ const {
 } = require("@nomicfoundation/hardhat-network-helpers");
 const {anyValue} = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const {expect} = require("chai");
+const {BigNumber} = require('ethers');
 
 describe("OracleConsumer", function () {
   // We define a fixture to reuse the same setup in every test.
@@ -47,15 +48,31 @@ describe("OracleConsumer", function () {
       });
     });
 
-    describe("Transfers", function () {
+    describe("Workflow", function () {
       it("Should update the lastTokenRateValue", async function () {
         const {oracleConsumer} = await loadFixture(deployContracts);
 
         await expect(await oracleConsumer.lastTokenRateValue()).to.equal(0)
 
-        await oracleConsumer.updateRateValue(ethers.utils.parseUnits("0.1", "ether")); // here we are converting the float to wei to work as "intFloat"
+        await oracleConsumer.updateRateValue(ethers.utils.parseUnits("0.01", "ether")); // here we are converting the float to wei to work as "intFloat"
 
-        await expect(await oracleConsumer.lastTokenRateValue()).to.equal(ethers.utils.parseUnits("0.1", "ether"))
+        await expect(await oracleConsumer.lastTokenRateValue()).to.equal(ethers.utils.parseUnits("0.01", "ether"))
+      });
+
+      it("Should get the correct getConversionRate", async function () {
+        const {oracleConsumer} = await loadFixture(deployContracts);
+
+        await oracleConsumer.updateRateValue(ethers.utils.parseUnits("10", "ether")); // here we are converting the float to wei to work as "intFloat"
+
+        const price1 = ethers.utils.formatUnits("1000000000000000000", "wei")
+        const price2 = ethers.utils.formatUnits("3000000000000000000", "wei")
+        const price3 = ethers.utils.formatUnits("5000000000000000000", "wei")
+        const price4 = ethers.utils.formatUnits("7000000000000000000", "wei")
+
+        await expect(await oracleConsumer.getConversionRate(BigNumber.from(price1))).to.equal("100000000000000000")
+        await expect(await oracleConsumer.getConversionRate(BigNumber.from(price2))).to.equal("300000000000000000")
+        await expect(await oracleConsumer.getConversionRate(BigNumber.from(price3))).to.equal("500000000000000000")
+        await expect(await oracleConsumer.getConversionRate(BigNumber.from(price4))).to.equal("700000000000000000")
       });
     });
   });
