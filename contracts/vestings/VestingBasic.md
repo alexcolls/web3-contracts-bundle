@@ -1,5 +1,7 @@
 # Smart Contract Documentation: VestingBasic
 
+Audit Report: [View](https://github.com/gamesforaliving/web3-contracts-bundle/blob/main/contracts/vestings/VestingBasic_Audit_Report.pdf)
+
 ## Overview:
 VestingBasic is a smart contract that manages the vesting of ERC20 tokens. The contract allows a specific set of users, called "vesters", to withdraw tokens from the contract at specific time intervals defined in a vesting schedule. The contract provides an easy way to manage and distribute tokens over time, rather than all at once.
 
