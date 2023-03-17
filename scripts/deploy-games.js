@@ -108,25 +108,28 @@ const ERC1155 = [
 ]
 
 async function main() {
+  // Skills
+
   const ElementalRaidersSkill = await hre.ethers.getContractFactory("ElementalRaidersSkill")
   const elementalRaidersSkill = await ElementalRaidersSkill.deploy(GFAL_TOKEN, ORACLE_CONSUMER, "")
   await elementalRaidersSkill.deployed()
 
-  const ElementalRaidersSkin = await hre.ethers.getContractFactory("ElementalRaidersSkin")
-  const elementalRaidersSkin = await ElementalRaidersSkin.deploy(GFAL_TOKEN, ORACLE_CONSUMER)
-  await elementalRaidersSkin.deployed()
-
-  // Executing functions
-
   // Updating baseURIs for both collections
   await elementalRaidersSkill.updateBaseURI(NFT_METADATA_BASEURI + elementalRaidersSkill.address + "/")
-  await elementalRaidersSkin.setURI(NFT_METADATA_BASEURI + elementalRaidersSkin.address + "/")
 
   // Updating prices for minting BY RARITY INDEX
   await elementalRaidersSkill.updateMintingPrice(1, hre.ethers.utils.parseEther('1'))
   await elementalRaidersSkill.updateMintingPrice(2, hre.ethers.utils.parseEther('3'))
   await elementalRaidersSkill.updateMintingPrice(3, hre.ethers.utils.parseEther('5'))
   await elementalRaidersSkill.updateMintingPrice(4, hre.ethers.utils.parseEther('7'))
+
+  // Skins
+
+  const ElementalRaidersSkin = await hre.ethers.getContractFactory("ElementalRaidersSkin")
+  const elementalRaidersSkin = await ElementalRaidersSkin.deploy(GFAL_TOKEN, ORACLE_CONSUMER)
+  await elementalRaidersSkin.deployed()
+
+  await elementalRaidersSkin.setURI(NFT_METADATA_BASEURI + elementalRaidersSkin.address + "/")
 
   // Updating prices for minting BY TOKEN ID (erc1155)
   for (let item of ERC1155) {

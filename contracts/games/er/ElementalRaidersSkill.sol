@@ -17,7 +17,7 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable, Owna
     Counters.Counter private _tokenIdCounter;
 
     address public gfalToken;
-    string public baseURI;
+    string public tBaseURI;
     address public feeCollector;
     mapping(uint256 => uint256) public prices;
     // Price data feed Oracle contract
@@ -25,11 +25,11 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable, Owna
 
     event Mint(address from, address to, uint256 tokenId, uint256 price);
 
-    constructor(address _gfalToken, address _oracleConsumer, string memory _baseURI) ERC721("Elemental Raiders Skill", "ERSKILL") {
+    constructor(address _gfalToken, address _oracleConsumer, string memory _tBaseURI) ERC721("Elemental Raiders Skill", "ERSKILL") {
         feeCollector = msg.sender;
         gfalToken = _gfalToken;
         oracleConsumer = OracleConsumer(_oracleConsumer);
-        baseURI = _baseURI;
+        tBaseURI = _tBaseURI;
     }
 
     // Abstract high-level flow
@@ -81,8 +81,12 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable, Owna
 
     // Owner
 
-    function updateBaseURI(string memory _baseURI) external onlyOwner {
-        baseURI = _baseURI;
+    function updateTBaseURI(string memory _tBaseURI) external onlyOwner {
+        tBaseURI = _tBaseURI;
+    }
+
+    function updateOracleConsumer(address _oracleConsumer) external onlyOwner {
+        oracleConsumer = OracleConsumer(_oracleConsumer);
     }
 
     function updateMintingPrice(uint256 rarity, uint256 price) external onlyOwner {
@@ -94,7 +98,7 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable, Owna
     // Optional overrides
 
     function _baseURI() internal view override returns (string memory) {
-        return baseURI;
+        return tBaseURI;
     }
 
     // The following functions are overrides required by Solidity.

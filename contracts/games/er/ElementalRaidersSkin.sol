@@ -80,6 +80,10 @@ contract ElementalRaidersSkin is ERC1155, Ownable, ERC1155Supply {
         prices[tokenId] = price; // 50000000000000000000 for 50.00 GFAL (50+18 zeros)
     }
 
+    function updateOracleConsumer(address _oracleConsumer) external onlyOwner {
+        oracleConsumer = OracleConsumer(_oracleConsumer);
+    }
+
     function updateMintingMaxSupply(uint256 tokenId, uint256 maxSupply) external onlyOwner {
         maxSupplies[tokenId] = maxSupply;
     }
