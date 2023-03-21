@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./utils/OracleConsumer.sol";
+import "../utils/OracleConsumer.sol";
 
 contract GFALMarketplace is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;

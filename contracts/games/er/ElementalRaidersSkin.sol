@@ -106,7 +106,7 @@ contract ElementalRaidersSkin is ERC1155, Ownable, ERC1155Supply {
         _setURI(newUri);
     }
 
-    function uri(uint256 tokenId) public view virtual override returns (string memory) {
+    function tokenURI(uint256 tokenId) public view returns (string memory) {
         return string(abi.encodePacked(uri(tokenId), tokenId));
     }
 

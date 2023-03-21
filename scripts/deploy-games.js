@@ -115,7 +115,7 @@ async function main() {
   await elementalRaidersSkill.deployed()
 
   // Updating baseURIs for both collections
-  await elementalRaidersSkill.updateBaseURI(NFT_METADATA_BASEURI + elementalRaidersSkill.address + "/")
+  await elementalRaidersSkill.updateTBaseURI(NFT_METADATA_BASEURI + elementalRaidersSkill.address + "/")
 
   // Updating prices for minting BY RARITY INDEX
   await elementalRaidersSkill.updateMintingPrice(1, hre.ethers.utils.parseEther('1'))
