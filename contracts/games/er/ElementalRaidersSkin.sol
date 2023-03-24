@@ -18,6 +18,7 @@ contract ElementalRaidersSkin is ERC1155, Ownable, ERC1155Supply {
     address public feeCollector;
     mapping(uint256 => uint256) public prices; // tokenId => priceInWeiGFAL
     mapping(uint256 => uint256) public maxSupplies; // tokenId => maxSupplyPerToken
+    mapping(uint256 => bool) public whitelistTokenIds; // tokenId => true/false
     // Price data feed Oracle contract
     OracleConsumer public oracleConsumer;
 
@@ -30,21 +31,21 @@ contract ElementalRaidersSkin is ERC1155, Ownable, ERC1155Supply {
         oracleConsumer = OracleConsumer(_oracleConsumer);
     }
 
-    function mint(address to, uint256 id, uint256 amount)
+    function mint(address to, uint256 id)
     public
     onlyOwner
     {
         if (maxSupplies[id] != 0) {
-            require((totalSupply(id) + amount) <= maxSupplies[id], "Amount to mint exceeds the maxSupply for the tokenId");
+            require(totalSupply(id) < maxSupplies[id], "Amount to mint exceeds the maxSupply for the tokenId");
         }
         // If the tokenId has been marked with a price higher than 0
         if (prices[id] != 0) {
             // Converting price from dollars to $GFAL
             IERC20(gfalToken).safeTransferFrom(to, feeCollector, OracleConsumer(oracleConsumer).getConversionRate(prices[id]));
         }
-        _mint(to, id, amount, "");
+        _mint(to, id, 1, "");
 
-        emit Mint(address(0), to, id, amount, OracleConsumer(oracleConsumer).getConversionRate(prices[id]));
+        emit Mint(address(0), to, id, 1, OracleConsumer(oracleConsumer).getConversionRate(prices[id]));
     }
 
     function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts)
@@ -80,12 +81,16 @@ contract ElementalRaidersSkin is ERC1155, Ownable, ERC1155Supply {
         prices[tokenId] = price; // 50000000000000000000 for 50.00 GFAL (50+18 zeros)
     }
 
+    function updateMintingMaxSupply(uint256 tokenId, uint256 maxSupply) external onlyOwner {
+        maxSupplies[tokenId] = maxSupply;
+    }
+
     function updateOracleConsumer(address _oracleConsumer) external onlyOwner {
         oracleConsumer = OracleConsumer(_oracleConsumer);
     }
 
-    function updateMintingMaxSupply(uint256 tokenId, uint256 maxSupply) external onlyOwner {
-        maxSupplies[tokenId] = maxSupply;
+    function updateFeeCollector(address _feeCollector) external onlyOwner {
+        feeCollector = _feeCollector;
     }
 
     // Getters

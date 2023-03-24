@@ -85,14 +85,17 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable, Owna
         tBaseURI = _tBaseURI;
     }
 
+    function updateMintingPrice(uint256 rarity, uint256 price) external onlyOwner {
+        require(rarity >= 1 && rarity <= 4, "Rarity index out of bound");
+        prices[rarity] = price; // 50000000000000000000 for 50.00 GFAL (50+18 zeros)
+    }
+
     function updateOracleConsumer(address _oracleConsumer) external onlyOwner {
         oracleConsumer = OracleConsumer(_oracleConsumer);
     }
 
-    function updateMintingPrice(uint256 rarity, uint256 price) external onlyOwner {
-        require(rarity >= 1 && rarity <= 4, "Rarity index out of bound.");
-
-        prices[rarity] = price; // 50000000000000000000 for 50.00 GFAL (50+18 zeros)
+    function updateFeeCollector(address _feeCollector) external onlyOwner {
+        feeCollector = _feeCollector;
     }
 
     // Optional overrides
