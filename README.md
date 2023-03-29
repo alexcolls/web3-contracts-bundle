@@ -25,4 +25,7 @@ npx hardhat test
 REPORT_GAS=true npx hardhat test
 npx hardhat node
 npx hardhat run scripts/deploy-{scriptName}.js
+
+//e.g
+npx hardhat run .\scripts\utils\set-vesting-schedule-developers.js --network bsc
 ```
