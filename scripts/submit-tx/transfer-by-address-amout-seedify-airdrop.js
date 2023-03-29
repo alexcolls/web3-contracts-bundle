@@ -220,7 +220,7 @@ const GFAL_TOKEN = process.env.GFAL_TOKEN_MAINNET
 
 async function main() {
   // Create a new provider
-  let provider = new ethers.providers.JsonRpcProvider(process.env.WEB3_HTTP_PROVIDER);
+  let provider = new ethers.providers.JsonRpcProvider(process.env.WEB3_HTTP_PROVIDER_MAIN);
 
   // Create a new instance of the contract using the provider
   const gfalToken = new ethers.Contract(GFAL_TOKEN, GFALTokenArtifact.abi, provider);

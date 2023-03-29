@@ -24,7 +24,7 @@ const VESTING_CONTRACTS = [
 async function main() {
   // Create a new signer and provider
   const signer = new ethers.Wallet(process.env.VESTER_PRIVATE_KEY_MAINNET)
-  let provider = new ethers.providers.JsonRpcProvider(process.env.WEB3_HTTP_PROVIDER);
+  let provider = new ethers.providers.JsonRpcProvider(process.env.WEB3_HTTP_PROVIDER_MAIN);
 
   // Executing transactions and saving results
   let results = []

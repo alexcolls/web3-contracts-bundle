@@ -11,18 +11,10 @@ const GFALTokenArtifact = require('../../artifacts/contracts/_mock/GFALToken.sol
 // Constants
 const TRANSFERS_PAYLOAD = {
   address: [
-    "0x63fd2851D4B6d7855d35e7E88fC0324C256E72b5", //Toad (moderator)
-    "0x7712766e970C91Ea6031f2A0ebFec66554FC83c3", //Mada (moderator)
-    "0x8B59D0F2a5E26702CeADD609609A4b043b58338a", //Skizo (moderator)
-    "0x2Ea537ae9955acECFf13BB6e9144bF6E871669a2", //Dverse (Feb)
-    "0x2Ea537ae9955acECFf13BB6e9144bF6E871669a2", //Dverse (Trip interview)
+    "0x977817a1fdde5c74d8a9201c1d2bd52664a4a1ed", //Bitget (Airdrop)
   ],
   amount: [
-    ethers.utils.parseEther(String(50000)),
-    ethers.utils.parseEther(String(50000)),
-    ethers.utils.parseEther(String(50000)),
-    ethers.utils.parseEther(String(160000)),
-    ethers.utils.parseEther(String(240000)),
+    ethers.utils.parseEther(String(15000)),
   ]
 }
 
