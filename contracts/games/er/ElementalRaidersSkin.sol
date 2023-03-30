@@ -3,86 +3,102 @@ pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "../../utils/OracleConsumer.sol";
 
-contract ElementalRaidersSkin is ERC1155, Ownable, ERC1155Supply {
+contract ElementalRaidersSkin is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     using SafeERC20 for IERC20;
+    using Counters for Counters.Counter;
 
-    // TODO: Metadata.name
-    // TODO: Metadata.symbol
+    Counters.Counter private _tokenIdCounter;
 
     address public gfalToken;
+    string public tBaseURI;
     address public feeCollector;
-    mapping(uint256 => uint256) public prices; // tokenId => priceInWeiGFAL
-    mapping(uint256 => uint256) public maxSupplies; // tokenId => maxSupplyPerToken
-    mapping(uint256 => bool) public whitelistTokenIds; // tokenId => true/false
+    mapping(uint256 => uint256) public prices;
+    mapping(uint256 => Skin) public skinsMap;
     // Price data feed Oracle contract
     OracleConsumer public oracleConsumer;
 
-    event Mint(address from, address to, uint256 id, uint256 amount, uint256 price);
-    event MintBatch(address from, address to, uint256[] ids, uint256[] amounts, uint256 price);
+    struct Skin {
+      uint256 maxSupply;
+      Counters.Counter totalSupply;
+    }
 
-    constructor(address _gfalToken, address _oracleConsumer) ERC1155("") {
+    event Mint(address from, address to, uint256 tokenId, uint256 price);
+
+    constructor(address _gfalToken, address _oracleConsumer, string memory _tBaseURI) ERC721("Elemental Raiders Skin", "ERSKILL") {
         feeCollector = msg.sender;
         gfalToken = _gfalToken;
         oracleConsumer = OracleConsumer(_oracleConsumer);
+        tBaseURI = _tBaseURI;
     }
 
-    function mint(address to, uint256 id)
-    public
-    onlyOwner
-    {
-        if (maxSupplies[id] != 0) {
-            require(totalSupply(id) < maxSupplies[id], "Amount to mint exceeds the maxSupply for the tokenId");
-        }
-        // If the tokenId has been marked with a price higher than 0
-        if (prices[id] != 0) {
-            // Converting price from dollars to $GFAL
-            IERC20(gfalToken).safeTransferFrom(to, feeCollector, OracleConsumer(oracleConsumer).getConversionRate(prices[id]));
-        }
-        _mint(to, id, 1, "");
+    // Abstract high-level flow
+    // - In-game user on in-game inventory clicks on Mint
+    // - Game clients check if the user already gave the approval to this contract, for the required amount
+    // - - Yes: Fine! Maybe the user tried before and something failed, or simply did that via User Portal or even chain block explorer!
+    // - - No: The user is prompted to confirm an approval transaction for the required minting amount in GFAL
+    // - Ack -> Game client sends the POST req to Game Server to start the mint, which will try move pre-approved amount and fails if the approval has been hijacked
+    // - Web3Provider is going to answer the Promise with a success or error in JSON-RPC format.
+    // - Further game handling.
+    function safeMint(address to, uint256 skinId) public onlyOwner {
+        require(skinsMap[skinId].totalSupply.current() < skinsMap[skinId].maxSupply, "Max supply reached");
 
-        emit Mint(address(0), to, id, 1, OracleConsumer(oracleConsumer).getConversionRate(prices[id]));
+        uint256 tokenPrice;
+        if (prices[skinId] != 0){
+            // Transferring GFAL from player wallet to feeCollector. Assuming previous allowance has been given.
+            tokenPrice = OracleConsumer(oracleConsumer).getConversionRate(prices[skinId]);
+            IERC20(gfalToken).safeTransferFrom(to, feeCollector, tokenPrice);
+        }
+
+        // Mint flow
+        uint256 tokenId = _tokenIdCounter.current();
+        _tokenIdCounter.increment();
+        _safeMint(to, tokenId);
+
+        skinsMap[skinId].totalSupply.increment();
+        emit Mint(address(0), to, tokenId, tokenPrice);
     }
 
-    function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts)
-    public
-    onlyOwner
-    {
-        require(ids.length == amounts.length, "ERC1155: ids and amounts length mismatch");
+    // Getters
 
-        // sumPrice based on prices mapping
-        uint256 sumPrice;
-        for (uint256 i = 0; i < ids.length; i++) {
-            if (maxSupplies[ids[i]] != 0) {
-                require((totalSupply(ids[i]) + amounts[i]) <= maxSupplies[ids[i]], "Amount to mint exceeds the maxSupply for the tokenId");
-            }
-            // Converting price from dollars to $GFAL
-            sumPrice += OracleConsumer(oracleConsumer).getConversionRate(prices[ids[i]]);
+    function getOwnersByTokens(uint256[] memory tokens) public view returns (address[] memory) {
+        address[] memory response = new address[](tokens.length);
+
+        for (uint256 i = 0; i < tokens.length; i++) {
+            response[i] = ERC721(address(this)).ownerOf(tokens[i]);
         }
 
-        // If the sumPrice is not 0, make the safeTransferFrom
-        if (sumPrice != 0) {
-            IERC20(gfalToken).safeTransferFrom(to, feeCollector, sumPrice);
+        return response;
+    }
+
+    function getMintingPricesBySkinIds(uint256[] memory skinIds) public view returns (uint256[] memory) {
+        uint256[] memory pricesSkins = new uint256[](skinIds.length);
+
+        for (uint256 i; i < skinIds.length; i++) {
+            pricesSkins[i] = OracleConsumer(oracleConsumer).getConversionRate(prices[skinIds[i]]);
         }
 
-        // Mint the batch
-        _mintBatch(to, ids, amounts, "");
-
-        emit MintBatch(address(0), to, ids, amounts, sumPrice);
+        return pricesSkins;
     }
 
     // Owner
 
-    function updateMintingPrice(uint256 tokenId, uint256 price) external onlyOwner {
-        prices[tokenId] = price; // 50000000000000000000 for 50.00 GFAL (50+18 zeros)
+    function updateTBaseURI(string memory _tBaseURI) external onlyOwner {
+        tBaseURI = _tBaseURI;
     }
 
-    function updateMintingMaxSupply(uint256 tokenId, uint256 maxSupply) external onlyOwner {
-        maxSupplies[tokenId] = maxSupply;
+    function updateMintingPrices(uint256[] calldata skinIds, uint256[] calldata skinPrices) external onlyOwner {
+        require(skinIds.length == skinPrices.length, "Length mismatch");
+
+        for (uint256 i; i < skinIds.length; i++){
+            prices[skinIds[i]] = skinPrices[i]; // 50000000000000000000 for 50.00 GFAL (50+18 zeros)
+        }
     }
 
     function updateOracleConsumer(address _oracleConsumer) external onlyOwner {
@@ -93,34 +109,36 @@ contract ElementalRaidersSkin is ERC1155, Ownable, ERC1155Supply {
         feeCollector = _feeCollector;
     }
 
-    // Getters
+    function updateSkinsMap(uint256[] calldata skinIds, uint256[] calldata maxSupplies) external onlyOwner{
+        require(skinIds.length == maxSupplies.length, "Length mismatch");
 
-    function getMintingPricesByTokenIds(uint256[] memory tokenIds) public view returns (uint256[] memory) {
-        uint256[] memory idPrices = new uint256[](tokenIds.length);
-
-        for (uint256 i = 0; i < tokenIds.length; i++) {
-            idPrices[i] = OracleConsumer(oracleConsumer).getConversionRate(prices[tokenIds[i]]);
+        for(uint256 i = 0; i < skinIds.length; i++){
+            require(skinsMap[skinIds[i]].maxSupply == 0, "Supply already set");
+            skinsMap[skinIds[i]].maxSupply = maxSupplies[i];
         }
-
-        return idPrices;
     }
 
-    // Overrides
+    // Optional overrides
 
-    function setURI(string memory newUri) public onlyOwner {
-        _setURI(newUri);
-    }
-
-    function tokenURI(uint256 tokenId) public view returns (string memory) {
-        return string(abi.encodePacked(uri(tokenId), tokenId));
+    function _baseURI() internal view override returns (string memory) {
+        return tBaseURI;
     }
 
     // The following functions are overrides required by Solidity.
 
-    function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
     internal
-    override(ERC1155, ERC1155Supply)
+    override(ERC721, ERC721Enumerable)
     {
-        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+        super._beforeTokenTransfer(from, to, tokenId, batchSize);
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+    public
+    view
+    override(ERC721, ERC721Enumerable)
+    returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 }
