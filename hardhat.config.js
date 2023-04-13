@@ -1,4 +1,4 @@
-require("dotenv").config()
+require("dotenv").config();
 require("@nomicfoundation/hardhat-toolbox");
 
 /** @type import('hardhat/config').HardhatUserConfig */
@@ -7,32 +7,32 @@ module.exports = {
 
   networks: {
     hardhat: {
-      chainId: 1337
+      chainId: 1337,
     },
-    bsctest: {
-      url: process.env.WEB3_HTTP_PROVIDER_TEST,
-      accounts: [process.env.OWNER_PRIVATE_KEY]
-    },
-    bscmain: {
-      url: process.env.WEB3_HTTP_PROVIDER_MAIN,
-      accounts: [process.env.OWNER_PRIVATE_KEY]
-    }
+    // bsctest: {
+    //   url: process.env.WEB3_HTTP_PROVIDER_TEST,
+    //   accounts: [process.env.OWNER_PRIVATE_KEY]
+    // },
+    // bscmain: {
+    //   url: process.env.WEB3_HTTP_PROVIDER_MAIN,
+    //   accounts: [process.env.OWNER_PRIVATE_KEY]
+    // }
   },
 
   paths: {
     sources: "./contracts",
     tests: "./test",
     cache: "./cache",
-    artifacts: "./artifacts"
+    artifacts: "./artifacts",
   },
 
   solidity: {
-    version: "0.8.17",
+    compilers: [{ version: "0.8.19" }, { version: "0.8.17" }],
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200
-      }
-    }
-  }
+        runs: 200,
+      },
+    },
+  },
 };

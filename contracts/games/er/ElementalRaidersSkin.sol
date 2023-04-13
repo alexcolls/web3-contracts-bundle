@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -10,7 +10,12 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../../utils/OracleConsumer.sol";
 
-contract ElementalRaidersSkin is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
+contract ElementalRaidersSkin is
+    ERC721,
+    ERC721Enumerable,
+    ERC721Burnable,
+    Ownable
+{
     using SafeERC20 for IERC20;
     using Counters for Counters.Counter;
 
@@ -25,13 +30,17 @@ contract ElementalRaidersSkin is ERC721, ERC721Enumerable, ERC721Burnable, Ownab
     OracleConsumer public oracleConsumer;
 
     struct Skin {
-      uint256 maxSupply;
-      Counters.Counter totalSupply;
+        uint256 maxSupply;
+        Counters.Counter totalSupply;
     }
 
     event Mint(address from, address to, uint256 tokenId, uint256 price);
 
-    constructor(address _gfalToken, address _oracleConsumer, string memory _tBaseURI) ERC721("Elemental Raiders Skin", "ERSKILL") {
+    constructor(
+        address _gfalToken,
+        address _oracleConsumer,
+        string memory _tBaseURI
+    ) ERC721("Elemental Raiders Skin", "ERSKILL") {
         feeCollector = msg.sender;
         gfalToken = _gfalToken;
         oracleConsumer = OracleConsumer(_oracleConsumer);
@@ -47,12 +56,17 @@ contract ElementalRaidersSkin is ERC721, ERC721Enumerable, ERC721Burnable, Ownab
     // - Web3Provider is going to answer the Promise with a success or error in JSON-RPC format.
     // - Further game handling.
     function safeMint(address to, uint256 skinId) public onlyOwner {
-        require(skinsMap[skinId].totalSupply.current() < skinsMap[skinId].maxSupply, "Max supply reached");
+        require(
+            skinsMap[skinId].totalSupply.current() < skinsMap[skinId].maxSupply,
+            "Max supply reached"
+        );
 
         uint256 tokenPrice;
-        if (prices[skinId] != 0){
+        if (prices[skinId] != 0) {
             // Transferring GFAL from player wallet to feeCollector. Assuming previous allowance has been given.
-            tokenPrice = OracleConsumer(oracleConsumer).getConversionRate(prices[skinId]);
+            tokenPrice = OracleConsumer(oracleConsumer).getConversionRate(
+                prices[skinId]
+            );
             IERC20(gfalToken).safeTransferFrom(to, feeCollector, tokenPrice);
         }
 
@@ -67,7 +81,9 @@ contract ElementalRaidersSkin is ERC721, ERC721Enumerable, ERC721Burnable, Ownab
 
     // Getters
 
-    function getOwnersByTokens(uint256[] memory tokens) public view returns (address[] memory) {
+    function getOwnersByTokens(
+        uint256[] memory tokens
+    ) public view returns (address[] memory) {
         address[] memory response = new address[](tokens.length);
 
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -77,11 +93,15 @@ contract ElementalRaidersSkin is ERC721, ERC721Enumerable, ERC721Burnable, Ownab
         return response;
     }
 
-    function getMintingPricesBySkinIds(uint256[] memory skinIds) public view returns (uint256[] memory) {
+    function getMintingPricesBySkinIds(
+        uint256[] memory skinIds
+    ) public view returns (uint256[] memory) {
         uint256[] memory pricesSkins = new uint256[](skinIds.length);
 
         for (uint256 i; i < skinIds.length; i++) {
-            pricesSkins[i] = OracleConsumer(oracleConsumer).getConversionRate(prices[skinIds[i]]);
+            pricesSkins[i] = OracleConsumer(oracleConsumer).getConversionRate(
+                prices[skinIds[i]]
+            );
         }
 
         return pricesSkins;
@@ -93,10 +113,13 @@ contract ElementalRaidersSkin is ERC721, ERC721Enumerable, ERC721Burnable, Ownab
         tBaseURI = _tBaseURI;
     }
 
-    function updateMintingPrices(uint256[] calldata skinIds, uint256[] calldata skinPrices) external onlyOwner {
+    function updateMintingPrices(
+        uint256[] calldata skinIds,
+        uint256[] calldata skinPrices
+    ) external onlyOwner {
         require(skinIds.length == skinPrices.length, "Length mismatch");
 
-        for (uint256 i; i < skinIds.length; i++){
+        for (uint256 i; i < skinIds.length; i++) {
             prices[skinIds[i]] = skinPrices[i]; // 50000000000000000000 for 50.00 GFAL (50+18 zeros)
         }
     }
@@ -109,10 +132,13 @@ contract ElementalRaidersSkin is ERC721, ERC721Enumerable, ERC721Burnable, Ownab
         feeCollector = _feeCollector;
     }
 
-    function updateSkinsMap(uint256[] calldata skinIds, uint256[] calldata maxSupplies) external onlyOwner{
+    function updateSkinsMap(
+        uint256[] calldata skinIds,
+        uint256[] calldata maxSupplies
+    ) external onlyOwner {
         require(skinIds.length == maxSupplies.length, "Length mismatch");
 
-        for(uint256 i = 0; i < skinIds.length; i++){
+        for (uint256 i = 0; i < skinIds.length; i++) {
             require(skinsMap[skinIds[i]].maxSupply == 0, "Supply already set");
             skinsMap[skinIds[i]].maxSupply = maxSupplies[i];
         }
@@ -126,19 +152,18 @@ contract ElementalRaidersSkin is ERC721, ERC721Enumerable, ERC721Burnable, Ownab
 
     // The following functions are overrides required by Solidity.
 
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
-    internal
-    override(ERC721, ERC721Enumerable)
-    {
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId,
+        uint256 batchSize
+    ) internal override(ERC721, ERC721Enumerable) {
         super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    override(ERC721, ERC721Enumerable)
-    returns (bool)
-    {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(ERC721, ERC721Enumerable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }
