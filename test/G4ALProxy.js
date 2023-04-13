@@ -7,6 +7,8 @@ const hre = require("hardhat");
 const NFT_METADATA_BASEURI =
   "https://prod-web3-token-tracker-tqkvar3wjq-uc.a.run.app/metadata/";
 
+const ROYALTIES_IN_BASIS_POINTS = 1000;
+
 describe("G4ALProxy", function () {
   // We define a fixture to reuse the same setup in every test.
   // We use loadFixture to run this setup once, snapshot that state,
@@ -20,9 +22,14 @@ describe("G4ALProxy", function () {
     const gfalToken = await GFALToken.deploy();
     await gfalToken.deployed();
 
+    // PROXY SC
+    const Proxy = await ethers.getContractFactory("G4ALProxy");
+    const proxy = await Proxy.deploy(gfalToken.address);
+    await proxy.deployed();
+
     // ORACLE CONSUMER
     const OracleConsumer = await ethers.getContractFactory("OracleConsumer");
-    const oracleConsumer = await OracleConsumer.deploy();
+    const oracleConsumer = await OracleConsumer.deploy(proxy.address);
     await oracleConsumer.deployed();
 
     // SKIN NFT
@@ -30,8 +37,7 @@ describe("G4ALProxy", function () {
       "ElementalRaidersSkin"
     );
     const elementalRaidersSkin = await ElementalRaidersSkin.deploy(
-      gfalToken.address,
-      oracleConsumer.address,
+      proxy.address,
       "ipfs://"
     );
     await elementalRaidersSkin.deployed();
@@ -41,16 +47,18 @@ describe("G4ALProxy", function () {
       "ElementalRaidersSkill"
     );
     const elementalRaidersSkill = await ElementalRaidersSkill.deploy(
-      gfalToken.address,
-      oracleConsumer.address,
+      proxy.address,
       "ipfs://"
     );
     await elementalRaidersSkill.deployed();
 
-    // PROXY SC
-    const Proxy = await ethers.getContractFactory("G4ALProxy");
-    const proxy = await Proxy.deploy();
-    await proxy.deployed();
+    // MARKETPLACE
+    const GFALMarketplace = await ethers.getContractFactory("GFALMarketplace");
+    const gFALMarketplace = await GFALMarketplace.deploy(
+      ROYALTIES_IN_BASIS_POINTS,
+      proxy.address
+    );
+    await gFALMarketplace.deployed();
 
     return {
       owner,
@@ -61,6 +69,7 @@ describe("G4ALProxy", function () {
       proxy,
       elementalRaidersSkill,
       oracleConsumer,
+      gFALMarketplace,
     };
   }
 
@@ -75,6 +84,7 @@ describe("G4ALProxy", function () {
         proxy,
         elementalRaidersSkill,
         oracleConsumer,
+        gFALMarketplace,
       } = await loadFixture(deployContracts);
 
       expect(await proxy.owner()).to.equal(owner.address);
@@ -91,25 +101,37 @@ describe("G4ALProxy", function () {
         proxy,
         elementalRaidersSkill,
         oracleConsumer,
+        gFALMarketplace,
       } = await loadFixture(deployContracts);
 
-      await proxy.connect(owner).updateGfalToken(contract.address);
-      expect(await proxy.gfalToken()).to.equal(contract.address);
+      await proxy.connect(owner).updateGfalToken(gfalToken.address);
+      expect(await proxy.gfalToken()).to.equal(gfalToken.address);
 
-      await proxy.connect(owner).updateOracleConsumer(contract.address);
-      expect(await proxy.oracleConsumer()).to.equal(contract.address);
+      await proxy.connect(owner).updateOracleConsumer(oracleConsumer.address);
+      expect(await proxy.oracleConsumer()).to.equal(oracleConsumer.address);
 
       await proxy.connect(owner).updateFeeCollector(contract.address);
       expect(await proxy.feeCollector()).to.equal(contract.address);
 
-      await proxy.connect(owner).updateMarketPlace(contract.address);
-      expect(await proxy.marketPlace()).to.equal(contract.address);
+      await proxy.connect(owner).updateRoyaltiesCollector(contract.address);
+      expect(await proxy.royaltiesCollector()).to.equal(contract.address);
 
-      await proxy.connect(owner).updateSkillCollection(contract.address);
-      expect(await proxy.skillCollection()).to.equal(contract.address);
+      await proxy.connect(owner).updateMarketPlace(gFALMarketplace.address);
+      expect(await proxy.marketPlace()).to.equal(gFALMarketplace.address);
 
-      await proxy.connect(owner).updateSkinCollection(contract.address);
-      expect(await proxy.skinCollection()).to.equal(contract.address);
+      await proxy
+        .connect(owner)
+        .updateSkillCollection(elementalRaidersSkill.address);
+      expect(await proxy.skillCollection()).to.equal(
+        elementalRaidersSkill.address
+      );
+
+      await proxy
+        .connect(owner)
+        .updateSkinCollection(elementalRaidersSkin.address);
+      expect(await proxy.skinCollection()).to.equal(
+        elementalRaidersSkin.address
+      );
 
       console.log(
         `\n- All contracts addresses are set correctly in the Proxy!`
@@ -126,6 +148,7 @@ describe("G4ALProxy", function () {
         proxy,
         elementalRaidersSkill,
         oracleConsumer,
+        gFALMarketplace,
       } = await loadFixture(deployContracts);
 
       await expect(proxy.connect(user).updateGfalToken(contract.address)).to.be
@@ -137,8 +160,13 @@ describe("G4ALProxy", function () {
       await expect(proxy.connect(user).updateFeeCollector(contract.address)).to
         .be.reverted;
 
-      await expect(proxy.connect(user).updateMarketPlace(contract.address)).to
-        .be.reverted;
+      await expect(
+        proxy.connect(user).updateRoyaltiesCollector(contract.address)
+      ).to.be.reverted;
+
+      await expect(
+        proxy.connect(user).updateMarketPlace(gFALMarketplace.address)
+      ).to.be.reverted;
 
       await expect(proxy.connect(user).updateSkillCollection(contract.address))
         .to.be.reverted;

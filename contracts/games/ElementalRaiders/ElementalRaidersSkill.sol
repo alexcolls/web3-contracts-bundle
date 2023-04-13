@@ -6,30 +6,38 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../../utils/OracleConsumer.sol";
+import "../../utils/G4ALProxy.sol";
+// Uncomment this line to use console.log
+import "hardhat/console.sol";
 
-contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
+contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
     using SafeERC20 for IERC20;
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
 
-    address public gfalToken;
-    string public tBaseURI;
-    address public feeCollector;
+    // Proxy to store variables as addresses from contracts and from wallets
+    G4ALProxy public g4alProxy;
+
+    string public baseURI;
+
     mapping(uint256 => uint256) public prices;
-    // Price data feed Oracle contract
-    OracleConsumer public oracleConsumer;
 
     event Mint(address from, address to, uint256 tokenId, uint256 price);
 
-    constructor(address _gfalToken, address _oracleConsumer, string memory _tBaseURI) ERC721("Elemental Raiders Skill", "ERSKILL") {
-        feeCollector = msg.sender;
-        gfalToken = _gfalToken;
-        oracleConsumer = OracleConsumer(_oracleConsumer);
-        tBaseURI = _tBaseURI;
+    modifier onlyOwner() {
+        require(msg.sender == g4alProxy.owner(), "Not owner");
+        _;
+    }
+
+    constructor(
+        address _g4alProxy,
+        string memory _baseUri
+    ) ERC721("Elemental Raiders Skill", "ERSKILL") {
+        g4alProxy = G4ALProxy(_g4alProxy);
+        baseURI = _baseUri;
     }
 
     // Abstract high-level flow
@@ -46,8 +54,13 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable, Owna
         require(prices[rarity] != 0, "Minting 0 price tokens is not allowed");
 
         // Transferring GFAL from player wallet to feeCollector. Assuming previous allowance has been given.
-        uint256 tokenPrice = OracleConsumer(oracleConsumer).getConversionRate(prices[rarity]);
-        IERC20(gfalToken).safeTransferFrom(to, feeCollector, tokenPrice);
+        uint256 tokenPrice = OracleConsumer(g4alProxy.oracleConsumer())
+            .getConversionRate(prices[rarity]);
+        IERC20(g4alProxy.gfalToken()).safeTransferFrom(
+            to,
+            g4alProxy.feeCollector(),
+            tokenPrice
+        );
 
         // Mint flow
         uint256 tokenId = _tokenIdCounter.current();
@@ -59,7 +72,9 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable, Owna
 
     // Getters
 
-    function getOwnersByTokens(uint256[] memory tokens) public view returns (address[] memory) {
+    function getOwnersByTokens(
+        uint256[] memory tokens
+    ) public view returns (address[] memory) {
         address[] memory response = new address[](tokens.length);
 
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -69,11 +84,14 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable, Owna
         return response;
     }
 
-    function getMintingPricesByRarity(uint256[] memory rarities) public view returns (uint256[] memory) {
+    function getMintingPricesByRarity(
+        uint256[] memory rarities
+    ) public view returns (uint256[] memory) {
         uint256[] memory rarityPrices = new uint256[](rarities.length);
 
         for (uint256 i = 0; i < rarities.length; i++) {
-            rarityPrices[i] = OracleConsumer(oracleConsumer).getConversionRate(prices[rarities[i]]);
+            rarityPrices[i] = OracleConsumer(g4alProxy.oracleConsumer())
+                .getConversionRate(prices[rarities[i]]);
         }
 
         return rarityPrices;
@@ -81,44 +99,37 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable, Owna
 
     // Owner
 
-    function updateTBaseURI(string memory _tBaseURI) external onlyOwner {
-        tBaseURI = _tBaseURI;
+    function updateBaseURI(string memory _baseUri) external onlyOwner {
+        baseURI = _baseUri;
     }
 
-    function updateMintingPrice(uint256 rarity, uint256 price) external onlyOwner {
+    function updateMintingPrice(
+        uint256 rarity,
+        uint256 price
+    ) external onlyOwner {
         require(rarity >= 1 && rarity <= 4, "Rarity index out of bound");
         prices[rarity] = price; // 50000000000000000000 for 50.00 GFAL (50+18 zeros)
     }
 
-    function updateOracleConsumer(address _oracleConsumer) external onlyOwner {
-        oracleConsumer = OracleConsumer(_oracleConsumer);
-    }
-
-    function updateFeeCollector(address _feeCollector) external onlyOwner {
-        feeCollector = _feeCollector;
-    }
-
     // Optional overrides
-
     function _baseURI() internal view override returns (string memory) {
-        return tBaseURI;
+        return baseURI;
     }
 
     // The following functions are overrides required by Solidity.
 
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
-    internal
-    override(ERC721, ERC721Enumerable)
-    {
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId,
+        uint256 batchSize
+    ) internal override(ERC721, ERC721Enumerable) {
         super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    override(ERC721, ERC721Enumerable)
-    returns (bool)
-    {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(ERC721, ERC721Enumerable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }

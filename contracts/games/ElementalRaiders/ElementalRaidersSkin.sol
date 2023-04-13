@@ -9,25 +9,20 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../../utils/OracleConsumer.sol";
+import "../../utils/G4ALProxy.sol";
 
-contract ElementalRaidersSkin is
-    ERC721,
-    ERC721Enumerable,
-    ERC721Burnable,
-    Ownable
-{
+contract ElementalRaidersSkin is ERC721, ERC721Enumerable, ERC721Burnable {
     using SafeERC20 for IERC20;
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
 
-    address public gfalToken;
-    string public tBaseURI;
-    address public feeCollector;
+    // Proxy to store variables as addresses from contracts and from wallets
+    G4ALProxy public g4alProxy;
+
+    string public baseUri;
     mapping(uint256 => uint256) public prices;
     mapping(uint256 => Skin) public skinsMap;
-    // Price data feed Oracle contract
-    OracleConsumer public oracleConsumer;
 
     struct Skin {
         uint256 maxSupply;
@@ -36,15 +31,17 @@ contract ElementalRaidersSkin is
 
     event Mint(address from, address to, uint256 tokenId, uint256 price);
 
+    modifier onlyOwner() {
+        require(msg.sender == g4alProxy.owner(), "Not owner");
+        _;
+    }
+
     constructor(
-        address _gfalToken,
-        address _oracleConsumer,
-        string memory _tBaseURI
-    ) ERC721("Elemental Raiders Skin", "ERSKILL") {
-        feeCollector = msg.sender;
-        gfalToken = _gfalToken;
-        oracleConsumer = OracleConsumer(_oracleConsumer);
-        tBaseURI = _tBaseURI;
+        address _g4alProxy,
+        string memory _baseUri
+    ) ERC721("Elemental Raiders Skin", "ERSKIN") {
+        g4alProxy = G4ALProxy(_g4alProxy);
+        baseUri = _baseUri;
     }
 
     // Abstract high-level flow
@@ -64,10 +61,13 @@ contract ElementalRaidersSkin is
         uint256 tokenPrice;
         if (prices[skinId] != 0) {
             // Transferring GFAL from player wallet to feeCollector. Assuming previous allowance has been given.
-            tokenPrice = OracleConsumer(oracleConsumer).getConversionRate(
-                prices[skinId]
+            tokenPrice = OracleConsumer(g4alProxy.oracleConsumer())
+                .getConversionRate(prices[skinId]);
+            IERC20(g4alProxy.gfalToken()).safeTransferFrom(
+                to,
+                g4alProxy.feeCollector(),
+                tokenPrice
             );
-            IERC20(gfalToken).safeTransferFrom(to, feeCollector, tokenPrice);
         }
 
         // Mint flow
@@ -99,9 +99,8 @@ contract ElementalRaidersSkin is
         uint256[] memory pricesSkins = new uint256[](skinIds.length);
 
         for (uint256 i; i < skinIds.length; i++) {
-            pricesSkins[i] = OracleConsumer(oracleConsumer).getConversionRate(
-                prices[skinIds[i]]
-            );
+            pricesSkins[i] = OracleConsumer(g4alProxy.oracleConsumer())
+                .getConversionRate(prices[skinIds[i]]);
         }
 
         return pricesSkins;
@@ -109,8 +108,8 @@ contract ElementalRaidersSkin is
 
     // Owner
 
-    function updateTBaseURI(string memory _tBaseURI) external onlyOwner {
-        tBaseURI = _tBaseURI;
+    function updateBaseUri(string memory _baseUri) external onlyOwner {
+        baseUri = _baseUri;
     }
 
     function updateMintingPrices(
@@ -122,14 +121,6 @@ contract ElementalRaidersSkin is
         for (uint256 i; i < skinIds.length; i++) {
             prices[skinIds[i]] = skinPrices[i]; // 50000000000000000000 for 50.00 GFAL (50+18 zeros)
         }
-    }
-
-    function updateOracleConsumer(address _oracleConsumer) external onlyOwner {
-        oracleConsumer = OracleConsumer(_oracleConsumer);
-    }
-
-    function updateFeeCollector(address _feeCollector) external onlyOwner {
-        feeCollector = _feeCollector;
     }
 
     function updateSkinsMap(
@@ -147,7 +138,7 @@ contract ElementalRaidersSkin is
     // Optional overrides
 
     function _baseURI() internal view override returns (string memory) {
-        return tBaseURI;
+        return baseUri;
     }
 
     // The following functions are overrides required by Solidity.

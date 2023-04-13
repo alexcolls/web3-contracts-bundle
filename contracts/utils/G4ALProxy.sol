@@ -5,11 +5,12 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract G4ALProxy is Ownable {
     address public gfalToken;
-    address public oracleConsumer;
-    address public feeCollector;
-    address public marketPlace;
-    address public skillCollection;
-    address public skinCollection;
+    address public oracleConsumer; // G4AL price feed              || Needs to be set once deployed
+    address public feeCollector; // From Minting NFTs
+    address public royaltiesCollector; // From Marketplace
+    address public marketPlace; // ERC721 & ERC1155 MarketPlace || Needs to be set once deployed
+    address public skillCollection; // || Needs to be set once deployed
+    address public skinCollection; // || Needs to be set once deployed
 
     event GfalTokenUpdated(address oldGfalToken, address newGfalToken);
     event OracleConsumerUpdated(
@@ -17,11 +18,19 @@ contract G4ALProxy is Ownable {
         address newOracleConsumer
     );
     event FeeCollectorUpdated(address oldFeeCollector, address newFeeCollector);
+    event RoyaltyCollectorUpdated(
+        address oldRoyaltyCollector,
+        address newRoyaltyCollector
+    );
     event MarketPlaceUpdated(address oldMarketPlace, address newMarketPlace);
     event SkillCollectionUpdate(address oldCollection, address newCollection);
     event SkinCollectionUpdate(address oldCollection, address newCollection);
 
-    constructor() {}
+    constructor(address _gfalToken) {
+        feeCollector = msg.sender;
+        royaltiesCollector = msg.sender;
+        gfalToken = _gfalToken;
+    }
 
     // Setter for new ERC20 Token address
     function updateGfalToken(address _newToken) external onlyOwner {
@@ -49,6 +58,18 @@ contract G4ALProxy is Ownable {
         feeCollector = _newFeeCollector;
 
         emit FeeCollectorUpdated(_oldCollector, _newFeeCollector);
+    }
+
+    // Setter for Royalties Collector (From MarketPlace)
+    function updateRoyaltiesCollector(
+        address _newCollector
+    ) external onlyOwner {
+        require(_newCollector != address(0), "Not valid address");
+
+        address _oldCollector = royaltiesCollector;
+        royaltiesCollector = _newCollector;
+
+        emit RoyaltyCollectorUpdated(_oldCollector, _newCollector);
     }
 
     // Setter for new MarketPlace address (For ERC721)
