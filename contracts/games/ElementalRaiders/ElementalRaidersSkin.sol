@@ -108,7 +108,7 @@ contract ElementalRaidersSkin is ERC721, ERC721Enumerable, ERC721Burnable {
 
     // Owner
 
-    function updateBaseUri(string memory _baseUri) external onlyOwner {
+    function updateBaseURI(string memory _baseUri) external onlyOwner {
         baseUri = _baseUri;
     }
 
