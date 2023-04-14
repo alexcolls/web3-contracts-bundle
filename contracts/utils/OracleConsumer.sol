@@ -24,7 +24,9 @@ contract OracleConsumer {
         g4alProxy = G4ALProxy(_g4alProxy);
     }
 
-    // Getters
+    // Getters (USD to GFAL)
+    // @param _value: is the value in Dollars to exchange for GFAL
+    // @return: Amount in GFAL tokens
     function getConversionRate(uint256 value) public view returns (uint256) {
         return (dollarValue * value) / lastTokenRateValue;
     }

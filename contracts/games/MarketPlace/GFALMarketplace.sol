@@ -107,7 +107,11 @@ contract GFALMarketplace is ReentrancyGuard {
         uint256 tokenId,
         uint256 price,
         bool isDollar
-    ) public onlyTradableToken(contractAddress, msg.sender, tokenId) {
+    ) external onlyTradableToken(contractAddress, msg.sender, tokenId) {
+        require(
+            whitelistNFTs[contractAddress].allowed,
+            "Not allowed NFT collection"
+        );
         require(price != 0, "Cannot put zero as a price");
 
         // If the seller is unknown, push it to the sellersList array
@@ -148,8 +152,11 @@ contract GFALMarketplace is ReentrancyGuard {
         address contractAddress,
         uint256 tokenId,
         address seller
-    ) public nonReentrant {
-        // TODO: Check token collection is allowed and not blacklisted in the meantime were listed
+    ) external nonReentrant {
+        require(
+            whitelistNFTs[contractAddress].allowed,
+            "Not allowed NFT collection"
+        );
 
         Sale memory sale = tokensForSale[contractAddress][tokenId][seller];
         require(sale.isForSale, "Token is not for sale.");
@@ -224,10 +231,23 @@ contract GFALMarketplace is ReentrancyGuard {
         );
     }
 
-    function removeToken(
-        address contractAddress,
-        uint256 tokenId
-    ) public onlyTradableToken(contractAddress, msg.sender, tokenId) {
+    function removeToken(address contractAddress, uint256 tokenId) external {
+        // Ownership check for ERC721 and ERC1155 based on whitelisted information
+        if (
+            whitelistNFTs[contractAddress].tokenStandard == TokenStandard.ERC721
+        ) {
+            require(
+                IERC721Enumerable(contractAddress).ownerOf(tokenId) ==
+                    msg.sender,
+                "Token does not belong to user or not existing 721."
+            );
+        } else {
+            require(
+                IERC1155(contractAddress).balanceOf(msg.sender, tokenId) != 0,
+                "Token does not belong to user or not existing 1155."
+            );
+        }
+
         tokensForSale[contractAddress][tokenId][msg.sender] = Sale(
             0,
             false,
@@ -251,7 +271,7 @@ contract GFALMarketplace is ReentrancyGuard {
 
     // Getters
 
-    function getSellersList() public view returns (address[] memory) {
+    function getSellersList() external view returns (address[] memory) {
         return sellersList;
     }
 
@@ -261,7 +281,7 @@ contract GFALMarketplace is ReentrancyGuard {
         uint256 start,
         uint256 end
     )
-        public
+        external
         view
         returns (
             uint256[] memory tokenIds,

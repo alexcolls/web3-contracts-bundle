@@ -30,7 +30,7 @@ describe("OracleConsumer", function () {
     it("Should have been deployed successfully", async function () {
       const { oracleConsumer } = await loadFixture(deployContracts);
 
-      expect(await oracleConsumer.address).to.be.equal(oracleConsumer.address); // TODO: Check
+      expect(await oracleConsumer.address).to.be.equal(oracleConsumer.address);
     });
   });
 
