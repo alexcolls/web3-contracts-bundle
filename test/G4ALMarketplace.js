@@ -214,7 +214,6 @@ describe("GFALMarketplace", function () {
 
   // TODO: Important: Test the contract's behavior when the contract is trying to be reentrant and check that it works as expected.
   // .
-  // TODO: Test the contract's behavior when the price of a token is updated while it is being sold, and check that the buyer is charged the correct price.
   // TODO: Test the contract's behavior when the whitelist of NFTs is updated and check that it works as expected.
   // TODO: Test the contract's behavior when the token for sale is already sold and check that it works as expected.
   // TODO: Test the contract's behavior when the contract is paused and check that it works as expected.
@@ -225,9 +224,10 @@ describe("GFALMarketplace", function () {
 
   describe("Workflow", function () {
     describe("Validations", function () {
-      // TODO!: Does it make sense that it returns *10 the price in USD when we set the price of the NFT in Dollar as False? (So G4AL)
-      // TODO!  Check oracleConsumer and buyToken function
-      it("Get right mount of tokens Id on sale by seller on given dates", async function () {
+      // TODO!
+      it("Test the contract's behavior when the price of a token is updated while it is being sold, and check that the buyer is charged the correct price", async function () {});
+
+      it("Get right mount of tokens Id on sale by seller on given dates elementalRaidersSkill", async function () {
         // getOnSaleTokenIds()
         const {
           owner,
@@ -266,11 +266,7 @@ describe("GFALMarketplace", function () {
         await elementalRaidersSkill.safeMint(seller.address, 1);
         await elementalRaidersSkill.safeMint(seller.address, 1); // 4 NFTs minted
 
-        console.log(
-          `Balance Seller GFAL After minting:  ${await gfalToken.balanceOf(
-            seller.address
-          )}`
-        );
+        expect(await gfalToken.balanceOf(seller.address)).to.equal("0");
 
         // Approve and list 0, 1, 2 & 3 Skill NFTs in Marketplace
         for (let i = 0; i < 4; i++) {
@@ -287,7 +283,7 @@ describe("GFALMarketplace", function () {
               false
             );
         }
-
+        const NFTsMinted = 4;
         const NFTsOnSale = await gfalMarketplace.getOnSaleTokenIds(
           elementalRaidersSkill.address,
           seller.address,
@@ -295,7 +291,29 @@ describe("GFALMarketplace", function () {
           5
         );
 
-        console.log(`NFTs On sale: ${NFTsOnSale}`);
+        // Check selling NFT id = NFT id
+        for (let i = 0; i < NFTsMinted; i++) {
+          expect(NFTsOnSale[0][i]).to.equal(i);
+        }
+
+        // check selling NFT id by seller
+        for (let i = 0; i < NFTsMinted; i++) {
+          expect(NFTsOnSale[1][i]).to.equal(seller.address);
+        }
+
+        // check selling NFT id by Price
+        for (let i = 0; i < NFTsMinted; i++) {
+          expect(NFTsOnSale[2][i]).to.equal(
+            ethers.utils.parseUnits("50", "ether")
+          );
+        }
+
+        // Check Not listed NFT (ID, Seller, Price) -> ID 4 is not listed
+        expect(NFTsOnSale[0][4]).to.equal("0");
+        expect(NFTsOnSale[1][4]).to.equal(
+          "0x0000000000000000000000000000000000000000"
+        );
+        expect(NFTsOnSale[2][4]).to.equal(0);
       });
 
       it("Should revert if an user tries to sell a not-whitelistedNFT", async function () {
