@@ -9,8 +9,6 @@ contract G4ALProxy is Ownable {
     address public feeCollector; // From Minting NFTs
     address public royaltiesCollector; // From Marketplace
     address public marketPlace; // ERC721 & ERC1155 MarketPlace || Needs to be set once deployed
-    address public skillCollection; // || Needs to be set once deployed
-    address public skinCollection; // || Needs to be set once deployed
 
     event GfalTokenUpdated(address oldGfalToken, address newGfalToken);
     event OracleConsumerUpdated(
@@ -23,8 +21,6 @@ contract G4ALProxy is Ownable {
         address newRoyaltyCollector
     );
     event MarketPlaceUpdated(address oldMarketPlace, address newMarketPlace);
-    event SkillCollectionUpdate(address oldCollection, address newCollection);
-    event SkinCollectionUpdate(address oldCollection, address newCollection);
 
     constructor(address _gfalToken) {
         feeCollector = msg.sender;
@@ -80,25 +76,5 @@ contract G4ALProxy is Ownable {
         marketPlace = _newMarketPlace;
 
         emit MarketPlaceUpdated(_oldMarketPlace, _newMarketPlace);
-    }
-
-    // Setter for new NFT Skill Collection address
-    function updateSkillCollection(address _newCollection) external onlyOwner {
-        require(_newCollection != address(0), "Not valid address");
-
-        address _oldCollection = skillCollection;
-        skillCollection = _newCollection;
-
-        emit SkillCollectionUpdate(_oldCollection, _newCollection);
-    }
-
-    // Setter for new NFT Skin Collection address
-    function updateSkinCollection(address _newCollection) external onlyOwner {
-        require(_newCollection != address(0), "Not valid address");
-
-        address _oldCollection = skinCollection;
-        skinCollection = _newCollection;
-
-        emit SkinCollectionUpdate(_oldCollection, _newCollection);
     }
 }
