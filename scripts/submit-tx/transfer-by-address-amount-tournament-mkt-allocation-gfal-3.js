@@ -409,6 +409,12 @@ async function main() {
   // Sender from private key
   const signer = new ethers.Wallet(process.env.OWNER_PRIVATE_KEY)
   const nonce = await provider.getTransactionCount(signer.address);
+  const balanceBeforeTransfer = await gfalToken.balanceOf(signer.address);
+  
+  console.log(
+    "-Sender G4AL balance Before:",
+    ethers.utils.formatEther(balanceBeforeTransfer.toString())
+  );
 
   // Executing transactions and saving results
   let results = []
@@ -427,13 +433,22 @@ async function main() {
     };
     const signedTx = await signer.signTransaction(tx);
     const transactionResponse = await provider.sendTransaction(signedTx);
-    results.push(transactionResponse)
+    // results.push(transactionResponse)
+    console.log(`Transferred to:${TRANSFERS_PAYLOAD.address[i]}`);
+    console.log(`Amount:${TRANSFERS_PAYLOAD.amount[i]}`);
   }
 
+//   console.log(
+//     `TransferByAddressAmountMarketplace script executed:`,
+//     results
+//   )
+
+  const balanceAfterTransfer = await gfalToken.balanceOf(signer.address);
+
   console.log(
-    `TransferByAddressAmountMarketplace script executed:`,
-    results
-  )
+    `\n- Sender balance After: 
+    ${ethers.utils.formatEther(balanceAfterTransfer.toString())} G4AL`
+  );
 }
 
 // We recommend this pattern to be able to use async/await everywhere
