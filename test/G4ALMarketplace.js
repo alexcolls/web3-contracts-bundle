@@ -257,6 +257,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
@@ -295,6 +296,7 @@ describe("GFALMarketplace", function () {
               .sellToken(
                 elementalRaidersSkill.address,
                 0,
+                1,
                 ethers.utils.parseUnits("50", "ether"),
                 false
               )
@@ -316,6 +318,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
@@ -346,6 +349,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
@@ -393,6 +397,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
@@ -436,6 +441,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
@@ -445,6 +451,7 @@ describe("GFALMarketplace", function () {
             .connect(seller)
             .sellToken(
               elementalRaidersSkill.address,
+              1,
               1,
               ethers.utils.parseUnits("50", "ether"),
               true
@@ -474,6 +481,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("10", "ether"),
               false
             );
@@ -483,6 +491,7 @@ describe("GFALMarketplace", function () {
             .connect(seller)
             .sellToken(
               elementalRaidersSkill.address,
+              1,
               1,
               ethers.utils.parseUnits("10", "ether"),
               true
@@ -548,6 +557,7 @@ describe("GFALMarketplace", function () {
               .sellToken(
                 elementalRaidersSkill.address,
                 i,
+                1,
                 ethers.utils.parseUnits("50", "ether"),
                 false
               );
@@ -611,6 +621,7 @@ describe("GFALMarketplace", function () {
               .sellToken(
                 elementalRaidersSkill.address,
                 0,
+                1,
                 ethers.utils.parseUnits("50", "ether"),
                 false
               )
@@ -631,6 +642,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
@@ -663,6 +675,7 @@ describe("GFALMarketplace", function () {
               .sellToken(
                 elementalRaidersSkill.address,
                 0,
+                1,
                 ethers.utils.parseUnits("50", "ether"),
                 false
               )
@@ -689,6 +702,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
@@ -731,6 +745,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
@@ -768,6 +783,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
@@ -837,6 +853,7 @@ describe("GFALMarketplace", function () {
               .sellToken(
                 elementalRaidersSkill.address,
                 0,
+                1,
                 ethers.utils.parseUnits("50", "ether"),
                 false
               )
@@ -845,6 +862,7 @@ describe("GFALMarketplace", function () {
             .withArgs(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false,
               seller.address
@@ -864,6 +882,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
@@ -924,11 +943,12 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
 
-          await expect(
+          expect(
             (
               await gfalMarketplace.tokensForSale(
                 elementalRaidersSkill.address,
@@ -937,7 +957,7 @@ describe("GFALMarketplace", function () {
               )
             ).isForSale
           ).to.equal(true);
-          await expect(
+          expect(
             (
               await gfalMarketplace.tokensForSale(
                 elementalRaidersSkill.address,
@@ -946,7 +966,7 @@ describe("GFALMarketplace", function () {
               )
             ).isDollar
           ).to.equal(false);
-          await expect(
+          expect(
             (
               await gfalMarketplace.tokensForSale(
                 elementalRaidersSkill.address,
@@ -974,6 +994,7 @@ describe("GFALMarketplace", function () {
             .withArgs(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               anyValue,
               anyValue,
@@ -998,6 +1019,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
@@ -1052,6 +1074,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("5", "ether"),
               true
             );
@@ -1105,6 +1128,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
@@ -1149,6 +1173,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("100", "ether"),
               true
             );
@@ -1202,6 +1227,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
@@ -1303,6 +1329,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
@@ -1426,6 +1453,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               elementalRaidersSkill.address,
               0,
+              1,
               ethers.utils.parseUnits("5", "ether"),
               true
             );
@@ -1517,13 +1545,13 @@ describe("GFALMarketplace", function () {
           expect(getOnSaleTokenIds.prices).to.deep.equal([BigNumber.from(0)]);
         });
 
-        // TODO: TEST A ERC1155 NFT IN THE MARKETPLACE (VIAL NFT)
+        // TODO: Test selling bunch of ERC1155 copies (It should be done after)!
         it("Should buy a tokens ERC1155 with same IDs that are for sell in $GFAL", async function () {
           const {
             seller,
             seller2,
             buyer,
-            elementalRaidersSkin,
+            proxy,
             gfalToken,
             gfalMarketplace,
             erc1155forTest,
@@ -1538,6 +1566,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               erc1155forTest.address,
               0,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
@@ -1578,6 +1607,7 @@ describe("GFALMarketplace", function () {
             .sellToken(
               erc1155forTest.address,
               1,
+              1,
               ethers.utils.parseUnits("50", "ether"),
               false
             );
@@ -1608,12 +1638,13 @@ describe("GFALMarketplace", function () {
               )
             ).price
           ).to.equal(ethers.utils.parseUnits("50", "ether"));
-          console.log("Error!");
 
           // NFT balance
-          expect(await erc1155forTest.balanceOf(seller.address, 0)).to.equal(1);
-          expect(await erc1155forTest.balanceOf(seller2.address, 0)).to.equal(
-            1
+          expect(await erc1155forTest.balanceOf(seller.address, 0)).to.equal(
+            10
+          );
+          expect(await erc1155forTest.balanceOf(seller2.address, 1)).to.equal(
+            10
           );
           expect(await erc1155forTest.balanceOf(buyer.address, 0)).to.equal(0);
 
@@ -1631,14 +1662,15 @@ describe("GFALMarketplace", function () {
             .buyToken(erc1155forTest.address, 0, seller.address);
           await gfalMarketplace
             .connect(buyer)
-            .buyToken(erc1155forTest.address, 0, seller2.address);
+            .buyToken(erc1155forTest.address, 1, seller2.address);
 
           // NFT balance
-          expect(await erc1155forTest.balanceOf(seller.address, 0)).to.equal(0);
-          expect(await erc1155forTest.balanceOf(seller2.address, 0)).to.equal(
-            0
+          expect(await erc1155forTest.balanceOf(seller.address, 0)).to.equal(9);
+          expect(await erc1155forTest.balanceOf(seller2.address, 1)).to.equal(
+            9
           );
-          expect(await erc1155forTest.balanceOf(buyer.address, 0)).to.equal(2);
+          expect(await erc1155forTest.balanceOf(buyer.address, 0)).to.equal(1);
+          expect(await erc1155forTest.balanceOf(buyer.address, 1)).to.equal(1);
 
           // Seller, buyer and Fee Collector balances checks
           expect(await gfalToken.balanceOf(seller.address)).to.equal(
@@ -1651,9 +1683,7 @@ describe("GFALMarketplace", function () {
             ethers.utils.parseUnits("0", "ether")
           );
           expect(
-            await gfalToken.balanceOf(
-              await gfalMarketplace.royaltiesCollector()
-            )
+            await gfalToken.balanceOf(await proxy.royaltiesCollector())
           ).to.equal(ethers.utils.parseUnits("10", "ether")); // considering previous 50+50 for minting
 
           // Volume increase check
@@ -1720,6 +1750,7 @@ describe("GFALMarketplace", function () {
             seller2,
             buyer,
             erc1155forTest,
+            proxy,
             gfalToken,
             gfalMarketplace,
           } = await loadFixture(deployContracts);
@@ -1728,14 +1759,17 @@ describe("GFALMarketplace", function () {
           await erc1155forTest
             .connect(seller)
             .setApprovalForAll(gfalMarketplace.address, true);
+
           await gfalMarketplace
             .connect(seller)
             .sellToken(
               erc1155forTest.address,
               0,
+              1,
               ethers.utils.parseUnits("5", "ether"),
               true
             );
+
           expect(
             (
               await gfalMarketplace.tokensForSale(
@@ -1745,6 +1779,7 @@ describe("GFALMarketplace", function () {
               )
             ).isForSale
           ).to.equal(true);
+
           expect(
             (
               await gfalMarketplace.tokensForSale(
@@ -1754,6 +1789,7 @@ describe("GFALMarketplace", function () {
               )
             ).isDollar
           ).to.equal(true);
+
           expect(
             (
               await gfalMarketplace.tokensForSale(
@@ -1768,46 +1804,53 @@ describe("GFALMarketplace", function () {
           await erc1155forTest
             .connect(seller2)
             .setApprovalForAll(gfalMarketplace.address, true);
+
           await gfalMarketplace
             .connect(seller2)
             .sellToken(
               erc1155forTest.address,
-              0,
+              1,
+              1,
               ethers.utils.parseUnits("5", "ether"),
               true
             );
+
           expect(
             (
               await gfalMarketplace.tokensForSale(
                 erc1155forTest.address,
-                0,
+                1,
                 seller2.address
               )
             ).isForSale
           ).to.equal(true);
+
           expect(
             (
               await gfalMarketplace.tokensForSale(
                 erc1155forTest.address,
-                0,
+                1,
                 seller2.address
               )
             ).isDollar
           ).to.equal(true);
+
           expect(
             (
               await gfalMarketplace.tokensForSale(
                 erc1155forTest.address,
-                0,
+                1,
                 seller2.address
               )
             ).price
           ).to.equal(ethers.utils.parseUnits("5", "ether"));
 
           // NFT balance
-          expect(await erc1155forTest.balanceOf(seller.address, 0)).to.equal(1);
-          expect(await erc1155forTest.balanceOf(seller2.address, 0)).to.equal(
-            1
+          expect(await erc1155forTest.balanceOf(seller.address, 0)).to.equal(
+            10
+          );
+          expect(await erc1155forTest.balanceOf(seller2.address, 1)).to.equal(
+            10
           );
           expect(await erc1155forTest.balanceOf(buyer.address, 0)).to.equal(0);
 
@@ -1823,16 +1866,18 @@ describe("GFALMarketplace", function () {
           await gfalMarketplace
             .connect(buyer)
             .buyToken(erc1155forTest.address, 0, seller.address);
+
           await gfalMarketplace
             .connect(buyer)
-            .buyToken(erc1155forTest.address, 0, seller2.address);
+            .buyToken(erc1155forTest.address, 1, seller2.address);
 
           // NFT balance
-          expect(await erc1155forTest.balanceOf(seller.address, 0)).to.equal(0);
-          expect(await erc1155forTest.balanceOf(seller2.address, 0)).to.equal(
-            0
+          expect(await erc1155forTest.balanceOf(seller.address, 0)).to.equal(9);
+          expect(await erc1155forTest.balanceOf(seller2.address, 1)).to.equal(
+            9
           );
-          expect(await erc1155forTest.balanceOf(buyer.address, 0)).to.equal(2);
+          expect(await erc1155forTest.balanceOf(buyer.address, 0)).to.equal(1);
+          expect(await erc1155forTest.balanceOf(buyer.address, 1)).to.equal(1);
 
           // Seller, buyer and Fee Collector balances checks
           expect(await gfalToken.balanceOf(seller.address)).to.equal(
@@ -1845,9 +1890,7 @@ describe("GFALMarketplace", function () {
             ethers.utils.parseUnits("0", "ether")
           );
           expect(
-            await gfalToken.balanceOf(
-              await gfalMarketplace.royaltiesCollector()
-            )
+            await gfalToken.balanceOf(await proxy.royaltiesCollector())
           ).to.equal(ethers.utils.parseUnits("10", "ether")); // considering previous 50+50 for minting
 
           // Volume increase check

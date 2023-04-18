@@ -44,7 +44,8 @@ contract GFALMarketplace is ReentrancyGuard {
     struct Sale {
         uint256 price;
         bool isDollar;
-        bool isForSale;
+        bool isForSale; // Price = 1:1 price x amount
+        uint256 amount;
     }
 
     struct Whitelist {
@@ -60,6 +61,7 @@ contract GFALMarketplace is ReentrancyGuard {
     event SellToken(
         address collection,
         uint256 tokenId,
+        uint256 amount,
         uint256 price,
         bool isDollar,
         address seller
@@ -67,6 +69,7 @@ contract GFALMarketplace is ReentrancyGuard {
     event BuyToken(
         address collection,
         uint tokenId,
+        uint256 amount,
         uint price,
         uint sellerRevenue,
         uint royalties,
@@ -108,9 +111,11 @@ contract GFALMarketplace is ReentrancyGuard {
     function sellToken(
         address contractAddress,
         uint256 tokenId,
+        uint256 amount,
         uint256 price,
         bool isDollar
     ) external onlyTradableToken(contractAddress, msg.sender, tokenId) {
+        require(amount > 0, "Amount cannot be 0");
         require(isActive, "SC Under maintenance");
         require(
             whitelistNFTs[contractAddress].allowed,
@@ -128,6 +133,7 @@ contract GFALMarketplace is ReentrancyGuard {
         if (
             whitelistNFTs[contractAddress].tokenStandard == TokenStandard.ERC721
         ) {
+            require(amount == 1, "Amount needs to be 1");
             require(
                 IERC721Enumerable(contractAddress).getApproved(tokenId) ==
                     address(this),
@@ -146,18 +152,26 @@ contract GFALMarketplace is ReentrancyGuard {
         tokensForSale[contractAddress][tokenId][msg.sender] = Sale(
             price,
             isDollar,
-            true
+            true,
+            amount
         );
 
-        emit SellToken(contractAddress, tokenId, price, isDollar, msg.sender);
+        emit SellToken(
+            contractAddress,
+            tokenId,
+            amount,
+            price,
+            isDollar,
+            msg.sender
+        );
     }
 
+    // If you purchase an ERC1155 you will purchase the whole sale amount. Example: Seller lists NFTID 152, 5 copies (ERC1155). Buyer will buy the 5 copies for the listed price.
     function buyToken(
         address contractAddress,
         uint256 tokenId,
         address seller
     ) external nonReentrant {
-        // TODO: Check token collection is allowed and not blacklisted in the meantime were listed
         require(isActive, "SC Under maintenance");
         require(
             whitelistNFTs[contractAddress].allowed,
@@ -198,12 +212,11 @@ contract GFALMarketplace is ReentrancyGuard {
                 tokenId
             );
         } else {
-            // Treating ERC1155 as it is 721 via hardcoded amount of 1
             IERC1155(contractAddress).safeTransferFrom(
                 seller,
                 msg.sender,
                 tokenId,
-                1,
+                sale.amount,
                 ""
             );
         }
@@ -224,11 +237,17 @@ contract GFALMarketplace is ReentrancyGuard {
         volume += price;
 
         // Setting token as not for sell
-        tokensForSale[contractAddress][tokenId][seller] = Sale(0, false, false);
+        tokensForSale[contractAddress][tokenId][seller] = Sale(
+            0,
+            false,
+            false,
+            0
+        );
 
         emit BuyToken(
             contractAddress,
             tokenId,
+            sale.amount,
             price,
             amountAfterRoyalties,
             royaltiesAmount,
@@ -257,7 +276,8 @@ contract GFALMarketplace is ReentrancyGuard {
         tokensForSale[contractAddress][tokenId][msg.sender] = Sale(
             0,
             false,
-            false
+            false,
+            0
         );
         emit RemoveToken(contractAddress, tokenId, msg.sender);
     }
