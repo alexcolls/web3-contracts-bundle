@@ -27,6 +27,7 @@ contract GFALMarketplace is ReentrancyGuard {
     mapping(address => bool) public knownSellers; // to avoid repeated sellersList.push(sellerAddress)
     uint256 public volume; // $GFAL all-time-volume
     uint256 public royaltiesInBasisPoints;
+    bool public isActive; // It will allow user to trade NFTs. They will always will be able to unlist them.
 
     modifier onlyOwner() {
         require(msg.sender == g4alProxy.owner(), "Not owner");
@@ -36,6 +37,7 @@ contract GFALMarketplace is ReentrancyGuard {
     constructor(uint256 _royaltiesInBasisPoints, address _g4alProxy) {
         royaltiesInBasisPoints = _royaltiesInBasisPoints;
         g4alProxy = G4ALProxy(_g4alProxy);
+        isActive = true;
     }
 
     // Structures
@@ -72,6 +74,7 @@ contract GFALMarketplace is ReentrancyGuard {
         address buyer
     );
     event RemoveToken(address collection, uint256 tokenId, address seller);
+    event ContractStatusUpdated(bool isActive);
 
     // Modifiers
 
@@ -108,6 +111,7 @@ contract GFALMarketplace is ReentrancyGuard {
         uint256 price,
         bool isDollar
     ) external onlyTradableToken(contractAddress, msg.sender, tokenId) {
+        require(isActive, "SC Under maintenance");
         require(
             whitelistNFTs[contractAddress].allowed,
             "Not allowed NFT collection"
@@ -153,6 +157,8 @@ contract GFALMarketplace is ReentrancyGuard {
         uint256 tokenId,
         address seller
     ) external nonReentrant {
+        // TODO: Check token collection is allowed and not blacklisted in the meantime were listed
+        require(isActive, "SC Under maintenance");
         require(
             whitelistNFTs[contractAddress].allowed,
             "Not allowed NFT collection"
@@ -312,6 +318,11 @@ contract GFALMarketplace is ReentrancyGuard {
     }
 
     // Owner functions
+
+    function updateContractStatus(bool _isActive) external onlyOwner {
+        isActive = _isActive;
+        emit ContractStatusUpdated(_isActive);
+    }
 
     function updateCollection(
         address _collectionAddress,
