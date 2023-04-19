@@ -1978,7 +1978,7 @@ describe("GFALMarketplace", function () {
             .allowed
         ).to.equal(false);
       });
-      // TODO: Test selling bunch of ERC1155 copies (It should be done after)!
+
       it("Mint 100 copies of 4 ERC1155 NFTs and sell them", async function () {
         const {
           owner,
@@ -2135,7 +2135,6 @@ describe("GFALMarketplace", function () {
         expect(await erc1155MockUp.balanceOf(owner.address, 4)).to.equal(0);
         expect(await erc1155MockUp.balanceOf(owner.address, 5)).to.equal(0);
 
-        //TODO! Check it dis removed from on sale Tokens ids
         const NFTsOnSaleSellerAfterSale_2_3 =
           await gfalMarketplace.getOnSaleTokenIds(
             erc1155MockUp.address,
