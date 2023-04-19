@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "../../utils/OracleConsumer.sol";
 import "../../utils/G4ALProxy.sol";
 
+// TODO! It is on process, needs to be finished based on the logic implementation we wish to have
 contract ElementalRaidersVials is ERC721 {
     using SafeERC20 for IERC20;
 

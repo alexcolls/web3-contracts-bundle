@@ -11,6 +11,8 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../../utils/OracleConsumer.sol";
 import "../../utils/G4ALProxy.sol";
 
+// import "hardhat/console.sol";
+
 contract GFALMarketplace is ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -42,9 +44,9 @@ contract GFALMarketplace is ReentrancyGuard {
 
     // Structures
     struct Sale {
-        uint256 price;
+        uint256 price; // Price = 1:1 price x amount
         bool isDollar;
-        bool isForSale; // Price = 1:1 price x amount
+        bool isForSale;
         uint256 amount;
     }
 

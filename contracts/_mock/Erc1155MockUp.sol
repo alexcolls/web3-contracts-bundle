@@ -10,7 +10,7 @@ import "../utils/OracleConsumer.sol";
 import "../utils/G4ALProxy.sol";
 
 // This contract has been created as a MockUp for testing the Marketplace using ERC1155 tokens.
-contract ERC1155forTest is ERC1155Supply {
+contract Erc1155MockUp is ERC1155Supply {
     using SafeERC20 for IERC20;
     uint256 public mintedNFTs; //Total amount of Different NFTs minted
     G4ALProxy public g4alProxy;
