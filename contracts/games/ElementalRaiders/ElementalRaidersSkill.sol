@@ -9,8 +9,9 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../../utils/OracleConsumer.sol";
 import "../../utils/G4ALProxy.sol";
+
 // Uncomment this line to use console.log
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
     using SafeERC20 for IERC20;
@@ -48,10 +49,13 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
     // - Ack -> Game client sends the POST req to Game Server to start the mint, which will try move pre-approved amount and fails if the approval has been hijacked
     // - Web3Provider is going to answer the Promise with a success or error in JSON-RPC format.
     // - Further game handling.
+    // Rarity -> should be 0 G4AL for ER minting and then list in market place
     function safeMint(address to, uint256 rarity) public onlyOwner {
         // Transfer $GFALs from the "to" address to the "collector" one
-        require(rarity >= 1 && rarity <= 4, "Rarity index out of bound.");
-        require(prices[rarity] != 0, "Minting 0 price tokens is not allowed");
+        require(
+            prices[rarity] != 0 || (rarity == 0 && to == msg.sender),
+            "Minting 0 price tokens is not allowed"
+        );
 
         // Transferring GFAL from player wallet to feeCollector. Assuming previous allowance has been given.
         uint256 tokenPrice = OracleConsumer(g4alProxy.oracleConsumer())
@@ -103,11 +107,11 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
         baseURI = _baseUri;
     }
 
+    // Rarity -> should be 0 G4AL for ER minting and then list in market place
     function updateMintingPrice(
         uint256 rarity,
         uint256 price
     ) external onlyOwner {
-        require(rarity >= 1 && rarity <= 4, "Rarity index out of bound");
         prices[rarity] = price; // 50000000000000000000 for 50.00 GFAL (50+18 zeros)
     }
 
