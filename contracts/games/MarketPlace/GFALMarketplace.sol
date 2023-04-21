@@ -12,7 +12,10 @@ import "../../utils/OracleConsumer.sol";
 import "../../utils/G4ALProxy.sol";
 
 // import "hardhat/console.sol";
-
+/**
+ *@title GFALMarketplace
+ *@dev A smart contract for a marketplace where users can sell and buy ERC721 and ERC1155 tokens. It uses OpenZeppelin contracts as libraries and inherits from ReentrancyGuard to prevent reentrancy attacks.
+ */
 contract GFALMarketplace is ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -43,6 +46,9 @@ contract GFALMarketplace is ReentrancyGuard {
     }
 
     // Structures
+    /**
+     * @dev Structure to hold the sale information.
+     */
     struct Sale {
         uint256 price; // Price = 1:1 price x amount
         bool isDollar;
@@ -50,10 +56,17 @@ contract GFALMarketplace is ReentrancyGuard {
         uint256 amount;
     }
 
+    /**
+     * @dev Structure to hold the whitelist information of a collection.
+     */
     struct Whitelist {
         bool allowed;
         TokenStandard tokenStandard;
     }
+
+    /**
+     * @dev Enum for different token standards.
+     */
     enum TokenStandard {
         ERC721,
         ERC1155
@@ -82,7 +95,15 @@ contract GFALMarketplace is ReentrancyGuard {
     event ContractStatusUpdated(bool isActive);
 
     // Modifiers
-
+    /**
+     *@dev Modifier to check if the token is tradable based on whitelisted information and ownership.
+     *@param contractAddress The address of the NFT contract.
+     *@param from The address of the token owner.
+     *@param tokenId The ID of the token being traded.
+     *Requirements:
+     *The collection must be whitelisted.
+     *The token must belong to the user or not exist in the case of an ERC721.
+     */
     modifier onlyTradableToken(
         address contractAddress,
         address from,
@@ -109,7 +130,21 @@ contract GFALMarketplace is ReentrancyGuard {
     }
 
     // -- Marketplace Methods
-
+    /**
+     *@dev Allows a user to sell an NFT token on the marketplace.
+     *@param contractAddress The address of the NFT contract.
+     *@param tokenId The ID of the token being sold.
+     *@param amount The amount of tokens being sold.
+     *@param price The price of the tokens being sold.
+     *@param isDollar A boolean flag indicating whether the price is in dollars or not.
+     *@notice This function can only be called by the owner of the token and if the token's collection is whitelisted.
+     *@notice The token needs to be approved for spending before it can be sold.
+     *@notice The amount cannot be 0, and the marketplace needs to be active and the NFT collection needs to be allowed.
+     *@notice If the seller is unknown, they are added to the sellersList array.
+     *@notice If the token is an ERC721 token, the amount needs to be 1 and the token needs to be approved for spending.
+     *@notice If the token is an ERC1155 token, the token needs to be approved for spending.
+     *@notice The details of the sale are stored in the tokensForSale mapping and an event is emitted with the details of the sale.
+     */
     function sellToken(
         address contractAddress,
         uint256 tokenId,
@@ -169,6 +204,12 @@ contract GFALMarketplace is ReentrancyGuard {
     }
 
     // If you purchase an ERC1155 you will purchase the whole sale amount. Example: Seller lists NFTID 152, 5 copies (ERC1155). Buyer will buy the 5 copies for the listed price.
+    /**
+     *@dev Function to buy an NFT token from a seller
+     *@param contractAddress The address of the NFT contract
+     *@param tokenId The ID of the NFT token being sold
+     *@param seller The address of the seller of the NFT token
+     */
     function buyToken(
         address contractAddress,
         uint256 tokenId,
@@ -258,34 +299,53 @@ contract GFALMarketplace is ReentrancyGuard {
         );
     }
 
-    function removeToken(address contractAddress, uint256 tokenId) external {
+    /**
+     *@dev Function to buy an NFT token from a seller
+     *@param contractAddress The address of the NFT contract
+     *@param _from The address of the NFT owner (Seller)
+     *@param tokenId The ID of the NFT token being sold
+     * Note: SC Owner can unlist the NFT token. (Useful in case the seller transfers/sells the NFT to other wallet)
+     */
+    function removeToken(
+        address contractAddress,
+        address _from,
+        uint256 tokenId
+    ) external {
         // Ownership check for ERC721 and ERC1155 based on whitelisted information
+        require(
+            msg.sender == _from || msg.sender == g4alProxy.owner(),
+            "Not owner token or owner SC"
+        );
         if (
             whitelistNFTs[contractAddress].tokenStandard == TokenStandard.ERC721
         ) {
             require(
-                IERC721Enumerable(contractAddress).ownerOf(tokenId) ==
-                    msg.sender,
+                IERC721Enumerable(contractAddress).ownerOf(tokenId) == _from,
                 "Token does not belong to user or not existing 721."
             );
         } else {
             require(
-                IERC1155(contractAddress).balanceOf(msg.sender, tokenId) != 0,
+                IERC1155(contractAddress).balanceOf(_from, tokenId) != 0,
                 "Token does not belong to user or not existing 1155."
             );
         }
 
-        tokensForSale[contractAddress][tokenId][msg.sender] = Sale(
+        tokensForSale[contractAddress][tokenId][_from] = Sale(
             0,
             false,
             false,
             0
         );
-        emit RemoveToken(contractAddress, tokenId, msg.sender);
+        emit RemoveToken(contractAddress, tokenId, _from);
     }
 
     // Private marketplace methods
-
+    /**
+     *@dev internal function to calculate the marketplace royalties to split the sale price.
+     *@param amount Total selling price to split.
+     *@return amountAfterRoyalties selling price substracting the royaltiesAmount.
+     *@return royaltiesAmount royaltiesAmount the royaltiesCollector keeps.
+     */
     function _calculateMarketplaceRoyalties(
         uint256 amount
     )
@@ -298,11 +358,24 @@ contract GFALMarketplace is ReentrancyGuard {
     }
 
     // Getters
-
+    /**
+     *@dev function to get the total of sellers that have list NFTs in GFALMarketplace.
+     *@return Array containing the total of sellers.
+     */
     function getSellersList() external view returns (address[] memory) {
         return sellersList;
     }
 
+    /**
+     *@dev function to get the total of sellers that have sold in GFALMarketplace.
+     *@param contractAddress NFT collection address.
+     *@param seller Seller of the NFT id.
+     *@param start NFT id from which to start the search.
+     *@param end NFT id from which ends the search.
+     *@return tokenIds Array with the tokenIds on sale.
+     *@return sellers Array containing the sellers of the ids from start to end.
+     *@return prices Array containing the prices of the ids from start to end.
+     */
     function getOnSaleTokenIds(
         address contractAddress,
         address seller,
@@ -340,12 +413,23 @@ contract GFALMarketplace is ReentrancyGuard {
     }
 
     // Owner functions
-
+    /**
+     *@dev Function to set the contract status.
+     *@param _isActive Boolean value to set the contract status. (True -> Contract activated, False -> Contract not active)
+     * Requirements: The caller must be the contract owner.
+     */
     function updateContractStatus(bool _isActive) external onlyOwner {
         isActive = _isActive;
         emit ContractStatusUpdated(_isActive);
     }
 
+    /**
+     *@dev Function to add or remove NFTs contracts from the whitelist. It will allow or refuse the selling option.
+     *@param _collectionAddress NFT collection address.
+     *@param _tokenStandard ERC Standar of the NFTscontract. (ERC721 or ERC1155)
+     *@param _allowed Boolean value to allow the NFT contract to be minted. (True -> Contract allowed, False -> Contract not allowed)
+     * Requirements: The caller must be the contract owner.
+     */
     function updateCollection(
         address _collectionAddress,
         TokenStandard _tokenStandard,
@@ -354,6 +438,12 @@ contract GFALMarketplace is ReentrancyGuard {
         whitelistNFTs[_collectionAddress] = Whitelist(_allowed, _tokenStandard);
     }
 
+    /**
+     *@dev Function set a new Royalties basis points
+     *@param _royaltiesInBasisPoints Royalties amount to set.
+     * Note: The amount given as parameter wil be divided between 10.000 as Solidity does not allow decimals. Example: 1.000 / 10.000 = 0.1
+     * Requirements: The caller must be the contract owner.
+     */
     function updateRoyaltiesInBasisPoints(
         uint256 _royaltiesInBasisPoints
     ) external onlyOwner {

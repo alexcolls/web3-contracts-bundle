@@ -7,25 +7,25 @@ module.exports = {
   defaultNetwork: "hardhat", // consider that for deploy you should use ganache instead, so specify here, or during command run with --network ganache flag
 
   networks: {
-    // hardhat: {
-    //   chainId: 1337,
-    // },
-    ganache: {
-      url: "HTTP://127.0.0.1:7545",
+    hardhat: {
       chainId: 1337,
-      gas: 2100000,
-      gasPrice: 8000000000,
     },
-    bsctest: {
-      url: process.env.WEB3_HTTP_PROVIDER_TEST,
-      accounts: [process.env.BSC_PRIVATE_KEY],
-      gas: 2100000,
-      gasPrice: 8000000000,
-    },
+    // ganache: {
+    //   url: "HTTP://127.0.0.1:7545",
+    //   chainId: 1337,
+    //   gas: 2100000,
+    //   gasPrice: 8000000000,
+    // },
+    // bsctest: {
+    //   url: process.env.WEB3_HTTP_PROVIDER_TEST,
+    //   accounts: [process.env.BSC_PRIVATE_KEY],
+    //   gas: 2100000,
+    //   gasPrice: 8000000000,
+    // },
     // bscmain: {
     //   url: process.env.WEB3_HTTP_PROVIDER_MAIN,
-    //   accounts: [process.env.OWNER_PRIVATE_KEY]
-    // }
+    //   accounts: [process.env.OWNER_PRIVATE_KEY],
+    // },
   },
   etherscan: {
     // Command to verify in Scan:
