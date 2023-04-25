@@ -400,8 +400,7 @@ describe("GFALMarketplace", function () {
 
         const saleBefore = await gfalMarketplace.tokensForSale(
           elementalRaidersSkill.address,
-          0,
-          seller.address
+          0
         );
 
         expect(saleBefore[2]).to.equal(true);
@@ -412,8 +411,7 @@ describe("GFALMarketplace", function () {
 
         const saleAfter = await gfalMarketplace.tokensForSale(
           elementalRaidersSkill.address,
-          0,
-          seller.address
+          0
         );
 
         expect(saleAfter[2]).to.equal(false);
@@ -455,7 +453,6 @@ describe("GFALMarketplace", function () {
 
         const NFTsOnSale = await gfalMarketplace.getOnSaleTokenIds(
           elementalRaidersSkill.address,
-          seller.address,
           0,
           2
         );
@@ -495,7 +492,6 @@ describe("GFALMarketplace", function () {
 
         const NFTsOnSalePriceUpdated = await gfalMarketplace.getOnSaleTokenIds(
           elementalRaidersSkill.address,
-          seller.address,
           0,
           2
         );
@@ -560,7 +556,6 @@ describe("GFALMarketplace", function () {
         const NFTsMinted = 4;
         const NFTsOnSale = await gfalMarketplace.getOnSaleTokenIds(
           elementalRaidersSkill.address,
-          seller.address,
           0,
           5
         );
@@ -887,30 +882,27 @@ describe("GFALMarketplace", function () {
             false
           );
 
-        await expect(
+        expect(
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isForSale
         ).to.equal(true);
-        await expect(
+        expect(
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isDollar
         ).to.equal(false);
-        await expect(
+        expect(
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).price
         ).to.equal(ethers.utils.parseUnits("50", "ether"));
@@ -952,8 +944,7 @@ describe("GFALMarketplace", function () {
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isForSale
         ).to.equal(true);
@@ -961,8 +952,7 @@ describe("GFALMarketplace", function () {
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isDollar
         ).to.equal(false);
@@ -970,8 +960,7 @@ describe("GFALMarketplace", function () {
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).price
         ).to.equal(ethers.utils.parseUnits("50", "ether"));
@@ -1024,40 +1013,35 @@ describe("GFALMarketplace", function () {
             false
           );
 
-        await expect(
+        expect(
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isForSale
         ).to.equal(true);
-        await expect(
+        expect(
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isDollar
         ).to.equal(false);
-        await expect(
+        expect(
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).price
         ).to.equal(ethers.utils.parseUnits("50", "ether"));
 
-        await expect(await gfalMarketplace.sellersList(0)).to.equal(
-          seller.address
+        expect(await gfalMarketplace.sellersList(0)).to.equal(seller.address);
+        expect(await gfalMarketplace.knownSellers(seller.address)).to.equal(
+          true
         );
-        await expect(
-          await gfalMarketplace.knownSellers(seller.address)
-        ).to.equal(true);
       });
 
       it("Should put a whitelisted collection token for sell in Dollars", async function () {
@@ -1079,37 +1063,32 @@ describe("GFALMarketplace", function () {
             true
           );
 
-        await expect(
+        expect(
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isForSale
         ).to.equal(true);
-        await expect(
+        expect(
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isDollar
         ).to.equal(true);
-        await expect(
+        expect(
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).price
         ).to.equal(ethers.utils.parseUnits("5", "ether"));
 
-        await expect(await gfalMarketplace.sellersList(0)).to.equal(
-          seller.address
-        );
+        expect(await gfalMarketplace.sellersList(0)).to.equal(seller.address);
         await expect(
           await gfalMarketplace.knownSellers(seller.address)
         ).to.equal(true);
@@ -1133,40 +1112,35 @@ describe("GFALMarketplace", function () {
             false
           );
 
-        await expect(
+        expect(
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isForSale
         ).to.equal(true);
-        await expect(
+        expect(
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isDollar
         ).to.equal(false);
-        await expect(
+        expect(
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).price
         ).to.equal(ethers.utils.parseUnits("50", "ether"));
 
-        await expect(await gfalMarketplace.sellersList(0)).to.equal(
-          seller.address
+        expect(await gfalMarketplace.sellersList(0)).to.equal(seller.address);
+        expect(await gfalMarketplace.knownSellers(seller.address)).to.equal(
+          true
         );
-        await expect(
-          await gfalMarketplace.knownSellers(seller.address)
-        ).to.equal(true);
 
         await gfalMarketplace
           .connect(seller)
@@ -1178,40 +1152,35 @@ describe("GFALMarketplace", function () {
             true
           );
 
-        await expect(
+        expect(
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isForSale
         ).to.equal(true);
-        await expect(
+        expect(
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isDollar
         ).to.equal(true);
-        await expect(
+        expect(
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).price
         ).to.equal(ethers.utils.parseUnits("100", "ether"));
 
-        await expect(await gfalMarketplace.sellersList(0)).to.equal(
-          seller.address
+        expect(await gfalMarketplace.sellersList(0)).to.equal(seller.address);
+        expect(await gfalMarketplace.knownSellers(seller.address)).to.equal(
+          true
         );
-        await expect(
-          await gfalMarketplace.knownSellers(seller.address)
-        ).to.equal(true);
       });
 
       it("Should remove a token from sell", async function () {
@@ -1236,8 +1205,7 @@ describe("GFALMarketplace", function () {
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isForSale
         ).to.equal(true);
@@ -1245,8 +1213,7 @@ describe("GFALMarketplace", function () {
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isDollar
         ).to.equal(false);
@@ -1254,8 +1221,7 @@ describe("GFALMarketplace", function () {
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).price
         ).to.equal(ethers.utils.parseUnits("50", "ether"));
@@ -1274,8 +1240,7 @@ describe("GFALMarketplace", function () {
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isForSale
         ).to.equal(false);
@@ -1283,8 +1248,7 @@ describe("GFALMarketplace", function () {
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isDollar
         ).to.equal(false);
@@ -1292,8 +1256,7 @@ describe("GFALMarketplace", function () {
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).price
         ).to.equal(ethers.utils.parseUnits("0", "ether"));
@@ -1334,8 +1297,7 @@ describe("GFALMarketplace", function () {
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isForSale
         ).to.equal(true);
@@ -1343,8 +1305,7 @@ describe("GFALMarketplace", function () {
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isDollar
         ).to.equal(false);
@@ -1352,8 +1313,7 @@ describe("GFALMarketplace", function () {
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).price
         ).to.equal(ethers.utils.parseUnits("50", "ether"));
@@ -1406,8 +1366,7 @@ describe("GFALMarketplace", function () {
         // Check tokensForSale has been removed from mapping (marked as isForSale false, etc.)
         const tokensForSale = await gfalMarketplace.tokensForSale(
           elementalRaidersSkill.address,
-          0,
-          seller.address
+          0
         );
         expect(tokensForSale.price).to.equal(
           ethers.utils.parseUnits("0", "ether")
@@ -1418,7 +1377,6 @@ describe("GFALMarketplace", function () {
         // Check getOnSaleTokenIds is returning empty arrays after buying the only token listed
         const getOnSaleTokenIds = await gfalMarketplace.getOnSaleTokenIds(
           elementalRaidersSkill.address,
-          seller.address,
           0,
           1
         );
@@ -1457,8 +1415,7 @@ describe("GFALMarketplace", function () {
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isForSale
         ).to.equal(true);
@@ -1466,8 +1423,7 @@ describe("GFALMarketplace", function () {
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).isDollar
         ).to.equal(true);
@@ -1475,8 +1431,7 @@ describe("GFALMarketplace", function () {
           (
             await gfalMarketplace.tokensForSale(
               elementalRaidersSkill.address,
-              0,
-              seller.address
+              0
             )
           ).price
         ).to.equal(ethers.utils.parseUnits("5", "ether")); // considering previous 50+50 for minting
@@ -1529,7 +1484,6 @@ describe("GFALMarketplace", function () {
         // Check getOnSaleTokenIds is returning empty arrays after buying the only token listed
         const getOnSaleTokenIds = await gfalMarketplace.getOnSaleTokenIds(
           elementalRaidersSkill.address,
-          seller.address,
           0,
           1
         );
@@ -1567,31 +1521,15 @@ describe("GFALMarketplace", function () {
             false
           );
         expect(
-          (
-            await gfalMarketplace.tokensForSale(
-              erc1155MockUp.address,
-              0,
-              seller.address
-            )
-          ).isForSale
+          (await gfalMarketplace.tokensForSale(erc1155MockUp.address, 0))
+            .isForSale
         ).to.equal(true);
         expect(
-          (
-            await gfalMarketplace.tokensForSale(
-              erc1155MockUp.address,
-              0,
-              seller.address
-            )
-          ).isDollar
+          (await gfalMarketplace.tokensForSale(erc1155MockUp.address, 0))
+            .isDollar
         ).to.equal(false);
         expect(
-          (
-            await gfalMarketplace.tokensForSale(
-              erc1155MockUp.address,
-              0,
-              seller.address
-            )
-          ).price
+          (await gfalMarketplace.tokensForSale(erc1155MockUp.address, 0)).price
         ).to.equal(ethers.utils.parseUnits("50", "ether"));
 
         // Seller 2 workflow
@@ -1608,31 +1546,15 @@ describe("GFALMarketplace", function () {
             false
           );
         expect(
-          (
-            await gfalMarketplace.tokensForSale(
-              erc1155MockUp.address,
-              1,
-              seller2.address
-            )
-          ).isForSale
+          (await gfalMarketplace.tokensForSale(erc1155MockUp.address, 1))
+            .isForSale
         ).to.equal(true);
         expect(
-          (
-            await gfalMarketplace.tokensForSale(
-              erc1155MockUp.address,
-              1,
-              seller2.address
-            )
-          ).isDollar
+          (await gfalMarketplace.tokensForSale(erc1155MockUp.address, 1))
+            .isDollar
         ).to.equal(false);
         expect(
-          (
-            await gfalMarketplace.tokensForSale(
-              erc1155MockUp.address,
-              1,
-              seller2.address
-            )
-          ).price
+          (await gfalMarketplace.tokensForSale(erc1155MockUp.address, 1)).price
         ).to.equal(ethers.utils.parseUnits("50", "ether"));
 
         // NFT balance
@@ -1684,8 +1606,7 @@ describe("GFALMarketplace", function () {
         // Check tokensForSale from Seller1 has been removed from mapping (marked as isForSale false, etc.)
         const tokensForSale1 = await gfalMarketplace.tokensForSale(
           erc1155MockUp.address,
-          0,
-          seller.address
+          0
         );
         expect(tokensForSale1.price).to.equal(
           ethers.utils.parseUnits("0", "ether")
@@ -1696,8 +1617,7 @@ describe("GFALMarketplace", function () {
         // Check tokensForSale has been removed from mapping (marked as isForSale false, etc.)
         const tokensForSale2 = await gfalMarketplace.tokensForSale(
           erc1155MockUp.address,
-          0,
-          seller2.address
+          0
         );
         expect(tokensForSale2.price).to.equal(
           ethers.utils.parseUnits("0", "ether")
@@ -1708,7 +1628,6 @@ describe("GFALMarketplace", function () {
         // Check getOnSaleTokenIds is returning empty arrays after buying the only token listed
         const getOnSaleTokenIds = await gfalMarketplace.getOnSaleTokenIds(
           erc1155MockUp.address,
-          seller.address,
           0,
           1
         );
@@ -1721,7 +1640,6 @@ describe("GFALMarketplace", function () {
         // Check getOnSaleTokenIds is returning empty arrays after buying the only token listed
         const getOnSaleTokenIds2 = await gfalMarketplace.getOnSaleTokenIds(
           erc1155MockUp.address,
-          seller.address,
           0,
           1
         );
@@ -1759,33 +1677,17 @@ describe("GFALMarketplace", function () {
           );
 
         expect(
-          (
-            await gfalMarketplace.tokensForSale(
-              erc1155MockUp.address,
-              0,
-              seller.address
-            )
-          ).isForSale
+          (await gfalMarketplace.tokensForSale(erc1155MockUp.address, 0))
+            .isForSale
         ).to.equal(true);
 
         expect(
-          (
-            await gfalMarketplace.tokensForSale(
-              erc1155MockUp.address,
-              0,
-              seller.address
-            )
-          ).isDollar
+          (await gfalMarketplace.tokensForSale(erc1155MockUp.address, 0))
+            .isDollar
         ).to.equal(true);
 
         expect(
-          (
-            await gfalMarketplace.tokensForSale(
-              erc1155MockUp.address,
-              0,
-              seller.address
-            )
-          ).price
+          (await gfalMarketplace.tokensForSale(erc1155MockUp.address, 0)).price
         ).to.equal(ethers.utils.parseUnits("5", "ether"));
 
         // Seller 2 workflow
@@ -1804,33 +1706,17 @@ describe("GFALMarketplace", function () {
           );
 
         expect(
-          (
-            await gfalMarketplace.tokensForSale(
-              erc1155MockUp.address,
-              1,
-              seller2.address
-            )
-          ).isForSale
+          (await gfalMarketplace.tokensForSale(erc1155MockUp.address, 1))
+            .isForSale
         ).to.equal(true);
 
         expect(
-          (
-            await gfalMarketplace.tokensForSale(
-              erc1155MockUp.address,
-              1,
-              seller2.address
-            )
-          ).isDollar
+          (await gfalMarketplace.tokensForSale(erc1155MockUp.address, 1))
+            .isDollar
         ).to.equal(true);
 
         expect(
-          (
-            await gfalMarketplace.tokensForSale(
-              erc1155MockUp.address,
-              1,
-              seller2.address
-            )
-          ).price
+          (await gfalMarketplace.tokensForSale(erc1155MockUp.address, 1)).price
         ).to.equal(ethers.utils.parseUnits("5", "ether"));
 
         // NFT balance
@@ -1883,8 +1769,7 @@ describe("GFALMarketplace", function () {
         // Check tokensForSale from Seller1 has been removed from mapping (marked as isForSale false, etc.)
         const tokensForSale1 = await gfalMarketplace.tokensForSale(
           erc1155MockUp.address,
-          0,
-          seller.address
+          0
         );
         expect(tokensForSale1.price).to.equal(
           ethers.utils.parseUnits("0", "ether")
@@ -1895,8 +1780,7 @@ describe("GFALMarketplace", function () {
         // Check tokensForSale has been removed from mapping (marked as isForSale false, etc.)
         const tokensForSale2 = await gfalMarketplace.tokensForSale(
           erc1155MockUp.address,
-          0,
-          seller2.address
+          0
         );
         expect(tokensForSale2.price).to.equal(
           ethers.utils.parseUnits("0", "ether")
@@ -1907,7 +1791,6 @@ describe("GFALMarketplace", function () {
         // Check getOnSaleTokenIds is returning empty arrays after buying the only token listed
         const getOnSaleTokenIds1 = await gfalMarketplace.getOnSaleTokenIds(
           erc1155MockUp.address,
-          seller.address,
           0,
           1
         );
@@ -1920,7 +1803,6 @@ describe("GFALMarketplace", function () {
         // Check getOnSaleTokenIds is returning empty arrays after buying the only token listed
         const getOnSaleTokenIds2 = await gfalMarketplace.getOnSaleTokenIds(
           erc1155MockUp.address,
-          seller2.address,
           0,
           1
         );
@@ -2057,7 +1939,6 @@ describe("GFALMarketplace", function () {
         // Checks from his NFTids (start to end)
         const NFTsOnSaleSeller = await gfalMarketplace.getOnSaleTokenIds(
           erc1155MockUp.address,
-          seller.address,
           1,
           3
         );
@@ -2065,9 +1946,8 @@ describe("GFALMarketplace", function () {
         // Checks from his NFTids (start to end)
         const NFTsOnSaleSeller2 = await gfalMarketplace.getOnSaleTokenIds(
           erc1155MockUp.address,
-          seller2.address,
           3,
-          5
+          6
         );
 
         // Seller
@@ -2079,12 +1959,15 @@ describe("GFALMarketplace", function () {
         expect(NFTsOnSaleSeller.prices[1]).to.equal(PRICE_GFAL_10_NFT);
 
         // Seller 2
-        expect(NFTsOnSaleSeller2.tokenIds[0]).to.equal(4);
-        expect(NFTsOnSaleSeller2.tokenIds[1]).to.equal(5);
-        expect(NFTsOnSaleSeller2.sellers[0]).to.equal(seller2.address);
+        expect(NFTsOnSaleSeller2.tokenIds[0]).to.equal(3);
+        expect(NFTsOnSaleSeller2.tokenIds[1]).to.equal(4);
+        expect(NFTsOnSaleSeller2.tokenIds[2]).to.equal(5);
+        expect(NFTsOnSaleSeller2.sellers[0]).to.equal(seller.address);
         expect(NFTsOnSaleSeller2.sellers[1]).to.equal(seller2.address);
+        expect(NFTsOnSaleSeller2.sellers[2]).to.equal(seller2.address);
         expect(NFTsOnSaleSeller2.prices[0]).to.equal(PRICE_GFAL_10_NFT);
         expect(NFTsOnSaleSeller2.prices[1]).to.equal(PRICE_GFAL_10_NFT);
+        expect(NFTsOnSaleSeller2.prices[2]).to.equal(PRICE_GFAL_10_NFT);
 
         // Set approval from the buyer to the Marketplace to manage GFAL
         await gfalToken
@@ -2137,12 +2020,7 @@ describe("GFALMarketplace", function () {
         expect(await erc1155MockUp.balanceOf(owner.address, 5)).to.equal(0);
 
         const NFTsOnSaleSellerAfterSale_2_3 =
-          await gfalMarketplace.getOnSaleTokenIds(
-            erc1155MockUp.address,
-            seller.address,
-            1,
-            3
-          );
+          await gfalMarketplace.getOnSaleTokenIds(erc1155MockUp.address, 1, 3);
 
         expect(NFTsOnSaleSellerAfterSale_2_3.tokenIds[0]).to.equal(0);
         expect(NFTsOnSaleSellerAfterSale_2_3.tokenIds[1]).to.equal(0);
@@ -2156,12 +2034,7 @@ describe("GFALMarketplace", function () {
         expect(NFTsOnSaleSellerAfterSale_2_3.prices[1]).to.equal(0);
 
         const NFTsOnSaleSellerAfterSale_3_5 =
-          await gfalMarketplace.getOnSaleTokenIds(
-            erc1155MockUp.address,
-            seller.address,
-            3,
-            5
-          );
+          await gfalMarketplace.getOnSaleTokenIds(erc1155MockUp.address, 3, 5);
 
         expect(NFTsOnSaleSellerAfterSale_3_5.tokenIds[0]).to.equal(0);
         expect(NFTsOnSaleSellerAfterSale_3_5.tokenIds[1]).to.equal(0);

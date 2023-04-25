@@ -26,8 +26,7 @@ contract GFALMarketplace is ReentrancyGuard {
     mapping(address => Whitelist) public whitelistNFTs;
 
     // Marketplace
-    mapping(address => mapping(uint256 => mapping(address => Sale)))
-        public tokensForSale; // collectionAddress => (tokenId => (sellerAddress => Sale))
+    mapping(address => mapping(uint256 => Sale)) public tokensForSale; // collectionAddress => (tokenId => Sale)
     address[] public sellersList; // to allow iterating in order to get on sale tokens for contractAddress and sellerAddress
     mapping(address => bool) public knownSellers; // to avoid repeated sellersList.push(sellerAddress)
     uint256 public volume; // $GFAL all-time-volume
@@ -54,6 +53,7 @@ contract GFALMarketplace is ReentrancyGuard {
         bool isDollar;
         bool isForSale;
         uint256 amount;
+        address seller;
     }
 
     /**
@@ -186,11 +186,12 @@ contract GFALMarketplace is ReentrancyGuard {
             );
         }
 
-        tokensForSale[contractAddress][tokenId][msg.sender] = Sale(
+        tokensForSale[contractAddress][tokenId] = Sale(
             price,
             isDollar,
             true,
-            amount
+            amount,
+            msg.sender
         );
 
         emit SellToken(
@@ -221,7 +222,7 @@ contract GFALMarketplace is ReentrancyGuard {
             "Not allowed NFT collection"
         );
 
-        Sale memory sale = tokensForSale[contractAddress][tokenId][seller];
+        Sale memory sale = tokensForSale[contractAddress][tokenId];
         require(sale.isForSale, "Token is not for sale.");
 
         // Calculating royalties and wanted price
@@ -280,11 +281,12 @@ contract GFALMarketplace is ReentrancyGuard {
         volume += price;
 
         // Setting token as not for sell
-        tokensForSale[contractAddress][tokenId][seller] = Sale(
+        tokensForSale[contractAddress][tokenId] = Sale(
             0,
             false,
             false,
-            0
+            0,
+            address(0)
         );
 
         emit BuyToken(
@@ -312,29 +314,34 @@ contract GFALMarketplace is ReentrancyGuard {
         uint256 tokenId
     ) external {
         // Ownership check for ERC721 and ERC1155 based on whitelisted information
+        address owner = g4alProxy.owner();
+
         require(
-            msg.sender == _from || msg.sender == g4alProxy.owner(),
+            msg.sender == _from || msg.sender == owner,
             "Not owner token or owner SC"
         );
         if (
             whitelistNFTs[contractAddress].tokenStandard == TokenStandard.ERC721
         ) {
             require(
-                IERC721Enumerable(contractAddress).ownerOf(tokenId) == _from,
+                IERC721Enumerable(contractAddress).ownerOf(tokenId) == _from ||
+                    msg.sender == owner,
                 "Token does not belong to user or not existing 721."
             );
         } else {
             require(
-                IERC1155(contractAddress).balanceOf(_from, tokenId) != 0,
+                IERC1155(contractAddress).balanceOf(_from, tokenId) != 0 ||
+                    msg.sender == owner,
                 "Token does not belong to user or not existing 1155."
             );
         }
 
-        tokensForSale[contractAddress][tokenId][_from] = Sale(
+        tokensForSale[contractAddress][tokenId] = Sale(
             0,
             false,
             false,
-            0
+            0,
+            address(0)
         );
         emit RemoveToken(contractAddress, tokenId, _from);
     }
@@ -369,7 +376,6 @@ contract GFALMarketplace is ReentrancyGuard {
     /**
      *@dev function to get the total of sellers that have sold in GFALMarketplace.
      *@param contractAddress NFT collection address.
-     *@param seller Seller of the NFT id.
      *@param start NFT id from which to start the search.
      *@param end NFT id from which ends the search.
      *@return tokenIds Array with the tokenIds on sale.
@@ -378,7 +384,6 @@ contract GFALMarketplace is ReentrancyGuard {
      */
     function getOnSaleTokenIds(
         address contractAddress,
-        address seller,
         uint256 start,
         uint256 end
     )
@@ -398,10 +403,10 @@ contract GFALMarketplace is ReentrancyGuard {
 
         uint256 counter = 0;
         for (uint256 i = start; i <= end; i++) {
-            Sale memory currentSale = tokensForSale[contractAddress][i][seller];
+            Sale memory currentSale = tokensForSale[contractAddress][i];
             if (currentSale.isForSale) {
                 _tokenIds[counter] = i;
-                _sellers[counter] = seller;
+                _sellers[counter] = currentSale.seller;
                 _prices[counter] = currentSale.isDollar
                     ? OracleConsumer(g4alProxy.oracleConsumer())
                         .getConversionRate(currentSale.price) // if isDollar we convert it to GFAL
