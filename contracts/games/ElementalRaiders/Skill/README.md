@@ -3,11 +3,6 @@ ElementalRaidersSkill is an ERC721 token for the Game Elemental Raiders. This sm
 
 The ElementalRaidersSkill smart contract uses the OpenZeppelin library for ERC20 token transfers and ERC721 token functionality. It also uses the OracleConsumer and G4ALProxy contracts for GFAL price conversion and to store contract addresses.
 
-## Smart Contract Details
-- Contract Name: ElementalRaidersSkill
-- Solidity Version: 0.8.19
-- OpenZeppelin Version: v4.4.0
-- License: MIT
 
 ## Key Features
 - SafeERC20 and Counters are used to handle token transfers and manage the number of tokens minted.
@@ -17,3 +12,9 @@ The ElementalRaidersSkill smart contract uses the OpenZeppelin library for ERC20
 - The safeMint function safely mints an ERC721 token for a user if the user has approved the required amount of GFAL tokens.
 - The getOwnersByTokens function returns the address of the token owner for the provided array of token ids.
 - The getMintingPricesByRarity function returns the price for the provided array of rarity ids.
+
+##License
+This smart contract is released under the MIT License.
+
+## Solidity Version
+- 0.8.19
