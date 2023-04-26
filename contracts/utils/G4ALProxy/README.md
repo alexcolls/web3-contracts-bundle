@@ -1,11 +1,6 @@
 # G4ALProxy Smart Contract
 This is a smart contract written in Solidity that serves as a proxy for the GFAL Token. The contract allows for the updating of various addresses related to the GFAL Token, such as the address of the Oracle Consumer, Fee Collector, Royalties Collector, and Marketplace.
 
-## Contract Details
-- SPDX-License-Identifier: MIT
-- Solidity version: 0.8.19
-- Inheritance: Ownable
-
 ## Functions
 The G4ALProxy contract has the following functions:
 
@@ -61,3 +56,9 @@ The G4ALProxy contract emits the following events:
 - MarketPlaceUpdated(address oldMarketPlace, address newMarketPlace)
 
 Note: The G4ALProxy contract requires the use of the OpenZeppelin's Ownable contract.
+
+##License
+This smart contract is released under the MIT License.
+
+## Solidity Version
+- 0.8.19
