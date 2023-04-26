@@ -5,7 +5,7 @@ This is a smart contract written in Solidity that serves as a proxy for the GFAL
 - SPDX-License-Identifier: MIT
 - Solidity version: 0.8.19
 - Inheritance: Ownable
-- 
+
 ## Functions
 The G4ALProxy contract has the following functions:
 
@@ -59,4 +59,5 @@ The G4ALProxy contract emits the following events:
 - FeeCollectorUpdated(address oldFeeCollector, address newFeeCollector)
 - RoyaltyCollectorUpdated(address oldRoyaltyCollector, address newRoyaltyCollector)
 - MarketPlaceUpdated(address oldMarketPlace, address newMarketPlace)
+
 Note: The G4ALProxy contract requires the use of the OpenZeppelin's Ownable contract.
