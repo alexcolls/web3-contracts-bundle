@@ -8,8 +8,8 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "../../utils/OracleConsumer.sol";
-import "../../utils/G4ALProxy.sol";
+import "../../../utils/G4ALProxy/G4ALProxy.sol";
+import "../../../utils/OracleConsumer/OracleConsumer.sol";
 
 // TODO! It is on process, needs to be finished based on the logic implementation we wish to have
 contract ElementalRaidersVials is ERC721 {

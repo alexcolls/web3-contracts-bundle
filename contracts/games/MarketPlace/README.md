@@ -70,9 +70,6 @@ Update the royalties percentage as basis points (e.g., 250 for 2.5%).
 ### getSellersList
 Returns the list of known sellers in the marketplace.
 
-### getOnSaleTokenIds
-Retrieve the token IDs, sellers, and prices of tokens listed for sale within a specified range (start and end) for a given contract address and seller.
-
 ##License
 This smart contract is released under the MIT License.
 

@@ -6,8 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
-import "../utils/OracleConsumer.sol";
-import "../utils/G4ALProxy.sol";
+import "../utils/OracleConsumer/OracleConsumer.sol";
+import "../utils/G4ALProxy/G4ALProxy.sol";
 
 // This contract has been created as a MockUp for testing the Marketplace using ERC1155 tokens.
 contract Erc1155MockUp is ERC1155Supply {

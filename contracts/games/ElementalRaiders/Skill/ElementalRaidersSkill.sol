@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "../../utils/OracleConsumer.sol";
-import "../../utils/G4ALProxy.sol";
+import "../../../utils/OracleConsumer/OracleConsumer.sol";
+import "../../../utils/G4ALProxy/G4ALProxy.sol";
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";

@@ -7,6 +7,7 @@ const ROYALTIES_IN_BASIS_POINTS = 1000;
 const ERC721 = 0;
 const ERC1155 = 1;
 
+
 describe("GFALMarketplace", function () {
   // We define a fixture to reuse the same setup in every test.
   // We use loadFixture to run this setup once, snapshot that state,
