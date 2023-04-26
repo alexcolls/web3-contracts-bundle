@@ -29,3 +29,6 @@ This event is emitted when the exchange rate is updated by the owner of the cont
 
 ##License
 This smart contract is released under the MIT License.
+
+## Solidity Version
+- 0.8.19
