@@ -296,7 +296,7 @@ describe("GFALMarketplace", function () {
               ethers.utils.parseUnits("50", "ether"),
               false
             )
-        ).to.be.revertedWith("SC Under maintenance");
+        ).to.be.revertedWith("MarketPlace Under maintenance");
       });
 
       it(`Update the contract Status to innactivated "UnderMaintenance" & try to unlist listed item`, async function () {
@@ -467,6 +467,13 @@ describe("GFALMarketplace", function () {
           ethers.utils.parseUnits("500", "ether")
         );
 
+        await gfalMarketplace
+          .connect(seller)
+          .removeToken(elementalRaidersSkill.address, seller.address, 0);
+
+        await gfalMarketplace
+          .connect(seller)
+          .removeToken(elementalRaidersSkill.address, seller.address, 1);
         // UPDATE PRICE WHILE SELLING!
         // G4AL Price
         await gfalMarketplace
@@ -1141,6 +1148,10 @@ describe("GFALMarketplace", function () {
         expect(await gfalMarketplace.knownSellers(seller.address)).to.equal(
           true
         );
+
+        await gfalMarketplace
+          .connect(seller)
+          .removeToken(elementalRaidersSkill.address, seller.address, 0);
 
         await gfalMarketplace
           .connect(seller)
@@ -1935,6 +1946,13 @@ describe("GFALMarketplace", function () {
         await gfalMarketplace
           .connect(seller2)
           .sellToken(erc1155MockUp.address, 5, AMOUNT, PRICE_USD_10_NFT, true);
+
+        console.log("Balance:");
+        await expect(
+          gfalMarketplace
+            .connect(seller2)
+            .sellToken(erc1155MockUp.address, 5, 100, PRICE_GFAL_10_NFT, false)
+        ).to.be.reverted;
 
         // Checks from his NFTids (start to end)
         const NFTsOnSaleSeller = await gfalMarketplace.getOnSaleTokenIds(

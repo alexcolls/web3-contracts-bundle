@@ -8,8 +8,9 @@ const SKILLS_PRICE_GFAL = ethers.utils.parseUnits("10", "ether");
 const SKILLS_PRICE_BUSD = ethers.utils.parseUnits("1", "ether");
 const SKINS_PRICE_GFAL = ethers.utils.parseUnits("50", "ether");
 const SKINS_PRICE_BUSD = ethers.utils.parseUnits("5", "ether");
+const ERC1155_PRICE_GFAL = ethers.utils.parseUnits("100", "ether");
 const ERC721 = 0;
-const ERC1105 = 1;
+const ERC1155 = 1;
 
 // Wait for 10 second to do not overload the block
 async function wait() {
@@ -19,11 +20,12 @@ async function wait() {
     console.log(e);
   }
 }
-
+// npx hardhat run scripts/massive-deploy-set.js --network bsctest
 async function main() {
   // const [owner] = await ethers.getSigners(); // Hardhat local
 
-  // const owner = new ethers.Wallet(process.env.GANACHE_PRIVATE_KEY); // Ganache
+  // const owner = new ethers.Wallet(process.env.BSC_PRIVATE_KEY); // Ganache or local
+  // const [owner] = await ethers.getSigners();
   const owner = new ethers.Wallet(process.env.BSC_PRIVATE_KEY); // BSC Testnet & Mainnet
 
   // DEPLOY CONTRACTS
@@ -45,6 +47,16 @@ async function main() {
   const oracleConsumer = await OracleConsumer.deploy(g4alProxy.address);
   await oracleConsumer.deployed();
   console.log("*OracleConsumer deployed to:", oracleConsumer.address);
+
+  // TODO! COMMENT MOCK UP WHEN DEPLOYING TO MAINNET
+  // -ERC1155 Token (Mockup)
+  const ERC1155MockUp = await ethers.getContractFactory("Erc1155MockUp");
+  const erc1155MockUp = await ERC1155MockUp.deploy(
+    g4alProxy.address,
+    TEMPORARY_URI
+  );
+  await erc1155MockUp.deployed();
+  console.log("\n*ERC1155MockUp deployed to:", erc1155MockUp.address);
 
   // -ERC721 Token
   const ElementalRaidersSkill = await ethers.getContractFactory(
@@ -99,6 +111,9 @@ async function main() {
     ERC721,
     true
   );
+  //TODO! COMMENT MOCK UP WHEN DEPLOYING TO MAINNET
+  await gfalMarketplace.updateCollection(erc1155MockUp.address, ERC1155, true);
+
   console.log("*Skin & Skill collections is set in the Marketplace");
 
   await wait(); // Wait for 10 second to do not overload the block
@@ -146,12 +161,20 @@ async function main() {
   }
   console.log("*Minted 10 Skills NFTs rarity 0 (Price 0)");
 
+  //TODO! COMMENT MOCK UP WHEN DEPLOYING TO MAINNET
+  for (let i = 0; i < 10; i++) {
+    await erc1155MockUp.mint(100);
+  }
+  console.log("*Minted 10 ERC1155MockUp NFTs (100 copies each)");
+
   await wait(); // Wait for 10 second to do not overload the block
 
   // - Allow Marketplace to manage NFTs
   for (let i = 0; i < 10; i++) {
     await elementalRaidersSkill.approve(gfalMarketplace.address, i);
     await elementalRaidersSkin.approve(gfalMarketplace.address, i);
+    //TODO! COMMENT MOCK UP WHEN DEPLOYING TO MAINNET
+    await erc1155MockUp.setApprovalForAll(gfalMarketplace.address, true);
   }
   console.log(
     "*Approved Marketplace to manage NFTs (Skills & Skins) from 0 to 9 (So 10 NFTs each collection)"
@@ -174,6 +197,15 @@ async function main() {
       i,
       1,
       SKINS_PRICE_GFAL,
+      false
+    );
+
+    //TODO! COMMENT MOCK UP WHEN DEPLOYING TO MAINNET
+    await gfalMarketplace.sellToken(
+      erc1155MockUp.address,
+      i,
+      20,
+      ERC1155_PRICE_GFAL,
       false
     );
   }

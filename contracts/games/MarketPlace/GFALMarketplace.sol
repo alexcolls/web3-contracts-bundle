@@ -153,7 +153,7 @@ contract GFALMarketplace is ReentrancyGuard {
         bool isDollar
     ) external onlyTradableToken(contractAddress, msg.sender, tokenId) {
         require(amount > 0, "Amount cannot be 0");
-        require(isActive, "SC Under maintenance");
+        require(isActive, "MarketPlace Under maintenance");
         require(
             whitelistNFTs[contractAddress].allowed,
             "Not allowed NFT collection"
@@ -172,11 +172,24 @@ contract GFALMarketplace is ReentrancyGuard {
         ) {
             require(amount == 1, "Amount needs to be 1");
             require(
+                tokensForSale[contractAddress][tokenId].amount == 0,
+                "TokenID already on sale"
+            );
+            require(
                 IERC721Enumerable(contractAddress).getApproved(tokenId) ==
                     address(this),
                 "NFT has not been approved for spending 721."
             );
         } else {
+            require(
+                IERC1155(contractAddress).balanceOf(msg.sender, tokenId) >=
+                    amount,
+                "Not enough token balance 1155"
+            );
+            require(
+                tokensForSale[contractAddress][tokenId].amount == 0,
+                "Only one sale per id 1155"
+            );
             require(
                 IERC1155(contractAddress).isApprovedForAll(
                     msg.sender,

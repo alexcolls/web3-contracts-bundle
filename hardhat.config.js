@@ -14,13 +14,13 @@ module.exports = {
       url: "HTTP://127.0.0.1:7545",
       chainId: 1337,
       gas: 2100000,
-      gasPrice: 8000000000,
+      gasPrice: 10000000000,
     },
     bsctest: {
       url: process.env.WEB3_HTTP_PROVIDER_TEST,
       accounts: [process.env.BSC_PRIVATE_KEY],
       gas: 2100000,
-      gasPrice: 8000000000,
+      gasPrice: 10000000000,
     },
     bscmain: {
       url: process.env.WEB3_HTTP_PROVIDER_MAIN,
