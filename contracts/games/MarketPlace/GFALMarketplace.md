@@ -1,23 +1,25 @@
 # GFAL Marketplace Documentation
 This is the documentation for the GFAL Marketplace smart contract.
 
-## Overview
 The GFAL Marketplace is a decentralized platform for buying and selling non-fungible tokens (NFTs) using the GFAL token as a medium of exchange. The marketplace supports both ERC721 and ERC1155 token standards.
 
 ## Features
-- Allows whitelisting of NFT collections.
-- Token sale listings can be denominated in USD or GFAL tokens.
-- Royalties are collected from each sale to be sent to a specified address.
-- Sellers can remove their tokens from sale listings.
-- Users can browse sale listings by seller and token collection.
+The GFAL Marketplace offers the following features:
 
-## Contract Setup
-The contract requires the following constructor parameters:
+- Sell NFTs: users can sell their NFTs by setting a price and amount for each token.
+- Buy NFTs: users can purchase NFTs listed on the marketplace.
+- Whitelist: only NFTs from whitelisted collections can be sold on the marketplace.
+- ERC721 and ERC1155 support: the marketplace supports both token standards.
+- Royalties: a percentage of the sales goes to the contract owner as royalties.
+- Volume tracking: the total volume of all sales is tracked and can be queried.
+- Maintenance mode: the marketplace can be temporarily disabled for maintenance.
+- 
+## Dependencies
+The GFAL Marketplace relies on the following dependencies:
 
-- _oracleConsumer: Address of the OracleConsumer contract.
-- _gfalToken: Address of the GFAL token contract.
-- _royaltiesCollector: Address of the royalties collector.
-- _royaltiesInBasisPoints: Royalties percentage as basis points (e.g., 250 for 2.5%).
+- OpenZeppelin: a library for secure smart contract development.
+- OracleConsumer: a utility for getting exchange rates from an oracle.
+- G4ALProxy: a utility for storing contract addresses and wallet addresses.
 
 ## Structures
 
