@@ -16,6 +16,7 @@ const TRANSFERS_PAYLOAD = {
     "0x8B59D0F2a5E26702CeADD609609A4b043b58338a", //Skizo (moderator)
     "0x2Ea537ae9955acECFf13BB6e9144bF6E871669a2", //Dverse (Feb)
     "0x2Ea537ae9955acECFf13BB6e9144bF6E871669a2", //Dverse (Trip interview)
+    "0xC7618E69F6cBECf2d3926D02DCC8357A7fdB27eF", //Lach (mkt contractor)
   ],
   amount: [
     ethers.utils.parseEther(String(50000)),
@@ -23,6 +24,7 @@ const TRANSFERS_PAYLOAD = {
     ethers.utils.parseEther(String(50000)),
     ethers.utils.parseEther(String(160000)),
     ethers.utils.parseEther(String(240000)),
+    ethers.utils.parseEther(String(100000)),
   ]
 }
 
