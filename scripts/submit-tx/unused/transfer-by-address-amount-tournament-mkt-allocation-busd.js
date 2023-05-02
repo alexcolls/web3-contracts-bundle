@@ -7,7 +7,7 @@
 const hre = require("hardhat")
 const {ethers} = require("hardhat");
 
-const GFALTokenArtifact = require('../../artifacts/contracts/_mock/GFALToken.sol/GFALToken.json')
+const GFALTokenArtifact = require('../../../artifacts/contracts/_mock/GFALToken.sol/GFALToken.json')
 // Constants
 const TRANSFERS_PAYLOAD = {
   address: [
