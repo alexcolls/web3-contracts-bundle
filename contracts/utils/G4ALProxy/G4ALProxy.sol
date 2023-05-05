@@ -4,11 +4,12 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract G4ALProxy is Ownable {
-    address public gfalToken; // Address of GFAL Token
-    address public oracleConsumer; // Address of G4AL price feed. Needs to be set once deployed
-    address public feeCollector; // Address of Fee Collector from minting NFTs
-    address public royaltiesCollector; // Address of Royalties Collector from Marketplace
-    address public marketPlace; // Address of ERC721 and ERC1155 Marketplace. Needs to be set once deployed
+    address private gfalToken; // Address of GFAL Token
+    address private oracleConsumer; // Address of G4AL price feed. Needs to be set once deployed
+    address private feeCollector; // Address of Fee Collector from minting NFTs
+    address private royaltiesCollector; // Address of Royalties Collector from Marketplace
+    address private marketPlace; // Address of ERC721 and ERC1155 Marketplace. Needs to be set once deployed
+    address private admin; // Address of Admin to call and have previlegies over the contracts
 
     event GfalTokenUpdated(address oldGfalToken, address newGfalToken);
     event OracleConsumerUpdated(
@@ -21,16 +22,30 @@ contract G4ALProxy is Ownable {
         address newRoyaltyCollector
     );
     event MarketPlaceUpdated(address oldMarketPlace, address newMarketPlace);
+    event AdminUpdated(address oldAdmin, address newAdmin);
 
     /**
      * @dev Initializes the G4ALProxy contract with the given GFAL Token address and sets the
      *      Fee Collector and the Royalties Collector to the contract deployer.
      * @param _gfalToken The address of GFAL Token.
      */
-    constructor(address _gfalToken) {
+    constructor(address _gfalToken, address _admin) {
         feeCollector = msg.sender;
         royaltiesCollector = msg.sender;
         gfalToken = _gfalToken;
+        admin = _admin;
+    }
+
+    /**
+     * @dev Updates the address of admin.
+     * @param _newAdmin The new address of admin.
+     */
+    function updateAdmin(address _newAdmin) external onlyOwner {
+        require(_newAdmin != address(0), "Not valid address");
+        address _oldAdmin = admin;
+        admin = _newAdmin;
+
+        emit AdminUpdated(_oldAdmin, _newAdmin);
     }
 
     /**
@@ -96,5 +111,30 @@ contract G4ALProxy is Ownable {
         marketPlace = _newMarketPlace;
 
         emit MarketPlaceUpdated(_oldMarketPlace, _newMarketPlace);
+    }
+
+    // Getters
+    function getGfalToken() external view returns (address) {
+        return gfalToken;
+    }
+
+    function getAdmin() external view returns (address) {
+        return admin;
+    }
+
+    function getMarketPlace() external view returns (address) {
+        return marketPlace;
+    }
+
+    function getOracleConsumer() external view returns (address) {
+        return oracleConsumer;
+    }
+
+    function getFeeCollector() external view returns (address) {
+        return feeCollector;
+    }
+
+    function getRoyaltiesCollector() external view returns (address) {
+        return royaltiesCollector;
     }
 }

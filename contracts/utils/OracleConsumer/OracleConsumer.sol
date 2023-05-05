@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../G4ALProxy/G4ALProxy.sol";
+import "../G4ALProxy/IG4ALProxy.sol";
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
@@ -13,7 +13,7 @@ import "../G4ALProxy/G4ALProxy.sol";
  */
 contract OracleConsumer {
     // Address of the G4ALProxy contract
-    G4ALProxy public g4alProxy;
+    IG4ALProxy public g4alProxy;
 
     // The last known value of the GFAL token exchange rate in USD
     uint256 public lastTokenRateValue = 0;
@@ -26,8 +26,8 @@ contract OracleConsumer {
     /**
      * @dev Modifier to ensure that only the owner of the contract can execute certain functions.
      */
-    modifier onlyOwner() {
-        require(msg.sender == g4alProxy.owner(), "Not owner");
+    modifier onlyAdmin() {
+        require(msg.sender == g4alProxy.getAdmin(), "Not Admin");
         _;
     }
 
@@ -36,7 +36,7 @@ contract OracleConsumer {
      * @param _g4alProxy The address of the G4ALProxy contract.
      */
     constructor(address _g4alProxy) {
-        g4alProxy = G4ALProxy(_g4alProxy);
+        g4alProxy = IG4ALProxy(_g4alProxy);
     }
 
     /**
@@ -53,7 +53,7 @@ contract OracleConsumer {
      * @dev Function for the owner of the contract to update the last known value of the GFAL token exchange rate.
      * @param _lastTokenRateValue The new value of the GFAL token exchange rate.
      */
-    function updateRateValue(uint256 _lastTokenRateValue) external onlyOwner {
+    function updateRateValue(uint256 _lastTokenRateValue) external onlyAdmin {
         lastTokenRateValue = _lastTokenRateValue;
 
         // Emit an event to signal that the rate has been updated

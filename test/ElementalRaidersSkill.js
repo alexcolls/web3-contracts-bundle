@@ -14,7 +14,7 @@ describe("ElementalRaidersSkill", function () {
   // and reset Hardhat Network to that snapshot in every test.
   async function deployContracts() {
     // Contracts are deployed using the first signer/account by default
-    const [owner, user] = await ethers.getSigners();
+    const [owner, user, admin] = await ethers.getSigners();
 
     // GFAL TOKEN
     const GFALToken = await ethers.getContractFactory("GFALToken");
@@ -27,7 +27,7 @@ describe("ElementalRaidersSkill", function () {
 
     // PROXY SC
     const Proxy = await ethers.getContractFactory("G4ALProxy");
-    const proxy = await Proxy.deploy(gfalToken.address);
+    const proxy = await Proxy.deploy(gfalToken.address, admin.address);
     await proxy.deployed();
 
     // ORACLE CONSUMER
@@ -64,29 +64,27 @@ describe("ElementalRaidersSkill", function () {
     await gFALMarketplace.deployed();
 
     // Oracle writes the priceFeed (Mocking external, untested here, workflow)
-    await oracleConsumer.updateRateValue(
-      ethers.utils.parseUnits("0.1", "ether")
-    ); // here we are converting the float to wei to work as "intFloat"
+    await oracleConsumer
+      .connect(admin)
+      .updateRateValue(ethers.utils.parseUnits("0.1", "ether")); // here we are converting the float to wei to work as "intFloat"
 
-    await elementalRaidersSkill.updateBaseURI(
-      NFT_METADATA_BASEURI + elementalRaidersSkill.address + "/"
-    );
-    await elementalRaidersSkill.updateMintingPrice(
-      1,
-      hre.ethers.utils.parseEther("50")
-    );
-    await elementalRaidersSkill.updateMintingPrice(
-      2,
-      hre.ethers.utils.parseEther("100")
-    );
-    await elementalRaidersSkill.updateMintingPrice(
-      3,
-      hre.ethers.utils.parseEther("150")
-    );
-    await elementalRaidersSkill.updateMintingPrice(
-      4,
-      hre.ethers.utils.parseEther("200")
-    );
+    await elementalRaidersSkill
+      .connect(admin)
+      .updateBaseURI(
+        NFT_METADATA_BASEURI + elementalRaidersSkill.address + "/"
+      );
+    await elementalRaidersSkill
+      .connect(admin)
+      .updateMintingPrice(1, hre.ethers.utils.parseEther("50"));
+    await elementalRaidersSkill
+      .connect(admin)
+      .updateMintingPrice(2, hre.ethers.utils.parseEther("100"));
+    await elementalRaidersSkill
+      .connect(admin)
+      .updateMintingPrice(3, hre.ethers.utils.parseEther("150"));
+    await elementalRaidersSkill
+      .connect(admin)
+      .updateMintingPrice(4, hre.ethers.utils.parseEther("200"));
 
     // Set Oracle for consuming the price when minting
     await proxy.updateOracleConsumer(oracleConsumer.address);
@@ -94,6 +92,7 @@ describe("ElementalRaidersSkill", function () {
     return {
       owner,
       user,
+      admin,
       gfalToken,
       oracleConsumer,
       elementalRaidersSkin,
@@ -173,6 +172,7 @@ describe("ElementalRaidersSkill", function () {
           gFALMarketplace,
           proxy,
           elementalRaidersSkill,
+          admin,
         } = await loadFixture(deployContracts);
 
         // User approve spending
@@ -184,7 +184,7 @@ describe("ElementalRaidersSkill", function () {
           );
 
         // Owner mints
-        await elementalRaidersSkill.safeMint(user.address, 1);
+        await elementalRaidersSkill.connect(admin).safeMint(user.address, 1);
 
         expect(await elementalRaidersSkill.totalSupply()).to.equal(1);
         expect(await elementalRaidersSkill.balanceOf(user.address)).to.equal(1);
@@ -200,7 +200,7 @@ describe("ElementalRaidersSkill", function () {
 
         // Owner updates the baseURI
         const newBaseURI = "ipfs://lol.com/";
-        await elementalRaidersSkill.updateBaseURI(newBaseURI);
+        await elementalRaidersSkill.connect(admin).updateBaseURI(newBaseURI);
 
         // Check new tokenURI for preminted token
         const newTokenURI = await elementalRaidersSkill.tokenURI(0);

@@ -9,21 +9,21 @@ describe("OracleConsumer", function () {
   // and reset Hardhat Network to that snapshot in every test.
   async function deployContracts() {
     // Contracts are deployed using the first signer/account by default
-    const [owner, user] = await ethers.getSigners();
+    const [owner, user, admin] = await ethers.getSigners();
 
     const GFALToken = await ethers.getContractFactory("GFALToken");
     const gfalToken = await GFALToken.deploy();
     await gfalToken.deployed();
 
     const Proxy = await ethers.getContractFactory("G4ALProxy");
-    const proxy = await Proxy.deploy(gfalToken.address);
+    const proxy = await Proxy.deploy(gfalToken.address, admin.address);
     await proxy.deployed();
 
     const OracleConsumer = await ethers.getContractFactory("OracleConsumer");
     const oracleConsumer = await OracleConsumer.deploy(proxy.address);
     await oracleConsumer.deployed();
 
-    return { owner, user, oracleConsumer };
+    return { owner, user, admin, oracleConsumer };
   }
 
   describe("Deployment", function () {
@@ -47,12 +47,14 @@ describe("OracleConsumer", function () {
 
     describe("Events", function () {
       it("Should emit an event UpdateRate on updating the rate", async function () {
-        const { oracleConsumer, owner } = await loadFixture(deployContracts);
+        const { oracleConsumer, owner, admin } = await loadFixture(
+          deployContracts
+        );
 
         await expect(
-          await oracleConsumer.updateRateValue(
-            ethers.utils.parseUnits("0.1", "ether")
-          )
+          await oracleConsumer
+            .connect(admin)
+            .updateRateValue(ethers.utils.parseUnits("0.1", "ether"))
         )
           .to.emit(oracleConsumer, "UpdateRate")
           .withArgs(ethers.utils.parseUnits("0.1", "ether"));
@@ -61,13 +63,13 @@ describe("OracleConsumer", function () {
 
     describe("Workflow", function () {
       it("Should update the lastTokenRateValue", async function () {
-        const { oracleConsumer } = await loadFixture(deployContracts);
+        const { oracleConsumer, admin } = await loadFixture(deployContracts);
 
         expect(await oracleConsumer.lastTokenRateValue()).to.equal(0);
 
-        oracleConsumer.updateRateValue(
-          ethers.utils.parseUnits("0.01", "ether")
-        ); // here we are converting the float to wei to work as "intFloat"
+        await oracleConsumer
+          .connect(admin)
+          .updateRateValue(ethers.utils.parseUnits("0.01", "ether")); // here we are converting the float to wei to work as "intFloat"
 
         expect(await oracleConsumer.lastTokenRateValue()).to.equal(
           ethers.utils.parseUnits("0.01", "ether")
@@ -75,11 +77,11 @@ describe("OracleConsumer", function () {
       });
 
       it("Should get the correct getConversionRate", async function () {
-        const { oracleConsumer } = await loadFixture(deployContracts);
+        const { oracleConsumer, admin } = await loadFixture(deployContracts);
 
-        await oracleConsumer.updateRateValue(
-          ethers.utils.parseUnits("10", "ether")
-        ); // here we are converting the float to wei to work as "intFloat"
+        await oracleConsumer
+          .connect(admin)
+          .updateRateValue(ethers.utils.parseUnits("10", "ether")); // here we are converting the float to wei to work as "intFloat"
 
         const price1 = ethers.utils.formatUnits("1000000000000000000", "wei");
         const price2 = ethers.utils.formatUnits("3000000000000000000", "wei");

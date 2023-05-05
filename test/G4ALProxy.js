@@ -15,7 +15,7 @@ describe("G4ALProxy", function () {
   // and reset Hardhat Network to that snapshot in every test.
   async function deployContracts() {
     // Contracts are deployed using the first signer/account by default
-    const [owner, user, contract] = await ethers.getSigners();
+    const [owner, user, contract, admin] = await ethers.getSigners();
 
     // GFAL TOKEN
     const GFALToken = await ethers.getContractFactory("GFALToken");
@@ -24,7 +24,7 @@ describe("G4ALProxy", function () {
 
     // PROXY SC
     const Proxy = await ethers.getContractFactory("G4ALProxy");
-    const proxy = await Proxy.deploy(gfalToken.address);
+    const proxy = await Proxy.deploy(gfalToken.address, admin.address);
     await proxy.deployed();
 
     // ORACLE CONSUMER
@@ -43,6 +43,7 @@ describe("G4ALProxy", function () {
     return {
       owner,
       user,
+      admin,
       contract,
       gfalToken,
       proxy,
@@ -52,11 +53,13 @@ describe("G4ALProxy", function () {
   }
 
   describe("Set addresses in G4ALProxy", function () {
-    it("Owner should be set correctly", async function () {
-      const { owner, proxy } = await loadFixture(deployContracts);
+    it("Owner & Admin should be set correctly", async function () {
+      const { owner, proxy, admin } = await loadFixture(deployContracts);
 
       expect(await proxy.owner()).to.equal(owner.address);
       console.log("- Owner set correctly!");
+
+      expect(admin.address).to.equal(await proxy.getAdmin());
     });
 
     it("Should have been set the addresses right", async function () {
@@ -70,19 +73,19 @@ describe("G4ALProxy", function () {
       } = await loadFixture(deployContracts);
 
       await proxy.connect(owner).updateGfalToken(gfalToken.address);
-      expect(await proxy.gfalToken()).to.equal(gfalToken.address);
+      expect(await proxy.getGfalToken()).to.equal(gfalToken.address);
 
       await proxy.connect(owner).updateOracleConsumer(oracleConsumer.address);
-      expect(await proxy.oracleConsumer()).to.equal(oracleConsumer.address);
+      expect(await proxy.getOracleConsumer()).to.equal(oracleConsumer.address);
 
       await proxy.connect(owner).updateFeeCollector(contract.address);
-      expect(await proxy.feeCollector()).to.equal(contract.address);
+      expect(await proxy.getFeeCollector()).to.equal(contract.address);
 
       await proxy.connect(owner).updateRoyaltiesCollector(contract.address);
-      expect(await proxy.royaltiesCollector()).to.equal(contract.address);
+      expect(await proxy.getRoyaltiesCollector()).to.equal(contract.address);
 
       await proxy.connect(owner).updateMarketPlace(gFALMarketplace.address);
-      expect(await proxy.marketPlace()).to.equal(gFALMarketplace.address);
+      expect(await proxy.getMarketPlace()).to.equal(gFALMarketplace.address);
 
       console.log(
         `\n- All contracts addresses are set correctly in the Proxy!`
