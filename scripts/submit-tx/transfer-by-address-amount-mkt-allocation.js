@@ -49,11 +49,11 @@ async function main() {
   // Executing transactions and saving results
   let results = []
   for (let i = 0; i < TRANSFERS_PAYLOAD.address.length; i++) {
-    const gasPrice = await provider.getGasPrice();
-    const gasLimit = await gfalToken.estimateGas.transfer(TRANSFERS_PAYLOAD.address[i], TRANSFERS_PAYLOAD.amount[i], {from: signer.address});
+    let gasPrice = await provider.getGasPrice();
+    let gasLimit = await gfalToken.estimateGas.transfer(TRANSFERS_PAYLOAD.address[i], TRANSFERS_PAYLOAD.amount[i], {from: signer.address});
 
     // Construct the transaction
-    const tx = {
+    let tx = {
       from: signer.address, // specify the sender
       to: gfalToken.address,
       gasLimit,
@@ -61,8 +61,8 @@ async function main() {
       nonce: nonce + i,
       data: gfalToken.interface.encodeFunctionData('transfer', [TRANSFERS_PAYLOAD.address[i], TRANSFERS_PAYLOAD.amount[i]]),
     };
-    const signedTx = await signer.signTransaction(tx);
-    const transactionResponse = await provider.sendTransaction(signedTx);
+    let signedTx = await signer.signTransaction(tx);
+    let transactionResponse = await provider.sendTransaction(signedTx);
     results.push(transactionResponse)
   }
 
