@@ -2,8 +2,9 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./IG4ALProxy.sol";
 
-contract G4ALProxy is Ownable {
+contract G4ALProxy is IG4ALProxy, Ownable {
     address private gfalToken; // Address of GFAL Token (ERC20)
     address private oracleConsumer; // Address of G4AL price feed. Needs to be set once deployed
     address private feeCollector; // Address of Fee Collector from minting NFTs
@@ -30,6 +31,10 @@ contract G4ALProxy is Ownable {
      * @param _gfalToken The address of GFAL Token.
      */
     constructor(address _gfalToken, address _admin) {
+        require(
+            _gfalToken != address(0) && _admin != address(0),
+            "Address cannot be 0"
+        );
         feeCollector = msg.sender;
         royaltiesCollector = msg.sender;
         gfalToken = _gfalToken;
@@ -38,79 +43,77 @@ contract G4ALProxy is Ownable {
 
     /**
      * @dev Updates the address of admin.
-     * @param _newAdmin The new address of admin.
+     * @param newAdmin The new address of admin.
      */
-    function updateAdmin(address _newAdmin) external onlyOwner {
-        require(_newAdmin != address(0), "Not valid address");
+    function updateAdmin(address newAdmin) external onlyOwner {
+        require(newAdmin != address(0), "Not valid address");
         address _oldAdmin = admin;
-        admin = _newAdmin;
+        admin = newAdmin;
 
-        emit AdminUpdated(_oldAdmin, _newAdmin);
+        emit AdminUpdated(_oldAdmin, newAdmin);
     }
 
     /**
      * @dev Updates the address of GFAL Token.
-     * @param _newToken The new address of GFAL Token.
+     * @param newToken The new address of GFAL Token.
      */
-    function updateGfalToken(address _newToken) external onlyOwner {
-        require(_newToken != address(0), "Not valid address");
+    function updateGfalToken(address newToken) external onlyOwner {
+        require(newToken != address(0), "Not valid address");
         address _oldGfal = gfalToken;
-        gfalToken = _newToken;
+        gfalToken = newToken;
 
-        emit GfalTokenUpdated(_oldGfal, _newToken);
+        emit GfalTokenUpdated(_oldGfal, newToken);
     }
 
     /**
      * @dev Updates the address of Oracle Consumer.
-     * @param _newOracle The new address of Oracle Consumer.
+     * @param newOracle The new address of Oracle Consumer.
      */
-    function updateOracleConsumer(address _newOracle) external onlyOwner {
-        require(_newOracle != address(0), "Not valid address");
+    function updateOracleConsumer(address newOracle) external onlyOwner {
+        require(newOracle != address(0), "Not valid address");
         address _oldOracle = oracleConsumer;
-        oracleConsumer = _newOracle;
+        oracleConsumer = newOracle;
 
-        emit OracleConsumerUpdated(_oldOracle, _newOracle);
+        emit OracleConsumerUpdated(_oldOracle, newOracle);
     }
 
     /**
      * @dev Updates the address of Fee Collector.
-     * @param _newFeeCollector The new address of Fee Collector.
+     * @param newFeeCollector The new address of Fee Collector.
      */
-    function updateFeeCollector(address _newFeeCollector) external onlyOwner {
-        require(_newFeeCollector != address(0), "Not valid address");
+    function updateFeeCollector(address newFeeCollector) external onlyOwner {
+        require(newFeeCollector != address(0), "Not valid address");
 
         address _oldCollector = feeCollector;
-        feeCollector = _newFeeCollector;
+        feeCollector = newFeeCollector;
 
-        emit FeeCollectorUpdated(_oldCollector, _newFeeCollector);
+        emit FeeCollectorUpdated(_oldCollector, newFeeCollector);
     }
 
     /**
      * @dev Updates the address of Royalties Collector.
-     * @param _newCollector The new address of Royalties Collector.
+     * @param newCollector The new address of Royalties Collector.
      */
-    function updateRoyaltiesCollector(
-        address _newCollector
-    ) external onlyOwner {
-        require(_newCollector != address(0), "Not valid address");
+    function updateRoyaltiesCollector(address newCollector) external onlyOwner {
+        require(newCollector != address(0), "Not valid address");
 
         address _oldCollector = royaltiesCollector;
-        royaltiesCollector = _newCollector;
+        royaltiesCollector = newCollector;
 
-        emit RoyaltyCollectorUpdated(_oldCollector, _newCollector);
+        emit RoyaltyCollectorUpdated(_oldCollector, newCollector);
     }
 
     /**
      * @dev Updates the address of MarketPlace.
-     * @param _newMarketPlace The new address of MarketPlace.
+     * @param newMarketPlace The new address of MarketPlace.
      */
-    function updateMarketPlace(address _newMarketPlace) external onlyOwner {
-        require(_newMarketPlace != address(0), "Not valid address");
+    function updateMarketPlace(address newMarketPlace) external onlyOwner {
+        require(newMarketPlace != address(0), "Not valid address");
 
         address _oldMarketPlace = marketPlace;
-        marketPlace = _newMarketPlace;
+        marketPlace = newMarketPlace;
 
-        emit MarketPlaceUpdated(_oldMarketPlace, _newMarketPlace);
+        emit MarketPlaceUpdated(_oldMarketPlace, newMarketPlace);
     }
 
     // Getters

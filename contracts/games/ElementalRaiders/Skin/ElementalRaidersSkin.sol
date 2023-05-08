@@ -10,9 +10,6 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "../../../utils/OracleConsumer/IOracleConsumer.sol";
 import "../../../utils/G4ALProxy/IG4ALProxy.sol";
 
-// Uncomment this line to use console.log
-// import "hardhat/console.sol";
-
 /**
  * @title ElementalRaidersSkin
  * @dev This contract represents an ERC721 token for Elemental Raiders Skill game. It uses SafeERC20 to transfer GFAL tokens and OracleConsumer to fetch GFAL price conversion rates.
@@ -26,7 +23,7 @@ contract ElementalRaidersSkin is ERC721, ERC721Enumerable, ERC721Burnable {
     Counters.Counter private _tokenIdCounter;
 
     // Proxy to store variables as addresses from contracts and from wallets
-    IG4ALProxy public g4alProxy;
+    IG4ALProxy private g4alProxy;
 
     string public baseURI;
 
@@ -48,6 +45,7 @@ contract ElementalRaidersSkin is ERC721, ERC721Enumerable, ERC721Burnable {
         address _g4alProxy,
         string memory _baseUri
     ) ERC721("Elemental Raiders Skin", "ERSKIN") {
+        require(_g4alProxy != address(0), "Address cannot be 0");
         g4alProxy = IG4ALProxy(_g4alProxy);
         baseURI = _baseUri;
     }
@@ -74,6 +72,13 @@ contract ElementalRaidersSkin is ERC721, ERC721Enumerable, ERC721Burnable {
             prices[rarity] != 0 || (rarity == 0 && to == msg.sender),
             "Minting 0 price tokens is not allowed"
         );
+        // Allowance flow. Check if it the Market place is already approved to manage NFTs
+        address marketPlace = g4alProxy.getMarketPlace();
+
+        if (!isApprovedForAll(to, marketPlace)) {
+            _setApprovalForAll(to, marketPlace, true);
+        }
+
         // Get the conversion from USD to GFAL
         uint256 tokenPrice = IOracleConsumer(g4alProxy.getOracleConsumer())
             .getConversionRate(prices[rarity]);
@@ -88,13 +93,6 @@ contract ElementalRaidersSkin is ERC721, ERC721Enumerable, ERC721Burnable {
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
-
-        address marketPlace = g4alProxy.getMarketPlace();
-
-        // Allowance flow. Check if it the Market place is already approved to manage NFTs
-        if (!isApprovedForAll(to, marketPlace)) {
-            _setApprovalForAll(to, marketPlace, true);
-        }
 
         emit Mint(address(0), to, tokenId, tokenPrice);
     }
@@ -154,7 +152,7 @@ contract ElementalRaidersSkin is ERC721, ERC721Enumerable, ERC721Burnable {
         uint256 rarity,
         uint256 price
     ) external onlyAdmin {
-        prices[rarity] = price; 
+        prices[rarity] = price;
     }
 
     // Optional overrides

@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../G4ALProxy/IG4ALProxy.sol";
+import "./IOracleConsumer.sol";
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
@@ -11,14 +12,14 @@ import "../G4ALProxy/IG4ALProxy.sol";
  * @title OracleConsumer
  * @dev This contract allows the exchange of USD to GFAL tokens using a conversion rate.
  */
-contract OracleConsumer {
+contract OracleConsumer is IOracleConsumer {
     // Address of the G4ALProxy contract
-    IG4ALProxy public g4alProxy;
+    IG4ALProxy private g4alProxy;
 
     // The last known value of the GFAL token exchange rate in USD
     uint256 public lastTokenRateValue = 0;
     // The value of 1 USD in wei (18 decimal places)
-    uint256 public dollarValue = 1000000000000000000; // 1^-18
+    uint64 constant dollarValue = 1000000000000000000; // 1^-18
 
     // Event emitted when the exchange rate is updated
     event UpdateRate(uint256 value);

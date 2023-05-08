@@ -13,8 +13,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../../utils/OracleConsumer/IOracleConsumer.sol";
 import "../../utils/G4ALProxy/IG4ALProxy.sol";
 
-import "hardhat/console.sol";
-
 /**
  *@title GFALMarketplace
  *@dev A smart contract for a marketplace where users can sell and buy ERC721 and ERC1155 tokens. It uses OpenZeppelin contracts as libraries and inherits from ReentrancyGuard to prevent reentrancy attacks.
@@ -23,34 +21,6 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
-    // Proxy to store variables as addresses from contracts and from wallets
-    IG4ALProxy public g4alProxy;
-
-    mapping(address => Whitelist) public whitelistNFTs;
-
-    // Marketplace
-    mapping(address => mapping(uint256 => mapping(address => Sale)))
-        public tokensForSale1155; // collectionAddressERC1155 => (tokenId => ( seller => Sale))
-    mapping(address => mapping(uint256 => Sale)) public tokensForSale721; // collectionAddressERC721 => (tokenId => Sale)
-
-    address[] public sellersList; // to allow iterating in order to get on sale tokens for contractAddress and sellerAddress
-    mapping(address => bool) public knownSellers; // to avoid repeated sellersList.push(sellerAddress)
-    uint256 public volume; // $GFAL all-time-volume
-    uint256 public royaltiesInBasisPoints;
-    bool public isActive; // It will allow user to trade NFTs. They will always will be able to unlist them.
-
-    modifier onlyAdmin() {
-        require(msg.sender == g4alProxy.getAdmin(), "Not Admin");
-        _;
-    }
-
-    constructor(uint256 _royaltiesInBasisPoints, address _g4alProxy) {
-        royaltiesInBasisPoints = _royaltiesInBasisPoints;
-        g4alProxy = IG4ALProxy(_g4alProxy);
-        isActive = true;
-    }
-
-    // Structures
     /**
      * @dev Structure to hold the sale information.
      */
@@ -78,7 +48,57 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
         ERC1155
     }
 
-    // Events
+    IG4ALProxy private g4alProxy; // Proxy to store variables as addresses from contracts and from wallets
+    address[] public sellersList; // to allow iterating in order to get on sale tokens for contractAddress and sellerAddress
+    uint256 public volume; // $GFAL all-time-volume
+    uint256 public royaltiesInBasisPoints;
+    bool public isActive; // It will allow user to trade NFTs. They will always will be able to unlist them.
+
+    mapping(address => Whitelist) public whitelistNFTs; // Whitelisted NFTs smart contracts
+    mapping(address => mapping(uint256 => mapping(address => Sale)))
+        public tokensForSale1155; // collectionAddressERC1155 => (tokenId => ( seller => Sale))
+    mapping(address => mapping(uint256 => Sale)) public tokensForSale721; // collectionAddressERC721 => (tokenId => Sale)
+    mapping(address => bool) public knownSellers; // to avoid repeated sellersList.push(sellerAddress)
+
+    modifier onlyAdmin() {
+        require(msg.sender == g4alProxy.getAdmin(), "Not Admin");
+        _;
+    }
+
+    /**
+     *@dev Modifier to check if the token is tradable based on whitelisted information and ownership.
+     *@param contractAddress The address of the NFT contract.
+     *@param from The address of the token owner.
+     *@param tokenId The ID of the token being traded.
+     *Requirements:
+     *The collection must be whitelisted.
+     *The token must belong to the user or not exist in the case of an ERC721.
+     */
+    modifier onlyTradableToken(
+        address contractAddress,
+        address from,
+        uint256 tokenId
+    ) {
+        Whitelist memory collection = whitelistNFTs[contractAddress];
+        require(
+            collection.allowed,
+            "You can sell only tokens about whitelisted collections."
+        );
+        // Ownership check for ERC721 and ERC1155 based on whitelisted information
+        if (collection.tokenStandard == TokenStandard.ERC721) {
+            require(
+                IERC721Enumerable(contractAddress).ownerOf(tokenId) == from,
+                "Token does not belong to user or not existing 721."
+            );
+        } else {
+            require(
+                IERC1155(contractAddress).balanceOf(msg.sender, tokenId) != 0,
+                "Token does not belong to user or not existing 1155."
+            );
+        }
+        _;
+    }
+
     event SellToken(
         address collection,
         uint256 tokenId,
@@ -100,42 +120,19 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
     event RemoveToken(address collection, uint256 tokenId, address seller);
     event ContractStatusUpdated(bool isActive);
 
-    // Modifiers
     /**
-     *@dev Modifier to check if the token is tradable based on whitelisted information and ownership.
-     *@param contractAddress The address of the NFT contract.
-     *@param from The address of the token owner.
-     *@param tokenId The ID of the token being traded.
-     *Requirements:
-     *The collection must be whitelisted.
-     *The token must belong to the user or not exist in the case of an ERC721.
+     * @dev Initializes the GFALMarketplace contract with the given G4ALProxy contract address and the rolaties in basis points to calculate the marketplace fees.
+     * @param _royaltiesInBasisPoints Royalties amount to set.
+     * @param _g4alProxy The address of the Proxy contract.
+     * Note: It sets the Marketplace as Activ by default.
      */
-    modifier onlyTradableToken(
-        address contractAddress,
-        address from,
-        uint256 tokenId
-    ) {
-        Whitelist memory collection = whitelistNFTs[contractAddress];
-        require(
-            collection.allowed == true,
-            "You can sell only tokens about whitelisted collections."
-        );
-        // Ownership check for ERC721 and ERC1155 based on whitelisted information
-        if (collection.tokenStandard == TokenStandard.ERC721) {
-            require(
-                IERC721Enumerable(contractAddress).ownerOf(tokenId) == from,
-                "Token does not belong to user or not existing 721."
-            );
-        } else {
-            require(
-                IERC1155(contractAddress).balanceOf(msg.sender, tokenId) != 0,
-                "Token does not belong to user or not existing 1155."
-            );
-        }
-        _;
+    constructor(uint256 _royaltiesInBasisPoints, address _g4alProxy) {
+        require(_g4alProxy != address(0), "Address cannot be 0");
+        royaltiesInBasisPoints = _royaltiesInBasisPoints;
+        g4alProxy = IG4ALProxy(_g4alProxy);
+        isActive = true;
     }
 
-    // -- Marketplace Methods
     /**
      *@dev Allows a user to sell an NFT token on the marketplace.
      *@param contractAddress The address of the NFT contract.
@@ -167,7 +164,7 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
         require(price != 0, "Cannot put zero as a price");
 
         // If the seller is unknown, push it to the sellersList array
-        if (knownSellers[msg.sender] == false) {
+        if (!knownSellers[msg.sender]) {
             knownSellers[msg.sender] = true;
             sellersList.push(msg.sender);
         }
@@ -278,7 +275,7 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
         require(sale.isForSale, "Token is not for sale.");
 
         // Calculating royalties and wanted price
-        uint256 price = sale.isDollar == true // if isDollar expressed listing
+        uint256 price = sale.isDollar // if isDollar expressed listing
             ? IOracleConsumer(g4alProxy.getOracleConsumer()).getConversionRate(
                 sale.price
             ) // convert from USD to GFAL
@@ -356,8 +353,8 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
                 tokensForSale721[contractAddress][tokenId].seller == msg.sender,
                 "Token does not belong to user or not existing 721."
             );
-            delete tokensForSale721[contractAddress][tokenId];
 
+            delete tokensForSale721[contractAddress][tokenId];
             IERC721Enumerable(contractAddress).safeTransferFrom(
                 address(this),
                 msg.sender,
@@ -428,17 +425,17 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
 
     /**
      *@dev Function to add or remove NFTs contracts from the whitelist. It will allow or refuse the selling option.
-     *@param _collectionAddress NFT collection address.
-     *@param _tokenStandard ERC Standar of the NFTscontract. (ERC721 or ERC1155)
-     *@param _allowed Boolean value to allow the NFT contract to be minted. (True -> Contract allowed, False -> Contract not allowed)
+     *@param collectionAddress NFT collection address.
+     *@param tokenStandard ERC Standar of the NFTscontract. (ERC721 or ERC1155)
+     *@param allowed Boolean value to allow the NFT contract to be minted. (True -> Contract allowed, False -> Contract not allowed)
      * Requirements: The caller must be the contract owner.
      */
     function updateCollection(
-        address _collectionAddress,
-        TokenStandard _tokenStandard,
-        bool _allowed
+        address collectionAddress,
+        TokenStandard tokenStandard,
+        bool allowed
     ) external onlyAdmin {
-        whitelistNFTs[_collectionAddress] = Whitelist(_allowed, _tokenStandard);
+        whitelistNFTs[collectionAddress] = Whitelist(allowed, tokenStandard);
     }
 
     /**
