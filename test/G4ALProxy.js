@@ -116,5 +116,20 @@ describe("G4ALProxy", function () {
 
       console.log(`\n- Setting addresses in contract from NOT OWNER rejected!`);
     });
+
+    it("Should update Admin and refuse if caller is not owner", async () => {
+      const { owner, user, admin, contract, proxy, gFALMarketplace } =
+        await loadFixture(deployContracts);
+
+      await expect(proxy.connect(admin).updateAdmin(admin.address)).to.be
+        .reverted;
+      await expect(
+        proxy.connect(admin).updateAdmin(ethers.constants.AddressZero)
+      ).to.be.reverted;
+
+      await proxy.connect(owner).updateAdmin(user.address);
+
+      expect(await proxy.getAdmin()).to.equal(user.address);
+    });
   });
 });

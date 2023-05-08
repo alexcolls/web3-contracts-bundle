@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "../../utils/OracleConsumer/OracleConsumer.sol";
+import "../../utils/OracleConsumer/IOracleConsumer.sol";
 import "../../utils/G4ALProxy/IG4ALProxy.sol";
 
 import "hardhat/console.sol";
@@ -279,7 +279,7 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
 
         // Calculating royalties and wanted price
         uint256 price = sale.isDollar == true // if isDollar expressed listing
-            ? OracleConsumer(g4alProxy.getOracleConsumer()).getConversionRate(
+            ? IOracleConsumer(g4alProxy.getOracleConsumer()).getConversionRate(
                 sale.price
             ) // convert from USD to GFAL
             : sale.price;

@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract G4ALProxy is Ownable {
-    address private gfalToken; // Address of GFAL Token
+    address private gfalToken; // Address of GFAL Token (ERC20)
     address private oracleConsumer; // Address of G4AL price feed. Needs to be set once deployed
     address private feeCollector; // Address of Fee Collector from minting NFTs
     address private royaltiesCollector; // Address of Royalties Collector from Marketplace
@@ -26,7 +26,7 @@ contract G4ALProxy is Ownable {
 
     /**
      * @dev Initializes the G4ALProxy contract with the given GFAL Token address and sets the
-     *      Fee Collector and the Royalties Collector to the contract deployer.
+     *      Fee Collector, the Royalties Collector and the admin address to the contract deployer.
      * @param _gfalToken The address of GFAL Token.
      */
     constructor(address _gfalToken, address _admin) {
@@ -114,26 +114,50 @@ contract G4ALProxy is Ownable {
     }
 
     // Getters
+    /**
+     * @dev Getter for the GfalToken (ERC20) address set.
+     * @return GfalToken address set.
+     */
     function getGfalToken() external view returns (address) {
         return gfalToken;
     }
 
+    /**
+     * @dev Getter for the admin address set.
+     * @return admin address set.
+     */
     function getAdmin() external view returns (address) {
         return admin;
     }
 
+    /**
+     * @dev Getter for the marketPlace (ERC721 & ERC1155) address set.
+     * @return marketPlace address set.
+     */
     function getMarketPlace() external view returns (address) {
         return marketPlace;
     }
 
+    /**
+     * @dev Getter for the oracle consumer address set.
+     * @return oracle consumer address set.
+     */
     function getOracleConsumer() external view returns (address) {
         return oracleConsumer;
     }
 
+    /**
+     * @dev Getter for the fee collector address set.
+     * @return fee collector address set.
+     */
     function getFeeCollector() external view returns (address) {
         return feeCollector;
     }
 
+    /**
+     * @dev Getter for the royalties collector address set.
+     * @return royalties collector address set.
+     */
     function getRoyaltiesCollector() external view returns (address) {
         return royaltiesCollector;
     }

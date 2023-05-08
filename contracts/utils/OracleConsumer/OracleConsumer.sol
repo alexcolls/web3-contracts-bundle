@@ -24,7 +24,7 @@ contract OracleConsumer {
     event UpdateRate(uint256 value);
 
     /**
-     * @dev Modifier to ensure that only the owner of the contract can execute certain functions.
+     * @dev Modifier to ensure that only the admin set in the proxy contract can execute certain functions.
      */
     modifier onlyAdmin() {
         require(msg.sender == g4alProxy.getAdmin(), "Not Admin");
