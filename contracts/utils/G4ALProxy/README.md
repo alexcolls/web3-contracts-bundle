@@ -13,7 +13,7 @@ The G4ALProxy contract has the following functions:
 - Initializes the G4ALProxy contract with the given GFAL Token address, admin address as a bundler role and sets the Fee Collector and the Royalties Collector to the contract deployer.
 - Parameters:
   **\_gfalToken:** The address of GFAL Token (ERC20).
-  **\_admin:** The address of the Admin (API caller).
+  **\_admin:** The address of the Admin (Bundler).
 
 ## Functions
 
