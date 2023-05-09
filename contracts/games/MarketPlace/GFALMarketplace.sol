@@ -49,7 +49,7 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
     }
 
     IG4ALProxy private g4alProxy; // Proxy to store variables as addresses from contracts and from wallets
-    address[] public sellersList; // to allow iterating in order to get on sale tokens for contractAddress and sellerAddress
+    address[] private sellersList; // to allow iterating in order to get on sale tokens for contractAddress and sellerAddress
     uint256 public volume; // $GFAL all-time-volume
     uint256 public royaltiesInBasisPoints;
     bool public isActive; // It will allow user to trade NFTs. They will always will be able to unlist them.
@@ -58,7 +58,7 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
     mapping(address => mapping(uint256 => mapping(address => Sale)))
         public tokensForSale1155; // collectionAddressERC1155 => (tokenId => ( seller => Sale))
     mapping(address => mapping(uint256 => Sale)) public tokensForSale721; // collectionAddressERC721 => (tokenId => Sale)
-    mapping(address => bool) public knownSellers; // to avoid repeated sellersList.push(sellerAddress)
+    mapping(address => bool) private knownSellers; // to avoid repeated sellersList.push(sellerAddress)
 
     modifier onlyAdmin() {
         require(msg.sender == g4alProxy.getAdmin(), "Not Admin");
@@ -100,25 +100,33 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
     }
 
     event SellToken(
-        address collection,
+        address indexed collection,
         uint256 tokenId,
         uint256 amount,
         uint256 price,
         bool isDollar,
-        address seller
+        address indexed seller
     );
     event BuyToken(
-        address collection,
+        address indexed collection,
         uint tokenId,
         uint256 amount,
         uint price,
         uint sellerRevenue,
         uint royalties,
-        address seller,
-        address buyer
+        address indexed seller,
+        address indexed buyer
     );
-    event RemoveToken(address collection, uint256 tokenId, address seller);
+    event RemoveToken(
+        address indexed collection,
+        uint256 tokenId,
+        address indexed seller
+    );
     event ContractStatusUpdated(bool isActive);
+    event RoyaltiesInBasisPointsUpdated(
+        uint256 oldRoyalties,
+        uint256 newRoyalties
+    );
 
     /**
      * @dev Initializes the GFALMarketplace contract with the given G4ALProxy contract address and the rolaties in basis points to calculate the marketplace fees.
@@ -447,6 +455,11 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
     function updateRoyaltiesInBasisPoints(
         uint256 _royaltiesInBasisPoints
     ) external onlyAdmin {
+        uint256 oldRoyalties = royaltiesInBasisPoints;
         royaltiesInBasisPoints = _royaltiesInBasisPoints;
+        emit RoyaltiesInBasisPointsUpdated(
+            oldRoyalties,
+            royaltiesInBasisPoints
+        );
     }
 }

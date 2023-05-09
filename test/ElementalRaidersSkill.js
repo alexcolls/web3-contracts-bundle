@@ -32,7 +32,10 @@ describe("ElementalRaidersSkill", function () {
 
     // ORACLE CONSUMER
     const OracleConsumer = await ethers.getContractFactory("OracleConsumer");
-    const oracleConsumer = await OracleConsumer.deploy(proxy.address);
+    const oracleConsumer = await OracleConsumer.deploy(
+      proxy.address,
+      ethers.utils.parseUnits("0.1", "ether")
+    );
     await oracleConsumer.deployed();
 
     // SKIN NFT
@@ -62,11 +65,6 @@ describe("ElementalRaidersSkill", function () {
       proxy.address
     );
     await gFALMarketplace.deployed();
-
-    // Oracle writes the priceFeed (Mocking external, untested here, workflow)
-    await oracleConsumer
-      .connect(admin)
-      .updateRateValue(ethers.utils.parseUnits("0.1", "ether")); // here we are converting the float to wei to work as "intFloat"
 
     await elementalRaidersSkill
       .connect(admin)
@@ -120,22 +118,6 @@ describe("ElementalRaidersSkill", function () {
         expectedTokenURI
       );
     });
-    it("Should have been set correct prices for minting", async function () {
-      const { elementalRaidersSkill } = await loadFixture(deployContracts);
-
-      expect(await elementalRaidersSkill.prices(1)).to.be.equal(
-        hre.ethers.utils.parseEther("50")
-      );
-      expect(await elementalRaidersSkill.prices(2)).to.be.equal(
-        hre.ethers.utils.parseEther("100")
-      );
-      expect(await elementalRaidersSkill.prices(3)).to.be.equal(
-        hre.ethers.utils.parseEther("150")
-      );
-      expect(await elementalRaidersSkill.prices(4)).to.be.equal(
-        hre.ethers.utils.parseEther("200")
-      );
-    });
   });
 
   describe("Workflow", function () {
@@ -149,16 +131,60 @@ describe("ElementalRaidersSkill", function () {
           elementalRaidersSkill.connect(user).safeMint(user.address, 1)
         ).to.be.reverted;
       });
-    });
 
-    describe("Events", function () {
-      // it("Should emit an event UpdateRate on updating the rate", async function () {
-      //   const {elementalRaidersSkill, owner} = await loadFixture(deployContracts);
-      //
-      //   await expect(await elementalRaidersSkill.updateRateValue(ethers.utils.parseUnits("0.1", "ether")))
-      //     .to.emit(elementalRaidersSkill, "UpdateRate")
-      //     .withArgs(ethers.utils.parseUnits("0.1", "ether"))
-      // });
+      it("Should return prices in USD by rarity", async function () {
+        const { elementalRaidersSkill, user } = await loadFixture(
+          deployContracts
+        );
+
+        const pricesRarity =
+          await elementalRaidersSkill.getMintingPricesByRarity([1, 2, 3, 4]);
+
+        expect(pricesRarity[0]).to.equal(ethers.utils.parseEther("500"));
+        expect(pricesRarity[1]).to.equal(ethers.utils.parseEther("1000"));
+        expect(pricesRarity[2]).to.equal(ethers.utils.parseEther("1500"));
+        expect(pricesRarity[3]).to.equal(ethers.utils.parseEther("2000"));
+      });
+
+      it("Should have been set correct prices for minting", async function () {
+        const { elementalRaidersSkill } = await loadFixture(deployContracts);
+
+        expect(await elementalRaidersSkill.prices(1)).to.be.equal(
+          hre.ethers.utils.parseEther("50")
+        );
+        expect(await elementalRaidersSkill.prices(2)).to.be.equal(
+          hre.ethers.utils.parseEther("100")
+        );
+        expect(await elementalRaidersSkill.prices(3)).to.be.equal(
+          hre.ethers.utils.parseEther("150")
+        );
+        expect(await elementalRaidersSkill.prices(4)).to.be.equal(
+          hre.ethers.utils.parseEther("200")
+        );
+      });
+
+      it("Should return the Owners by token", async function () {
+        const { elementalRaidersSkill, admin } = await loadFixture(
+          deployContracts
+        );
+
+        await elementalRaidersSkill.connect(admin).safeMint(admin.address, 0);
+        await elementalRaidersSkill.connect(admin).safeMint(admin.address, 0);
+
+        const ownerByID = await elementalRaidersSkill.getOwnersByTokens([0, 1]);
+        expect(ownerByID[0]).to.equal(admin.address);
+        expect(ownerByID[1]).to.equal(admin.address);
+      });
+
+      it("Should return `true` when calling supportsInterface() ", async function () {
+        const { elementalRaidersSkill, admin } = await loadFixture(
+          deployContracts
+        );
+
+        expect(
+          await elementalRaidersSkill.supportsInterface(0x80ac58cd)
+        ).to.equal(true);
+      });
     });
 
     describe("Transfers", function () {

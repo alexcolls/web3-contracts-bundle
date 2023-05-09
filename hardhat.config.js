@@ -1,6 +1,8 @@
 require("dotenv").config();
 require("@nomicfoundation/hardhat-toolbox");
 require("@nomiclabs/hardhat-etherscan");
+require("hardhat-gas-reporter");
+require("solidity-coverage");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -28,9 +30,6 @@ module.exports = {
     },
   },
   etherscan: {
-    // Command to verify in Scan:
-    // npx hardhat verify --network bsc CONTRACT_ADDRESS "Constructor argument 1" "Constructor argument 2" ...
-    //(If it does not work, clean cache & artifacts & make sure there are not 2 contracts with the same code)
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
 
@@ -40,14 +39,35 @@ module.exports = {
     cache: "./cache",
     artifacts: "./artifacts",
   },
-
   solidity: {
-    compilers: [{ version: "0.8.19" }, { version: "0.8.17" }],
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: "0.8.19",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 50000,
+          },
+        },
       },
-    },
+      {
+        version: "0.8.17",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 50000,
+          },
+        },
+      },
+    ],
+  },
+  gasReporter: {
+    enabled: true,
+    // outputFile: "gas-report.txt",
+    currency: "EUR",
+    gasPrice: 5,
+    token: "BNB",
+    coinmarketcap: process.env.COINMARKETCAP_API,
+    gasPriceApi: process.env.BINANCE_GAS_API,
   },
 };

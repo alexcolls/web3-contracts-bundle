@@ -38,7 +38,10 @@ describe("GFALMarketplace", function () {
     await proxy.updateRoyaltiesCollector(royaltyCollector.address);
 
     const OracleConsumer = await ethers.getContractFactory("OracleConsumer");
-    const oracleConsumer = await OracleConsumer.deploy(proxy.address);
+    const oracleConsumer = await OracleConsumer.deploy(
+      proxy.address,
+      ethers.utils.parseUnits("0.1", "ether")
+    );
     await oracleConsumer.deployed();
 
     const ElementalRaidersSkill = await ethers.getContractFactory(
@@ -62,11 +65,6 @@ describe("GFALMarketplace", function () {
     const Erc1155MockUp = await ethers.getContractFactory("Erc1155MockUp");
     const erc1155MockUp = await Erc1155MockUp.deploy(proxy.address, "ipfs://");
     await erc1155MockUp.deployed();
-
-    // Oracle writes the priceFeed (Mocking external, untested here, workflow)
-    await oracleConsumer
-      .connect(admin)
-      .updateRateValue(ethers.utils.parseUnits("0.1", "ether")); // here we are converting the float to wei to work as "intFloat"
 
     // Massive approvals of GFAL token for ERC721s when minting (ONE LIFE TIME)
     await gfalToken
@@ -832,13 +830,35 @@ describe("GFALMarketplace", function () {
           ).to.be.reverted;
         });
 
-        it("Should revert if an user tries to updateRoyaltiesInBasisPoints", async function () {
-          const { buyer, gfalMarketplace } = await loadFixture(deployContracts);
+        it("Should revert if an user tries to updateRoyaltiesInBasisPoints & should set if caller is admin", async function () {
+          const { buyer, gfalMarketplace, admin } = await loadFixture(
+            deployContracts
+          );
+          const oldRoyaltyPoints =
+            await gfalMarketplace.royaltiesInBasisPoints();
+          const newRoyaltyPoints = 500;
 
-          // Expect to find it in the mapping as true
           await expect(
-            gfalMarketplace.connect(buyer).updateRoyaltiesInBasisPoints(500)
+            gfalMarketplace
+              .connect(buyer)
+              .updateRoyaltiesInBasisPoints(newRoyaltyPoints)
           ).to.be.reverted;
+
+          await gfalMarketplace
+            .connect(admin)
+            .updateRoyaltiesInBasisPoints(newRoyaltyPoints);
+
+          expect(await gfalMarketplace.royaltiesInBasisPoints()).to.equal(
+            newRoyaltyPoints
+          );
+
+          expect(
+            await gfalMarketplace
+              .connect(admin)
+              .updateRoyaltiesInBasisPoints(RoyaltyPoints)
+          )
+            .to.emit(gfalMarketplace, "RoyaltiesInBasisPointsUpdated")
+            .withArgs(oldRoyaltyPoints, newRoyaltyPoints);
         });
       });
 
@@ -1039,11 +1059,8 @@ describe("GFALMarketplace", function () {
               )
             ).price
           ).to.equal(ethers.utils.parseUnits("50", "ether"));
-
-          expect(await gfalMarketplace.sellersList(0)).to.equal(seller.address);
-          expect(await gfalMarketplace.knownSellers(seller.address)).to.equal(
-            true
-          );
+          const sellerList = await gfalMarketplace.getSellersList();
+          expect(sellerList[0]).to.equal(seller.address);
         });
 
         it("Should put a whitelisted collection token for sell in Dollars", async function () {
@@ -1086,10 +1103,8 @@ describe("GFALMarketplace", function () {
             ).price
           ).to.equal(ethers.utils.parseUnits("5", "ether"));
 
-          expect(await gfalMarketplace.sellersList(0)).to.equal(seller.address);
-          await expect(
-            await gfalMarketplace.knownSellers(seller.address)
-          ).to.equal(true);
+          const sellerList = await gfalMarketplace.getSellersList();
+          expect(sellerList[0]).to.equal(seller.address);
         });
 
         it("Should adjust the price for a token already for sell", async function () {
@@ -1131,11 +1146,6 @@ describe("GFALMarketplace", function () {
             ).price
           ).to.equal(ethers.utils.parseUnits("50", "ether"));
 
-          expect(await gfalMarketplace.sellersList(0)).to.equal(seller.address);
-          expect(await gfalMarketplace.knownSellers(seller.address)).to.equal(
-            true
-          );
-
           await gfalMarketplace
             .connect(seller)
             .removeToken(elementalRaidersSkill.address, 0);
@@ -1175,10 +1185,9 @@ describe("GFALMarketplace", function () {
             ).price
           ).to.equal(ethers.utils.parseUnits("100", "ether"));
 
-          expect(await gfalMarketplace.sellersList(0)).to.equal(seller.address);
-          expect(await gfalMarketplace.knownSellers(seller.address)).to.equal(
-            true
-          );
+          const sellerList = await gfalMarketplace.getSellersList();
+          expect(sellerList[0]).to.equal(seller.address);
+          expect(sellerList[1]).to.equal(undefined);
         });
 
         it("Should remove a token from sell", async function () {
@@ -1220,11 +1229,6 @@ describe("GFALMarketplace", function () {
             ).price
           ).to.equal(ethers.utils.parseUnits("50", "ether"));
 
-          expect(await gfalMarketplace.sellersList(0)).to.equal(seller.address);
-          expect(await gfalMarketplace.knownSellers(seller.address)).to.equal(
-            true
-          );
-
           // Removes it
           await gfalMarketplace
             .connect(seller)
@@ -1254,11 +1258,6 @@ describe("GFALMarketplace", function () {
               )
             ).price
           ).to.equal(ethers.utils.parseUnits("0", "ether"));
-
-          expect(await gfalMarketplace.sellersList(0)).to.equal(seller.address);
-          expect(await gfalMarketplace.knownSellers(seller.address)).to.equal(
-            true
-          );
         });
 
         it("Should buy a token ERC721 that is for sell in $GFAL", async function () {
@@ -1902,6 +1901,64 @@ describe("GFALMarketplace", function () {
           ).to.equal(false);
         });
 
+        it("Mint ERC1155, sell and remove", async function () {
+          const {
+            owner,
+            admin,
+            seller,
+            seller2,
+            buyer,
+            erc1155MockUp,
+            proxy,
+            gfalToken,
+            gfalMarketplace,
+          } = await loadFixture(deployContracts);
+
+          await erc1155MockUp.connect(seller2).mint(100);
+
+          await gfalMarketplace
+            .connect(seller2)
+            .sellToken(erc1155MockUp.address, 2, 100, 1, true);
+
+          await gfalMarketplace
+            .connect(seller2)
+            .removeToken(erc1155MockUp.address, 2);
+
+          expect(await erc1155MockUp.balanceOf(seller2.address, 2)).to.equal(
+            100
+          );
+          expect(
+            await erc1155MockUp.balanceOf(gfalMarketplace.address, 2)
+          ).to.equal(0);
+        });
+
+        it("Should return sellers list", async function () {
+          const {
+            owner,
+            admin,
+            seller,
+            seller2,
+            buyer,
+            erc1155MockUp,
+            proxy,
+            gfalToken,
+            gfalMarketplace,
+          } = await loadFixture(deployContracts);
+
+          await gfalMarketplace
+            .connect(seller)
+            .sellToken(
+              erc1155MockUp.address,
+              0,
+              1,
+              ethers.utils.parseUnits("5", "ether"),
+              true
+            );
+
+          const sellersList = await gfalMarketplace.getSellersList();
+          expect(sellersList.length).to.equal(1);
+        });
+
         it("Mint 100 copies of 4 ERC1155 NFTs and sell them", async function () {
           const {
             owner,
@@ -1936,6 +1993,7 @@ describe("GFALMarketplace", function () {
           await erc1155MockUp.connect(seller).mint(100);
 
           // Mint 100 NFTs ID 4 & 5 by seller2
+          await erc1155MockUp.connect(seller2).mint(100);
           await erc1155MockUp.connect(seller2).mint(100);
           await erc1155MockUp.connect(seller2).mint(100);
 

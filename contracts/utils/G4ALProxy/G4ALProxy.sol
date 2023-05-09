@@ -12,18 +12,27 @@ contract G4ALProxy is IG4ALProxy, Ownable {
     address private marketPlace; // Address of ERC721 and ERC1155 Marketplace. Needs to be set once deployed
     address private admin; // Address of Admin to call and have previlegies over the contracts
 
-    event GfalTokenUpdated(address oldGfalToken, address newGfalToken);
+    event GfalTokenUpdated(
+        address indexed oldGfalToken,
+        address indexed newGfalToken
+    );
     event OracleConsumerUpdated(
-        address oldOracleConsumer,
-        address newOracleConsumer
+        address indexed oldOracleConsumer,
+        address indexed newOracleConsumer
     );
-    event FeeCollectorUpdated(address oldFeeCollector, address newFeeCollector);
+    event FeeCollectorUpdated(
+        address indexed oldFeeCollector,
+        address indexed newFeeCollector
+    );
     event RoyaltyCollectorUpdated(
-        address oldRoyaltyCollector,
-        address newRoyaltyCollector
+        address indexed oldRoyaltyCollector,
+        address indexed newRoyaltyCollector
     );
-    event MarketPlaceUpdated(address oldMarketPlace, address newMarketPlace);
-    event AdminUpdated(address oldAdmin, address newAdmin);
+    event MarketPlaceUpdated(
+        address indexed oldMarketPlace,
+        address indexed newMarketPlace
+    );
+    event AdminUpdated(address indexed oldAdmin, address indexed newAdmin);
 
     /**
      * @dev Initializes the G4ALProxy contract with the given GFAL Token address and sets the

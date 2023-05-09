@@ -20,7 +20,10 @@ describe("OracleConsumer", function () {
     await proxy.deployed();
 
     const OracleConsumer = await ethers.getContractFactory("OracleConsumer");
-    const oracleConsumer = await OracleConsumer.deploy(proxy.address);
+    const oracleConsumer = await OracleConsumer.deploy(
+      proxy.address,
+      ethers.utils.parseUnits("0.1", "ether")
+    );
     await oracleConsumer.deployed();
 
     return { owner, user, admin, oracleConsumer };
@@ -31,6 +34,17 @@ describe("OracleConsumer", function () {
       const { oracleConsumer } = await loadFixture(deployContracts);
 
       expect(await oracleConsumer.address).to.be.equal(oracleConsumer.address);
+    });
+
+    it("Should not allow to set the lastTokenRateValue to 0", async function () {
+      const { oracleConsumer, admin } = await loadFixture(deployContracts);
+
+      expect(await oracleConsumer.lastTokenRateValue()).to.equal(
+        ethers.utils.parseUnits("0.1", "ether")
+      );
+
+      await expect(oracleConsumer.connect(admin).updateRateValue(0)).to.be
+        .reverted;
     });
   });
 
@@ -46,7 +60,7 @@ describe("OracleConsumer", function () {
     });
 
     describe("Events", function () {
-      it("Should emit an event UpdateRate on updating the rate", async function () {
+      it("Should emit an event UpdatedRate on updating the rate", async function () {
         const { oracleConsumer, owner, admin } = await loadFixture(
           deployContracts
         );
@@ -56,7 +70,7 @@ describe("OracleConsumer", function () {
             .connect(admin)
             .updateRateValue(ethers.utils.parseUnits("0.1", "ether"))
         )
-          .to.emit(oracleConsumer, "UpdateRate")
+          .to.emit(oracleConsumer, "UpdatedRate")
           .withArgs(ethers.utils.parseUnits("0.1", "ether"));
       });
     });
@@ -65,7 +79,9 @@ describe("OracleConsumer", function () {
       it("Should update the lastTokenRateValue", async function () {
         const { oracleConsumer, admin } = await loadFixture(deployContracts);
 
-        expect(await oracleConsumer.lastTokenRateValue()).to.equal(0);
+        expect(await oracleConsumer.lastTokenRateValue()).to.equal(
+          ethers.utils.parseUnits("0.1", "ether")
+        );
 
         await oracleConsumer
           .connect(admin)

@@ -29,7 +29,10 @@ describe("G4ALProxy", function () {
 
     // ORACLE CONSUMER
     const OracleConsumer = await ethers.getContractFactory("OracleConsumer");
-    const oracleConsumer = await OracleConsumer.deploy(proxy.address);
+    const oracleConsumer = await OracleConsumer.deploy(
+      proxy.address,
+      ethers.utils.parseUnits("0.1", "ether")
+    );
     await oracleConsumer.deployed();
 
     // MARKETPLACE

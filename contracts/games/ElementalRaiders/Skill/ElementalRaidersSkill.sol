@@ -10,7 +10,6 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "../../../utils/OracleConsumer/IOracleConsumer.sol";
 import "../../../utils/G4ALProxy/IG4ALProxy.sol";
 
-
 /**
  * @title ElementalRaidersSkin
  * @dev This contract represents an ERC721 token for Elemental Raiders Skin game. It uses SafeERC20 to transfer GFAL tokens and OracleConsumer to fetch GFAL price conversion rates.
@@ -28,9 +27,15 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
 
     string public baseURI;
 
+    // Prices by rarity. It returns the price in USD
     mapping(uint256 => uint256) public prices;
 
-    event Mint(address from, address to, uint256 tokenId, uint256 price);
+    event Mint(
+        address indexed from,
+        address indexed to,
+        uint256 tokenId,
+        uint256 price
+    );
 
     modifier onlyAdmin() {
         require(msg.sender == g4alProxy.getAdmin(), "Not Admin");
@@ -67,7 +72,7 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
      * Note: For Company use -> Rarity should be set to 0, as it will be 0 G4AL (ERC-20) for minting and then list in market place
      *      It will allow the marketplace contract to manage all the NFTs. To avoid friction for the user to approve the marketplace.
      */
-    function safeMint(address to, uint256 rarity) public onlyAdmin {
+    function safeMint(address to, uint256 rarity) external onlyAdmin {
         // Transfer $GFALs from the "to" address to the "collector" one
         require(
             prices[rarity] != 0 || (rarity == 0 && to == msg.sender),
@@ -105,28 +110,35 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
      */
     function getOwnersByTokens(
         uint256[] memory tokens
-    ) public view returns (address[] memory) {
+    ) external view returns (address[] memory) {
         address[] memory response = new address[](tokens.length);
 
-        for (uint256 i = 0; i < tokens.length; i++) {
+        for (uint256 i = 0; i < tokens.length; ) {
             response[i] = ERC721(address(this)).ownerOf(tokens[i]);
+            unchecked {
+                i++;
+            }
         }
 
         return response;
     }
 
-    /** @dev Returns the price for the provided array of rarity ids.
+    /** @dev Returns the price in GFAL for the provided array of rarity ids.
      *  @param rarities An array of rarity ids.
-     * @return An array of prices of the rarity id.
+     * @return An array of prices of the rarity id (Set in USD).
      */
     function getMintingPricesByRarity(
         uint256[] memory rarities
-    ) public view returns (uint256[] memory) {
+    ) external view returns (uint256[] memory) {
         uint256[] memory rarityPrices = new uint256[](rarities.length);
 
-        for (uint256 i = 0; i < rarities.length; i++) {
+        for (uint256 i = 0; i < rarities.length; ) {
             rarityPrices[i] = IOracleConsumer(g4alProxy.getOracleConsumer())
                 .getConversionRate(prices[rarities[i]]);
+
+            unchecked {
+                i++;
+            }
         }
 
         return rarityPrices;
@@ -138,7 +150,7 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
      * @param _baseUri The new base URI.
      * Requirements: The caller must be the contract admin (Set in the Proxy contract).
      */
-    function updateBaseURI(string memory _baseUri) external onlyAdmin {
+    function updateBaseURI(string calldata _baseUri) external onlyAdmin {
         baseURI = _baseUri;
     }
 
