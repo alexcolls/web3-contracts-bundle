@@ -7,15 +7,14 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "../../../utils/OracleConsumer/OracleConsumer.sol";
-import "../../../utils/G4ALProxy/G4ALProxy.sol";
-
-// Uncomment this line to use console.log
-// import "hardhat/console.sol";
+import "../../../utils/OracleConsumer/IOracleConsumer.sol";
+import "../../../utils/G4ALProxy/IG4ALProxy.sol";
 
 /**
- * @title ElementalRaidersSkill
- * @dev This contract represents an ERC721 token for Elemental Raiders Skill game. It uses SafeERC20 to transfer GFAL tokens and OracleConsumer to fetch GFAL price conversion rates. The contract allows the game to safely mint tokens by ensuring that users have approved the required amount of GFAL tokens before minting. The contract also allows the game owner to update minting prices and the base URI.
+ * @title ElementalRaidersSkin
+ * @dev This contract represents an ERC721 token for Elemental Raiders Skin game. It uses SafeERC20 to transfer GFAL tokens and OracleConsumer to fetch GFAL price conversion rates.
+ * The contract allows the game to safely mint tokens by ensuring that users have approved the required amount of GFAL tokens before minting & allowes the Marketplace SC to manage all NFTs.
+ * The contract also allows the game owner to update minting prices and the base URI.
  */
 contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
     using SafeERC20 for IERC20;
@@ -24,16 +23,22 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
     Counters.Counter private _tokenIdCounter;
 
     // Proxy to store variables as addresses from contracts and from wallets
-    G4ALProxy public g4alProxy;
+    IG4ALProxy private g4alProxy;
 
     string public baseURI;
 
+    // Prices by rarity. It returns the price in USD
     mapping(uint256 => uint256) public prices;
 
-    event Mint(address from, address to, uint256 tokenId, uint256 price);
+    event Mint(
+        address indexed from,
+        address indexed to,
+        uint256 tokenId,
+        uint256 price
+    );
 
-    modifier onlyOwner() {
-        require(msg.sender == g4alProxy.owner(), "Not owner");
+    modifier onlyAdmin() {
+        require(msg.sender == g4alProxy.getAdmin(), "Not Admin");
         _;
     }
 
@@ -46,7 +51,8 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
         address _g4alProxy,
         string memory _baseUri
     ) ERC721("Elemental Raiders Skill", "ERSKILL") {
-        g4alProxy = G4ALProxy(_g4alProxy);
+        require(_g4alProxy != address(0), "Address cannot be 0");
+        g4alProxy = IG4ALProxy(_g4alProxy);
         baseURI = _baseUri;
     }
 
@@ -62,22 +68,30 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
      * @dev Safely mints an ERC721 token for a user if the user has approved the required amount of GFAL tokens.
      * @param to The address to which the minted token should be sent.
      * @param rarity The rarity of the token to be minted.
-     * Requirements: The caller must be the contract owner.
-     * Note: Rarity -> should be 0 G4AL for ER minting and then list in market place
+     * Requirements: The caller must be the contract admin (Set in the Proxy contract).
+     * Note: For Company use -> Rarity should be set to 0, as it will be 0 G4AL (ERC-20) for minting and then list in market place
+     *      It will allow the marketplace contract to manage all the NFTs. To avoid friction for the user to approve the marketplace.
      */
-    function safeMint(address to, uint256 rarity) public onlyOwner {
+    function safeMint(address to, uint256 rarity) external onlyAdmin {
         // Transfer $GFALs from the "to" address to the "collector" one
         require(
             prices[rarity] != 0 || (rarity == 0 && to == msg.sender),
             "Minting 0 price tokens is not allowed"
         );
+        // Allowance flow. Check if it the Market place is already approved to manage NFTs
+        address marketPlace = g4alProxy.getMarketPlace();
 
-        // Transferring GFAL from player wallet to feeCollector. Assuming previous allowance has been given.
-        uint256 tokenPrice = OracleConsumer(g4alProxy.oracleConsumer())
+        if (!isApprovedForAll(to, marketPlace)) {
+            _setApprovalForAll(to, marketPlace, true);
+        }
+
+        // Get the conversion from USD to GFAL
+        uint256 tokenPrice = IOracleConsumer(g4alProxy.getOracleConsumer())
             .getConversionRate(prices[rarity]);
-        IERC20(g4alProxy.gfalToken()).safeTransferFrom(
+        // Transferring GFAL from player wallet to feeCollector. Assuming previous allowance has been given.
+        IERC20(g4alProxy.getGfalToken()).safeTransferFrom(
             to,
-            g4alProxy.feeCollector(),
+            g4alProxy.getFeeCollector(),
             tokenPrice
         );
 
@@ -96,28 +110,35 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
      */
     function getOwnersByTokens(
         uint256[] memory tokens
-    ) public view returns (address[] memory) {
+    ) external view returns (address[] memory) {
         address[] memory response = new address[](tokens.length);
 
-        for (uint256 i = 0; i < tokens.length; i++) {
+        for (uint256 i = 0; i < tokens.length; ) {
             response[i] = ERC721(address(this)).ownerOf(tokens[i]);
+            unchecked {
+                i++;
+            }
         }
 
         return response;
     }
 
-    /** @dev Returns the price for the provided array of rarity ids.
+    /** @dev Returns the price in GFAL for the provided array of rarity ids.
      *  @param rarities An array of rarity ids.
-     * @return An array of prices of the rarity id.
+     * @return An array of prices of the rarity id (Set in USD).
      */
     function getMintingPricesByRarity(
         uint256[] memory rarities
-    ) public view returns (uint256[] memory) {
+    ) external view returns (uint256[] memory) {
         uint256[] memory rarityPrices = new uint256[](rarities.length);
 
-        for (uint256 i = 0; i < rarities.length; i++) {
-            rarityPrices[i] = OracleConsumer(g4alProxy.oracleConsumer())
+        for (uint256 i = 0; i < rarities.length; ) {
+            rarityPrices[i] = IOracleConsumer(g4alProxy.getOracleConsumer())
                 .getConversionRate(prices[rarities[i]]);
+
+            unchecked {
+                i++;
+            }
         }
 
         return rarityPrices;
@@ -127,9 +148,9 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
     /**
      * @dev Updates the base URI for the token metadata.
      * @param _baseUri The new base URI.
-     * Requirements: The caller must be the contract owner.
+     * Requirements: The caller must be the contract admin (Set in the Proxy contract).
      */
-    function updateBaseURI(string memory _baseUri) external onlyOwner {
+    function updateBaseURI(string calldata _baseUri) external onlyAdmin {
         baseURI = _baseUri;
     }
 
@@ -138,12 +159,12 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
      * @param rarity The rarity for which to update the price.
      * @param price The new price for the given rarity.
      * Requirements: The caller must be the contract owner.
-     * Note: Rarity -> should be 0 G4AL for ER minting and then list in market place
+     * Note: Rarity -> should be 0 G4AL for company minting and then list in market place
      */
     function updateMintingPrice(
         uint256 rarity,
         uint256 price
-    ) external onlyOwner {
+    ) external onlyAdmin {
         prices[rarity] = price; // 50000000000000000000 for 50.00 GFAL (50+18 zeros)
     }
 
