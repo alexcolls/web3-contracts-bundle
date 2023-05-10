@@ -14,7 +14,7 @@ import "./IOracleConsumer.sol";
  */
 contract OracleConsumer is IOracleConsumer {
     // Address of the G4ALProxy contract
-    IG4ALProxy private g4alProxy;
+    IG4ALProxy immutable g4alProxy;
 
     // The last known value of the GFAL token exchange rate in USD
     uint256 public lastTokenRateValue = 0;

@@ -48,7 +48,7 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
         ERC1155
     }
 
-    IG4ALProxy private g4alProxy; // Proxy to store variables as addresses from contracts and from wallets
+    IG4ALProxy immutable g4alProxy; // Proxy to store variables as addresses from contracts and from wallets
     address[] private sellersList; // to allow iterating in order to get on sale tokens for contractAddress and sellerAddress
     uint256 public volume; // $GFAL all-time-volume
     uint256 public royaltiesInBasisPoints;

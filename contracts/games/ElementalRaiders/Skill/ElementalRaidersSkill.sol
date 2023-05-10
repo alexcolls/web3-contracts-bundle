@@ -23,9 +23,9 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
     Counters.Counter private _tokenIdCounter;
 
     // Proxy to store variables as addresses from contracts and from wallets
-    IG4ALProxy private g4alProxy;
+    IG4ALProxy immutable g4alProxy;
 
-    string public baseURI;
+    string private baseURI;
 
     // Prices by rarity. It returns the price in USD
     mapping(uint256 => uint256) public prices;
