@@ -24,9 +24,9 @@ async function wait() {
 async function main() {
   // const [owner] = await ethers.getSigners(); // Hardhat local
 
-  // const owner = new ethers.Wallet(process.env.BSC_PRIVATE_KEY); // Ganache or local
+  // const owner = new ethers.Wallet(process.env.OWNER_PRIVATE_KEY); // Ganache or local
   // const [owner] = await ethers.getSigners();
-  const owner = new ethers.Wallet(process.env.BSC_PRIVATE_KEY); // BSC Testnet & Mainnet
+  const owner = new ethers.Wallet(process.env.OWNER_PRIVATE_KEY); // BSC Testnet & Mainnet
 
   // DEPLOY CONTRACTS
 
