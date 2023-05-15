@@ -20,13 +20,17 @@ module.exports = {
     },
     bsctest: {
       url: process.env.WEB3_HTTP_PROVIDER_TEST,
-      accounts: [process.env.OWNER_PRIVATE_KEY, process.env.ADMIN_PRIVATE_KEY],
+      // accounts: [process.env.OWNER_PRIVATE_KEY, process.env.ADMIN_PRIVATE_KEY], // Testing
+      accounts: [process.env.OWNER_PRIVATE_KEY],
       gas: 2100000,
-      // gasPrice: 10000000000,
+      gasPrice: 10000000000,
     },
     bscmain: {
       url: process.env.WEB3_HTTP_PROVIDER_MAIN,
-      accounts: [process.env.OWNER_PRIVATE_KEY, process.env.ADMIN_PRIVATE_KEY],
+      // accounts: [process.env.OWNER_PRIVATE_KEY, process.env.ADMIN_PRIVATE_KEY], // Testing
+      accounts: [process.env.OWNER_PRIVATE_KEY],
+      gas: 2100000,
+      gasPrice: 10000000000,
     },
   },
   etherscan: {
