@@ -1260,6 +1260,39 @@ describe("GFALMarketplace", function () {
           ).to.equal(ethers.utils.parseUnits("0", "ether"));
         });
 
+        it("Should put on sale a token ERC721 and modify the price", async function () {
+          const {
+            seller,
+            buyer,
+            elementalRaidersSkill,
+            gfalToken,
+            gfalMarketplace,
+            proxy,
+          } = await loadFixture(deployContracts);
+
+          await gfalMarketplace
+            .connect(seller)
+            .sellToken(elementalRaidersSkill.address, 0, 1, 100, false);
+
+          const sale = await gfalMarketplace.tokensForSale721(
+            elementalRaidersSkill.address,
+            0
+          );
+
+          expect(sale.price).to.equal(100);
+
+          await gfalMarketplace
+            .connect(seller)
+            .updatePrice(elementalRaidersSkill.address, 0, 10);
+
+          const saleModified = await gfalMarketplace.tokensForSale721(
+            elementalRaidersSkill.address,
+            0
+          );
+
+          expect(saleModified.price).to.equal(10);
+        });
+
         it("Should buy a token ERC721 that is for sell in $GFAL", async function () {
           const {
             seller,
