@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "../G4ALProxy/IG4ALProxy.sol";
 import "./IOracleConsumer.sol";
 
@@ -14,12 +13,12 @@ import "./IOracleConsumer.sol";
  */
 contract OracleConsumer is IOracleConsumer {
     // Address of the G4ALProxy contract
-    IG4ALProxy private g4alProxy;
+    IG4ALProxy private immutable g4alProxy;
 
     // The last known value of the GFAL token exchange rate in USD
-    uint256 public lastTokenRateValue = 0;
+    uint256 public lastTokenRateValue;
     // The value of 1 USD in wei (18 decimal places)
-    uint64 constant dollarValue = 1000000000000000000; // 1^-18
+    uint64 constant dollarValue = 1e18; // 1.000.000.000.000.000.000
 
     // Event emitted when the exchange rate is updated
     event UpdatedRate(uint256 value);
@@ -55,13 +54,13 @@ contract OracleConsumer is IOracleConsumer {
     // Owner
     /**
      * @dev Function for the owner of the contract to update the last known value of the GFAL token exchange rate.
-     * @param newTokenRateValue The new value of the GFAL token exchange rate.
+     * @param newValue The new value of the GFAL token exchange rate.
      */
-    function updateRateValue(uint256 newTokenRateValue) external onlyAdmin {
-        require(newTokenRateValue > 0, "RateValue cannot be 0");
-        lastTokenRateValue = newTokenRateValue;
+    function updateRateValue(uint256 newValue) external onlyAdmin {
+        require(newValue > 0, "RateValue cannot be 0");
+        lastTokenRateValue = newValue;
 
         // Emit an event to signal that the rate has been updated
-        emit UpdatedRate(newTokenRateValue);
+        emit UpdatedRate(newValue);
     }
 }

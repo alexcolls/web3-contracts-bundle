@@ -6,7 +6,7 @@ require("solidity-coverage");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
-  defaultNetwork: "hardhat",
+  defaultNetwork: "hardhat", // consider that for deploy you should use ganache instead, so specify here, or during command run with --network ganache flag
 
   networks: {
     hardhat: {
@@ -16,16 +16,18 @@ module.exports = {
       url: "HTTP://127.0.0.1:7545",
       chainId: 1337,
       gas: 2100000,
-      gasPrice: 10000000000,
+      // gasPrice: 10000000000,
     },
     bsctest: {
       url: process.env.WEB3_HTTP_PROVIDER_TEST,
+      // accounts: [process.env.OWNER_PRIVATE_KEY, process.env.ADMIN_PRIVATE_KEY], // Testing
       accounts: [process.env.OWNER_PRIVATE_KEY],
       gas: 2100000,
       gasPrice: 10000000000,
     },
     bscmain: {
       url: process.env.WEB3_HTTP_PROVIDER_MAIN,
+      // accounts: [process.env.OWNER_PRIVATE_KEY, process.env.ADMIN_PRIVATE_KEY], // Testing
       accounts: [process.env.OWNER_PRIVATE_KEY],
       gas: 2100000,
       gasPrice: 10000000000,
@@ -65,6 +67,7 @@ module.exports = {
   },
   gasReporter: {
     enabled: true,
+    // outputFile: "gas-report.txt",
     currency: "EUR",
     gasPrice: 5,
     token: "BNB",

@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "../../../utils/OracleConsumer/IOracleConsumer.sol";
 import "../../../utils/G4ALProxy/IG4ALProxy.sol";
 
@@ -18,14 +17,13 @@ import "../../../utils/G4ALProxy/IG4ALProxy.sol";
  */
 contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
     using SafeERC20 for IERC20;
-    using Counters for Counters.Counter;
 
-    Counters.Counter private _tokenIdCounter;
+    uint256 private _tokenIdCounter;
 
     // Proxy to store variables as addresses from contracts and from wallets
-    IG4ALProxy private g4alProxy;
+    IG4ALProxy private immutable g4alProxy;
 
-    string public baseURI;
+    string private baseURI;
 
     // Prices by rarity. It returns the price in USD
     mapping(uint256 => uint256) public prices;
@@ -73,11 +71,6 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
      *      It will allow the marketplace contract to manage all the NFTs. To avoid friction for the user to approve the marketplace.
      */
     function safeMint(address to, uint256 rarity) external onlyAdmin {
-        // Transfer $GFALs from the "to" address to the "collector" one
-        require(
-            prices[rarity] != 0 || (rarity == 0 && to == msg.sender),
-            "Minting 0 price tokens is not allowed"
-        );
         // Allowance flow. Check if it the Market place is already approved to manage NFTs
         address marketPlace = g4alProxy.getMarketPlace();
 
@@ -88,6 +81,7 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
         // Get the conversion from USD to GFAL
         uint256 tokenPrice = IOracleConsumer(g4alProxy.getOracleConsumer())
             .getConversionRate(prices[rarity]);
+        // Transfer $GFALs from the "to" address to the "collector" one
         // Transferring GFAL from player wallet to feeCollector. Assuming previous allowance has been given.
         IERC20(g4alProxy.getGfalToken()).safeTransferFrom(
             to,
@@ -96,8 +90,8 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
         );
 
         // Mint flow
-        uint256 tokenId = _tokenIdCounter.current();
-        _tokenIdCounter.increment();
+        uint256 tokenId = _tokenIdCounter;
+        _tokenIdCounter++;
         _safeMint(to, tokenId);
 
         emit Mint(address(0), to, tokenId, tokenPrice);

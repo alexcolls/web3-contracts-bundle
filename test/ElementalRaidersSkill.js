@@ -94,7 +94,6 @@ describe("ElementalRaidersSkill", function () {
       gfalToken,
       oracleConsumer,
       elementalRaidersSkin,
-      elementalRaidersSkin,
       gFALMarketplace,
       proxy,
       elementalRaidersSkill,
