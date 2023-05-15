@@ -1280,10 +1280,11 @@ describe("GFALMarketplace", function () {
           );
 
           expect(sale.price).to.equal(100);
+          expect(sale.isDollar).to.equal(false);
 
           await gfalMarketplace
             .connect(seller)
-            .updatePrice(elementalRaidersSkill.address, 0, 10);
+            .updatePrice(elementalRaidersSkill.address, 0, 10, true);
 
           const saleModified = await gfalMarketplace.tokensForSale721(
             elementalRaidersSkill.address,
@@ -1291,6 +1292,7 @@ describe("GFALMarketplace", function () {
           );
 
           expect(saleModified.price).to.equal(10);
+          expect(saleModified.isDollar).to.equal(true);
         });
 
         it("Should buy a token ERC721 that is for sell in $GFAL", async function () {

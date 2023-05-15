@@ -84,6 +84,7 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
         address indexed collection,
         uint256 tokenId,
         uint256 newPrice,
+        bool isDollar,
         address indexed seller
     );
     event RemoveToken(
@@ -326,7 +327,8 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
     function updatePrice(
         address collection,
         uint256 tokenId,
-        uint256 newPrice
+        uint256 newPrice,
+        bool _isDollar
     ) external {
         require(newPrice > 0, "Price must be greater than 0");
 
@@ -337,6 +339,7 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
             );
 
             tokensForSale721[collection][tokenId].price = newPrice;
+            tokensForSale721[collection][tokenId].isDollar = _isDollar;
         } else {
             require(
                 tokensForSale1155[collection][tokenId][msg.sender].seller ==
@@ -346,9 +349,11 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
 
             // Amount to transfer back when removing
             tokensForSale1155[collection][tokenId][msg.sender].price = newPrice;
+            tokensForSale1155[collection][tokenId][msg.sender]
+                .isDollar = _isDollar;
         }
 
-        emit SaleUpdated(collection, tokenId, newPrice, msg.sender);
+        emit SaleUpdated(collection, tokenId, newPrice, _isDollar, msg.sender);
     }
 
     /**
