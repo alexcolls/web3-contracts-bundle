@@ -10,6 +10,7 @@ The GFAL Marketplace offers the following features:
 
 - **Sell NFTs:** users can sell their NFTs by setting a price and amount for each token.
 - **Buy NFTs:** users can purchase NFTs listed on the marketplace.
+- **Update Sale Price:** users can update the Sale price while selling.
 - **Whitelist:** only NFTs from whitelisted collections can be sold on the marketplace.
 - **ERC721 and ERC1155 support:** the marketplace supports both token standards.
 - **Royalties:** a percentage of the sales goes to the contract owner as royalties.
@@ -56,6 +57,9 @@ List an NFT for sale by specifying its contract address, token ID, price, and wh
 ### buyToken
 
 Purchase an NFT by specifying its contract address, token ID, and the seller's address. Requires the buyer to have sufficient GFAL token allowance to cover the purchase price.
+
+## updatePrice
+Seller can update Sale price while NFT is on sale.
 
 ### removeToken
 
