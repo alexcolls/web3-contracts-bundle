@@ -27,6 +27,7 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
         bool isForSale;
         uint256 amount;
         address seller;
+        uint256 saleId;
     }
 
     /**
@@ -50,6 +51,7 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
     uint256 public volume; // $GFAL all-time-volume
     uint256 public royaltiesInBasisPoints;
     bool public isActive; // It will allow user to trade NFTs. They will always will be able to unlist them.
+    uint256 public saleCounter;
 
     mapping(address => Whitelist) public whitelistNFTs; // Whitelisted NFTs smart contracts
     mapping(address => mapping(uint256 => mapping(address => Sale)))
@@ -68,7 +70,8 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
         uint256 amount,
         uint256 price,
         bool isDollar,
-        address indexed seller
+        address indexed seller,
+        uint256 saleId
     );
     event BuyToken(
         address indexed collection,
@@ -78,19 +81,22 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
         uint sellerRevenue,
         uint royalties,
         address indexed seller,
-        address indexed buyer
+        address indexed buyer,
+        uint256 saleId
     );
     event SaleUpdated(
         address indexed collection,
         uint256 tokenId,
         uint256 newPrice,
         bool isDollar,
-        address indexed seller
+        address indexed seller,
+        uint256 saleId
     );
     event RemoveToken(
         address indexed collection,
         uint256 tokenId,
-        address indexed seller
+        address indexed seller,
+        uint256 saleId
     );
     event ContractStatusUpdated(bool isActive);
     event RoyaltiesInBasisPointsUpdated(
@@ -148,6 +154,8 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
             sellersList.push(msg.sender);
         }
 
+        uint256 saleId = saleCounter;
+
         // Check on TokenStandard.ERC721 or ERC1155 in order to look for specific approval
         if (whitelistNFTs[collection].tokenStandard == TokenStandard.ERC721) {
             require(amount == 1, "Amount needs to be 1");
@@ -171,7 +179,8 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
                 isDollar,
                 true,
                 amount,
-                msg.sender
+                msg.sender,
+                saleId
             );
             IERC721Enumerable(collection).safeTransferFrom(
                 msg.sender,
@@ -199,7 +208,8 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
                 isDollar,
                 true,
                 amount,
-                msg.sender
+                msg.sender,
+                saleId
             );
             IERC1155(collection).safeTransferFrom(
                 msg.sender,
@@ -209,6 +219,7 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
                 ""
             );
         }
+        saleCounter = saleId + 1;
 
         emit SellToken(
             collection,
@@ -216,7 +227,8 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
             amount,
             price,
             isDollar,
-            msg.sender
+            msg.sender,
+            saleId
         );
     }
 
@@ -314,7 +326,8 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
             amountAfterRoyalties,
             royaltiesAmount,
             seller,
-            msg.sender
+            msg.sender,
+            sale.saleId
         );
     }
 
@@ -332,6 +345,8 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
     ) external {
         require(newPrice > 0, "Price must be greater than 0");
 
+        uint256 saleId;
+
         if (whitelistNFTs[collection].tokenStandard == TokenStandard.ERC721) {
             require(
                 tokensForSale721[collection][tokenId].seller == msg.sender,
@@ -340,6 +355,8 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
 
             tokensForSale721[collection][tokenId].price = newPrice;
             tokensForSale721[collection][tokenId].isDollar = _isDollar;
+
+            saleId = tokensForSale721[collection][tokenId].saleId;
         } else {
             require(
                 tokensForSale1155[collection][tokenId][msg.sender].seller ==
@@ -351,9 +368,18 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
             tokensForSale1155[collection][tokenId][msg.sender].price = newPrice;
             tokensForSale1155[collection][tokenId][msg.sender]
                 .isDollar = _isDollar;
+
+            saleId = tokensForSale1155[collection][tokenId][msg.sender].saleId;
         }
 
-        emit SaleUpdated(collection, tokenId, newPrice, _isDollar, msg.sender);
+        emit SaleUpdated(
+            collection,
+            tokenId,
+            newPrice,
+            _isDollar,
+            msg.sender,
+            saleId
+        );
     }
 
     /**
@@ -362,9 +388,13 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
      *@param tokenId The ID of the NFT token being sold
      */
     function removeToken(address collection, uint256 tokenId) external {
+        Sale memory _sale;
+
         if (whitelistNFTs[collection].tokenStandard == TokenStandard.ERC721) {
+            _sale = tokensForSale721[collection][tokenId];
+
             require(
-                tokensForSale721[collection][tokenId].seller == msg.sender,
+                _sale.seller == msg.sender,
                 "ERC721 not seller or existing"
             );
 
@@ -381,6 +411,8 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
                 "ERC1155 not seller or existing"
             );
 
+            _sale = tokensForSale1155[collection][tokenId][msg.sender];
+
             // Amount to transfer back when removing
             uint256 amount = tokensForSale1155[collection][tokenId][msg.sender]
                 .amount;
@@ -395,7 +427,7 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
             );
         }
 
-        emit RemoveToken(collection, tokenId, msg.sender);
+        emit RemoveToken(collection, tokenId, msg.sender, _sale.saleId);
     }
 
     // Private marketplace methods

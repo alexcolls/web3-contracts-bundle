@@ -66,7 +66,7 @@ module.exports = {
     ],
   },
   gasReporter: {
-    enabled: true,
+    enabled: false,
     // outputFile: "gas-report.txt",
     currency: "EUR",
     gasPrice: 5,
