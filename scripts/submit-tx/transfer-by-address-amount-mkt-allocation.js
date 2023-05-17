@@ -4,10 +4,21 @@
 // You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
 // will compile your contracts, add the Hardhat Runtime Environment's members to the
 // global scope, and execute the script.
-const hre = require("hardhat")
+//const hre = require("hardhat")
 const {ethers} = require("hardhat");
 
-const GFALTokenArtifact = require('../../artifacts/contracts/_mock/GFALToken.sol/GFALToken.json')
+//const GFALTokenArtifact = require('./GFALToken.json')
+const GFALTokenArtifact = {
+  "_format": "hh-sol-artifact-1",
+  "contractName": "skfghkjsahgfjhkgasjhkfhjgk",
+  "sourceName": "contracts/_mock/GFALTokenArtifact.sol",
+  "abi": [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}],
+  "bytecode": "esdkjgfhjkhasdghjkasd",
+  "deployedBytecode": "kghkasdhgkjahkjsghkjag",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+};
+
 // Constants
 const TRANSFERS_PAYLOAD = {
   address: [
@@ -29,6 +40,7 @@ const TRANSFERS_PAYLOAD = {
 }
 
 const GFAL_TOKEN = process.env.GFAL_TOKEN_MAINNET
+
 
 async function main() {
   // Create a new provider
@@ -67,14 +79,36 @@ async function main() {
   }
 
   console.log(
-    `TransferByAddressAmountMarketplace script executed:`,
-    results
+      `TransferByAddressAmountMarketplace script executed:`,
+      results
   )
 }
 
+/**
+ * Responds to any HTTP request.
+ *
+ * @param {!express:Request} req HTTP request context.
+ * @param {!express:Response} res HTTP response context.
+ */
+exports.performTransferByAddressAmountMktAllocationHTTP = (req, res) => {
+  // We recommend this pattern to be able to use async/await everywhere
+  // and properly handle errors.
+  let message = req.query.message || req.body.message || 'On it - ';
+
+  main().catch((error) => {
+    let message = error.message;
+    console.error(error);
+    process.exitCode = 1;
+  })
+  res.status(200).send(message);
+}
+
+const local = false;
+if(local) {
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
-main().catch((error) => {
-  console.error(error)
-  process.exitCode = 1
-})
+  main().catch((error) => {
+    console.error(error)
+    process.exitCode = 1
+  })
+}

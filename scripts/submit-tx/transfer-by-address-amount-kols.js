@@ -4,10 +4,23 @@
 // You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
 // will compile your contracts, add the Hardhat Runtime Environment's members to the
 // global scope, and execute the script.
-const hre = require("hardhat")
+//const hre = require("hardhat")
+
 const {ethers} = require("hardhat");
 
-const GFALTokenArtifact = require('../../artifacts/contracts/_mock/GFALToken.sol/GFALToken.json')
+//const GFALTokenArtifact = require('./GFALToken.json')
+const GFALTokenArtifact = {
+  "_format": "hh-sol-artifact-1",
+  "contractName": "skfghkjsahgfjhkgasjhkfhjgk",
+  "sourceName": "contracts/_mock/GFALTokenArtifact.sol",
+  "abi": [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}],
+  "bytecode": "esdkjgfhjkhasdghjkasd",
+  "deployedBytecode": "kghkasdhgkjahkjsghkjag",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+};
+
+
 // Constants
 const TRANSFERS_PAYLOAD = {
   address: [
@@ -37,12 +50,6 @@ const TRANSFERS_PAYLOAD = {
     "0xDC91c2CF4313fc80F36d540FB4f797d68F9BDe1a",
     "0x00C9b37df30AcB68ad0b6EcB419425FF22f652D1",
     "0x0887C5C38697ed6a4c592aF15735eF2B4d9556Ec",
-    "0xB6393357EFd9023cf59BAFd501289D4B45DFd628",
-    "0xfb078c81eA86Ce334B4e760919B43856199CF164",
-    "0xB16A6094AB88776a5B9E080f71B08acDE58b9d7d",
-    "0x64ec24675d7bbC80f954FF15EDD57d381f5b3E1a",
-    "0x5f7dA351b88aAF0Ea38b1274e578C64a444e7F9b",
-    "0x203ee0Ef92e633d96Fd574491feDF9b5DaEa5996",
     "0x0036d68CCab1677179cD7A5c8c8568Dc7907eAc8",
     "0x241E670036A44c655c62FF9ee55eb708Fa71b00b",
     "0x56E37F8C824344A41B5B1Db614AbFf732f0603aD",
@@ -80,7 +87,6 @@ const TRANSFERS_PAYLOAD = {
     "0xf7Ef4A3ab05d61317D2B37006c54229c8dEb6B77",
     "0x19Bb8DC361C33DE97fAea342300D43C337f201B9",
     "0x74ec3daabde3d29ff44eb09a0984500c25eb0126",
-    "0x6e56CDEc3baf2A1c41a60ABA25b0895B473CbE7E",
     "0xe7291624133a9C26e706Fa56BBA62caa4081378E",
     "0x6fDDfA63C80e222F8237D03D80D8B44Fe882f508",
     "0x2b12a8460E88e7754b498a7d32A8ba259d81Ef6A",
@@ -123,12 +129,6 @@ const TRANSFERS_PAYLOAD = {
     ethers.utils.parseEther(String(44270.8333333333)),
     ethers.utils.parseEther(String(35416.6666666667)),
     ethers.utils.parseEther(String(26562.5)),
-    ethers.utils.parseEther(String(35416.6666666667)),
-    ethers.utils.parseEther(String(44270.8333333333)),
-    ethers.utils.parseEther(String(26562.5)),
-    ethers.utils.parseEther(String(70833.3333333333)),
-    ethers.utils.parseEther(String(26562.5)),
-    ethers.utils.parseEther(String(17708.3333333333)),
     ethers.utils.parseEther(String(53125)),
     ethers.utils.parseEther(String(70833.3333333333)),
     ethers.utils.parseEther(String(70833.3333333333)),
@@ -166,7 +166,6 @@ const TRANSFERS_PAYLOAD = {
     ethers.utils.parseEther(String(26562.5)),
     ethers.utils.parseEther(String(10625)),
     ethers.utils.parseEther(String(10625)),
-    ethers.utils.parseEther(String(3541.66666666667)),
     ethers.utils.parseEther(String(53125)),
     ethers.utils.parseEther(String(10625)),
     ethers.utils.parseEther(String(17708.3333333333)),
@@ -223,14 +222,36 @@ async function main() {
   }
 
   console.log(
-    `TransferByAddressAmountKols script executed:`,
-    results
+      `TransferByAddressAmountKols script executed:`,
+      results
   )
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main().catch((error) => {
-  console.error(error)
-  process.exitCode = 1
-})
+/**
+ * Responds to any HTTP request.
+ *
+ * @param {!express:Request} req HTTP request context.
+ * @param {!express:Response} res HTTP response context.
+ */
+exports.performTransferByAddressAmountKolsHTTP = (req, res) => {
+  // We recommend this pattern to be able to use async/await everywhere
+  // and properly handle errors.
+  let message = req.query.message || req.body.message || 'On it - ';
+
+  main().catch((error) => {
+    let message = error.message;
+    console.error(error);
+    process.exitCode = 1;
+  })
+  res.status(200).send(message);
+}
+
+const local = false;
+if(local) {
+  // We recommend this pattern to be able to use async/await everywhere
+  // and properly handle errors.
+  main().catch((error) => {
+    console.error(error)
+    process.exitCode = 1
+  })
+}
