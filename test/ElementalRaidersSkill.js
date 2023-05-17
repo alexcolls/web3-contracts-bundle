@@ -109,11 +109,14 @@ describe("ElementalRaidersSkill", function () {
       );
     });
     it("Should have been set tokenURI", async function () {
-      const { elementalRaidersSkill } = await loadFixture(deployContracts);
+      const { elementalRaidersSkill, admin } = await loadFixture(
+        deployContracts
+      );
+      await elementalRaidersSkill.connect(admin).safeMint(admin.address, 0);
 
       const expectedTokenURI =
-        NFT_METADATA_BASEURI + elementalRaidersSkill.address + "/";
-      expect(await elementalRaidersSkill.baseURI()).to.be.equal(
+        NFT_METADATA_BASEURI + elementalRaidersSkill.address + "/0";
+      expect(await elementalRaidersSkill.tokenURI(0)).to.be.equal(
         expectedTokenURI
       );
     });
