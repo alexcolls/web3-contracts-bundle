@@ -55,7 +55,7 @@ contract ElementalRaidersVials is ERC1155URIStorage {
         _;
     }
 
-    modifier isWhitelist(uint256 vialId, bytes32[] memory proof) {
+    modifier isWhitelist(uint256 vialId, bytes32[] calldata proof) {
         require(!isMinted[vialId][msg.sender], "Vial already claimed");
         bool success = MerkleProof.verify(
             proof,
@@ -76,7 +76,7 @@ contract ElementalRaidersVials is ERC1155URIStorage {
     function mintWhitelisted(
         address to,
         uint256 vialId,
-        bytes32[] memory proof
+        bytes32[] calldata proof
     ) external isWhitelist(vialId, proof) {
         require(vialCounter > vialId, "Invalid vialId");
         isMinted[vialId][msg.sender] = true;
