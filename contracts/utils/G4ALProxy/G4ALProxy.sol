@@ -40,10 +40,7 @@ contract G4ALProxy is IG4ALProxy, Ownable {
      * @param _gfalToken The address of GFAL Token.
      */
     constructor(address _gfalToken, address _admin) {
-        require(
-            _gfalToken != address(0) && _admin != address(0),
-            "Address cannot be 0"
-        );
+        require(_gfalToken != address(0) && _admin != address(0));
         feeCollector = msg.sender;
         royaltiesCollector = msg.sender;
         gfalToken = _gfalToken;
@@ -131,6 +128,7 @@ contract G4ALProxy is IG4ALProxy, Ownable {
      * @return GfalToken address set.
      */
     function getGfalToken() external view returns (address) {
+        require(gfalToken != address(0), "Address set as 0");
         return gfalToken;
     }
 
@@ -139,6 +137,7 @@ contract G4ALProxy is IG4ALProxy, Ownable {
      * @return admin address set.
      */
     function getAdmin() external view returns (address) {
+        require(admin != address(0), "Address set as 0");
         return admin;
     }
 
@@ -147,6 +146,7 @@ contract G4ALProxy is IG4ALProxy, Ownable {
      * @return marketPlace address set.
      */
     function getMarketPlace() external view returns (address) {
+        require(marketPlace != address(0), "Address set as 0");
         return marketPlace;
     }
 
@@ -155,6 +155,7 @@ contract G4ALProxy is IG4ALProxy, Ownable {
      * @return oracle consumer address set.
      */
     function getOracleConsumer() external view returns (address) {
+        require(oracleConsumer != address(0), "Address set as 0");
         return oracleConsumer;
     }
 
@@ -163,6 +164,7 @@ contract G4ALProxy is IG4ALProxy, Ownable {
      * @return fee collector address set.
      */
     function getFeeCollector() external view returns (address) {
+        require(feeCollector != address(0), "Address set as 0");
         return feeCollector;
     }
 
@@ -171,6 +173,7 @@ contract G4ALProxy is IG4ALProxy, Ownable {
      * @return royalties collector address set.
      */
     function getRoyaltiesCollector() external view returns (address) {
+        require(royaltiesCollector != address(0), "Address set as 0");
         return royaltiesCollector;
     }
 }
