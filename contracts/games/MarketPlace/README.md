@@ -59,7 +59,8 @@ List an NFT for sale by specifying its contract address, token ID, price, and wh
 Purchase an NFT by specifying its contract address, token ID, and the seller's address. Requires the buyer to have sufficient GFAL token allowance to cover the purchase price.
 
 ## updatePrice
-Seller can update Sale price while NFT is on sale.
+
+Seller can update Sale price & currency while NFT is on sale.
 
 ### removeToken
 
