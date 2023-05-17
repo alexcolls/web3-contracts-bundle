@@ -57,10 +57,11 @@ contract ElementalRaidersVials is ERC1155URIStorage {
 
     modifier isWhitelist(uint256 vialId, bytes32[] memory proof) {
         require(!isMinted[vialId][msg.sender], "Vial already claimed");
-        Vial storage _vial = vials[vialId];
-        bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
-        bytes32 root = _vial.hashRoot;
-        bool success = MerkleProof.verify(proof, root, leaf);
+        bool success = MerkleProof.verify(
+            proof,
+            vials[vialId].hashRoot,
+            keccak256(abi.encodePacked(msg.sender))
+        );
         require(success, "You are not in the whitelist for minting");
         _;
     }
@@ -93,7 +94,7 @@ contract ElementalRaidersVials is ERC1155URIStorage {
             _vial.totalSold < _vial.maxSupplySale,
             "vialId maxsupply reached"
         );
-        vials[vialId].totalSold++;
+        _vial.totalSold++;
 
         if (msg.sender == g4alProxy.getAdmin()) {
             _mint(to, vialId, 1, "");
