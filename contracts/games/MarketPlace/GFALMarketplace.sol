@@ -146,7 +146,6 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
             whitelistNFTs[collection].allowed,
             "Not allowed NFT collection"
         );
-        require(price > 0, "Cannot put zero as a price");
 
         // If the seller is unknown, push it to the sellersList array
         if (!knownSellers[msg.sender]) {
@@ -480,6 +479,11 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
         TokenStandard tokenStandard,
         bool allowed
     ) external onlyAdmin {
+        require(
+            tokenStandard == TokenStandard.ERC721 ||
+                tokenStandard == TokenStandard.ERC1155,
+            "Not valid tokenStandard"
+        );
         whitelistNFTs[collection] = Whitelist(allowed, tokenStandard);
         emit CollectionUpdated(collection, allowed);
     }
@@ -493,6 +497,7 @@ contract GFALMarketplace is ReentrancyGuard, ERC721Holder, ERC1155Holder {
     function updateRoyaltiesInBasisPoints(
         uint256 _royaltiesInBasisPoints
     ) external onlyAdmin {
+        require(_royaltiesInBasisPoints < 10001, "number exceeds 100%");
         uint256 oldRoyalties = royaltiesInBasisPoints;
         royaltiesInBasisPoints = _royaltiesInBasisPoints;
         emit RoyaltiesInBasisPointsUpdated(

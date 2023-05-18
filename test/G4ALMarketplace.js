@@ -626,7 +626,7 @@ describe("GFALMarketplace", function () {
         // Adding ERC721 to whitelist as FALSE (BlackListed)
         await gfalMarketplace
           .connect(admin)
-          .updateCollection(elementalRaidersSkill.address, 0, false);
+          .updateCollection(elementalRaidersSkill.address, ERC721, false);
 
         await expect(
           gfalMarketplace
@@ -658,7 +658,7 @@ describe("GFALMarketplace", function () {
         // Adding ERC721 to whitelist as FALSE (BlackListed)
         await gfalMarketplace
           .connect(admin)
-          .updateCollection(elementalRaidersSkill.address, 0, false);
+          .updateCollection(elementalRaidersSkill.address, ERC721, false);
 
         // Remove Token un-whitelisted
         await gfalMarketplace
@@ -690,7 +690,7 @@ describe("GFALMarketplace", function () {
         // Adding ERC721 to whitelist as FALSE (BlackListed)
         await gfalMarketplace
           .connect(admin)
-          .updateCollection(elementalRaidersSkill.address, 0, false);
+          .updateCollection(elementalRaidersSkill.address, ERC721, false);
 
         await gfalToken
           .connect(buyer)
@@ -831,7 +831,45 @@ describe("GFALMarketplace", function () {
           .withArgs(oldRoyaltyPoints, newRoyaltyPoints);
       });
 
-      // todo!
+      it("Should revert if royaltypoints exceeds 100%", async function () {
+        const { buyer, gfalMarketplace, admin } = await loadFixture(
+          deployContracts
+        );
+        const newRoyaltyPoints = 10001;
+
+        await expect(
+          gfalMarketplace
+            .connect(admin)
+            .updateRoyaltiesInBasisPoints(newRoyaltyPoints)
+        ).to.be.reverted;
+      });
+
+      it("Should revert if invalid tokenStandard", async function () {
+        const {
+          buyer,
+          seller,
+          elementalRaidersSkill,
+          elementalRaidersSkin,
+          gfalMarketplace,
+          erc1155MockUp,
+          admin,
+        } = await loadFixture(deployContracts);
+
+        await gfalMarketplace
+          .connect(admin)
+          .updateCollection(elementalRaidersSkill.address, 0, true);
+
+        await gfalMarketplace
+          .connect(admin)
+          .updateCollection(erc1155MockUp.address, 1, true);
+
+        await expect(
+          gfalMarketplace
+            .connect(admin)
+            .updateCollection(elementalRaidersSkin.address, 2, true)
+        ).to.be.reverted;
+      });
+
       it("Should increment saleID after each sale", async function () {
         const {
           buyer,
