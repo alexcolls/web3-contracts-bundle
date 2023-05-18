@@ -6,7 +6,7 @@ const hre = require("hardhat");
 
 const NFT_METADATA_BASEURI =
   "https://prod-web3-token-tracker-tqkvar3wjq-uc.a.run.app/metadata/";
-const ROYALTIES_IN_BASIS_POINTS = 1000;
+const ROYALTIES_IN_BASIS_POINTS = 100;
 
 describe("ElementalRaidersSkill", function () {
   // We define a fixture to reuse the same setup in every test.
@@ -44,7 +44,8 @@ describe("ElementalRaidersSkill", function () {
     );
     const elementalRaidersSkin = await ElementalRaidersSkin.deploy(
       proxy.address,
-      "ipfs://"
+      "ipfs://",
+      ROYALTIES_IN_BASIS_POINTS
     );
     await elementalRaidersSkin.deployed();
 
@@ -54,7 +55,8 @@ describe("ElementalRaidersSkill", function () {
     );
     const elementalRaidersSkill = await ElementalRaidersSkill.deploy(
       proxy.address,
-      "ipfs://"
+      "ipfs://",
+      ROYALTIES_IN_BASIS_POINTS
     );
     await elementalRaidersSkill.deployed();
 
@@ -86,6 +88,7 @@ describe("ElementalRaidersSkill", function () {
 
     // Set Oracle for consuming the price when minting
     await proxy.updateOracleConsumer(oracleConsumer.address);
+    await proxy.updateMarketPlace(gFALMarketplace.address);
 
     return {
       owner,
@@ -169,7 +172,6 @@ describe("ElementalRaidersSkill", function () {
         const { elementalRaidersSkill, admin } = await loadFixture(
           deployContracts
         );
-
         await elementalRaidersSkill.connect(admin).safeMint(admin.address, 0);
         await elementalRaidersSkill.connect(admin).safeMint(admin.address, 0);
 
@@ -234,6 +236,36 @@ describe("ElementalRaidersSkill", function () {
         const newTokenURI = await elementalRaidersSkill.tokenURI(0);
         expect(newTokenURI).to.equal(newBaseURI + "0");
       });
+    });
+  });
+  describe("Royalty for secondary market ERC2981", function () {
+    it("Should have set the royaltyFraction price correctly", async function () {
+      const { owner, user, elementalRaidersSkill, admin } = await loadFixture(
+        deployContracts
+      );
+
+      let result = await elementalRaidersSkill.royaltyInfo(0, 1000);
+      expect(result[1]).to.equal(10);
+    });
+
+    it("Update royaltyFraction price and check", async function () {
+      const { owner, user, elementalRaidersSkill, admin } = await loadFixture(
+        deployContracts
+      );
+
+      await elementalRaidersSkill.connect(admin).setTokenRoyalty(1000);
+
+      let result = await elementalRaidersSkill.royaltyInfo(0, 1000);
+      expect(result[1]).to.equal(100);
+    });
+
+    it("Should revert if caller to update royaltyFraction is not admin", async function () {
+      const { owner, user, elementalRaidersSkill, admin } = await loadFixture(
+        deployContracts
+      );
+
+      await expect(elementalRaidersSkill.connect(user).setTokenRoyalty(10000))
+        .to.be.reverted;
     });
   });
 });

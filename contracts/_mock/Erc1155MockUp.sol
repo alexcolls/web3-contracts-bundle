@@ -20,7 +20,11 @@ contract Erc1155MockUp is ERC1155Supply {
     //     _;
     // }
 
-    constructor(address _proxy, string memory _uri) ERC1155(_uri) {
+    constructor(
+        address _proxy,
+        string memory _uri,
+        uint256 basicsPoints
+    ) ERC1155(_uri) {
         g4alProxy = IG4ALProxy(_proxy);
     }
 

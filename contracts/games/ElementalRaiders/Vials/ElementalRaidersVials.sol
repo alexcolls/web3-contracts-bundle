@@ -28,6 +28,8 @@ contract ElementalRaidersVials is ERC1155URIStorage {
     }
 
     IG4ALProxy private immutable g4alProxy;
+
+    uint16 private royaltyFraction; // Royalty percentage to send to feeCollector when sold in secondary market, but not our marketplace. (royaltyFraction / 10.000)¡
     uint256 public vialCounter; // counter for the total collections of Vials created
 
     mapping(uint256 => Vial) public vials; // vialId => Vial details
@@ -84,10 +86,15 @@ contract ElementalRaidersVials is ERC1155URIStorage {
      * @param _baseUri The base URI for the vial URIs.
      * @param _g4alProxy The address of the G4ALProxy contract.
      */
-    constructor(string memory _baseUri, address _g4alProxy) ERC1155(_baseUri) {
+    constructor(
+        string memory _baseUri,
+        address _g4alProxy,
+        uint16 _royaltyFraction
+    ) ERC1155(_baseUri) {
         require(_g4alProxy != address(0), "Use a valid address");
         g4alProxy = IG4ALProxy(_g4alProxy);
         _setBaseURI(_baseUri);
+        royaltyFraction = _royaltyFraction;
     }
 
     /**
@@ -183,5 +190,40 @@ contract ElementalRaidersVials is ERC1155URIStorage {
             maxClaimableSupply,
             hashRoot
         );
+    }
+
+    /**
+     * @dev Updates the royalty fraction set for secondary market sale.
+     * @param feeNumerator The new royalty fraction to set. 100(feeNumerator) / 10.0000 = 0.01% as fee
+     * Note: It will take effect only in secondary market place (Not in our own market place)
+     */
+    function setTokenRoyalty(uint16 feeNumerator) external onlyAdmin {
+        require(feeNumerator < 10001, "Royalty fee will exceed salePrice");
+        royaltyFraction = feeNumerator;
+    }
+
+    /**
+     * @dev Returns the fee collector and the royaltyAmount to transfer.
+     * @param salePrice Total sale price.
+     * Note: It will take effect only in secondary market place. (Not in our own market place)
+     */
+    function royaltyInfo(
+        uint256,
+        uint256 salePrice
+    ) public view returns (address, uint256) {
+        uint256 royaltyAmount = (salePrice * royaltyFraction) / 10000;
+
+        return (g4alProxy.getFeeCollector(), royaltyAmount);
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     * Note: Added interface for ERC2981 (for being Royalties compatible)
+     */
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(ERC1155) returns (bool) {
+        return
+            interfaceId == 0x2a55205a || super.supportsInterface(interfaceId);
     }
 }

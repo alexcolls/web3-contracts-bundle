@@ -23,6 +23,7 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
     // Proxy to store variables as addresses from contracts and from wallets
     IG4ALProxy private immutable g4alProxy;
 
+    uint16 private royaltyFraction; // Royalty percentage to send to feeCollector when sold in secondary market, but not our marketplace. (royaltyFraction / 10.000)
     string private baseURI;
 
     // Prices by rarity. It returns the price in USD
@@ -47,11 +48,13 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
      */
     constructor(
         address _g4alProxy,
-        string memory _baseUri
+        string memory _baseUri,
+        uint16 _royaltyFraction
     ) ERC721("Elemental Raiders Skill", "ERSKILL") {
         require(_g4alProxy != address(0), "Address cannot be 0");
         g4alProxy = IG4ALProxy(_g4alProxy);
         baseURI = _baseUri;
+        royaltyFraction = _royaltyFraction;
     }
 
     // Abstract high-level flow
@@ -162,6 +165,41 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
         prices[rarity] = price; // 50000000000000000000 for 50.00 GFAL (50+18 zeros)
     }
 
+    /**
+     * @dev Updates the royalty fraction set for secondary market sale.
+     * @param feeNumerator The new royalty fraction to set. 100(feeNumerator) / 10.0000 = 0.01% as fee
+     * Note: It will take effect only in secondary market place (Not in our own market place)
+     */
+    function setTokenRoyalty(uint16 feeNumerator) external onlyAdmin {
+        require(feeNumerator < 10001, "Royalty fee will exceed salePrice");
+        royaltyFraction = feeNumerator;
+    }
+
+    /**
+     * @dev Returns the fee collector and the royaltyAmount to transfer.
+     * @param salePrice Total sale price.
+     * Note: It will take effect only in secondary market place. (Not in our own market place)
+     */
+    function royaltyInfo(
+        uint256,
+        uint256 salePrice
+    ) external view returns (address, uint256) {
+        uint256 royaltyAmount = (salePrice * royaltyFraction) / 10000;
+
+        return (g4alProxy.getFeeCollector(), royaltyAmount);
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     * Note: Added interface for ERC2981 (for being Royalties compatible)
+     */
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(ERC721, ERC721Enumerable) returns (bool) {
+        return
+            interfaceId == 0x2a55205a || super.supportsInterface(interfaceId);
+    }
+
     // Optional overrides
     /**
      *@dev Returns the base URI for the token metadata.
@@ -183,14 +221,5 @@ contract ElementalRaidersSkill is ERC721, ERC721Enumerable, ERC721Burnable {
         uint256 batchSize
     ) internal override(ERC721, ERC721Enumerable) {
         super._beforeTokenTransfer(from, to, tokenId, batchSize);
-    }
-
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override(ERC721, ERC721Enumerable) returns (bool) {
-        return super.supportsInterface(interfaceId);
     }
 }

@@ -6,6 +6,7 @@ const { BigNumber } = require("ethers");
 const { proofFormated1, root1, wallet1 } = require("./1_merkleTree");
 const { proofFormated2, root2, wallet2 } = require("./2_merkleTree");
 
+const ROYALTIES_IN_BASIS_POINTS = 100;
 const BASE_URI = "http://baseUri/";
 
 describe("Elemental Raiders Vials", function () {
@@ -38,7 +39,8 @@ describe("Elemental Raiders Vials", function () {
     );
     const elementalRaidersVials = await ElementalRaidersVials.deploy(
       BASE_URI,
-      proxy.address
+      proxy.address,
+      ROYALTIES_IN_BASIS_POINTS
     );
     await elementalRaidersVials.deployed();
 
@@ -344,6 +346,33 @@ describe("Elemental Raiders Vials", function () {
       expect(await elementalRaidersVials.balanceOf(user.address, 0)).to.equal(
         1
       );
+    });
+  });
+  describe("Royalty for secondary market ERC2981", function () {
+    it("Should have set the royaltyFraction price correctly", async function () {
+      const { owner, user, admin, elementalRaidersVials, proxy } =
+        await loadFixture(deployContracts);
+
+      let result = await elementalRaidersVials.royaltyInfo(0, 1000);
+      expect(result[1]).to.equal(10);
+    });
+
+    it("Update royaltyFraction price and check", async function () {
+      const { owner, user, admin, elementalRaidersVials, proxy } =
+        await loadFixture(deployContracts);
+
+      await elementalRaidersVials.connect(admin).setTokenRoyalty(1000);
+
+      let result = await elementalRaidersVials.royaltyInfo(0, 1000);
+      expect(result[1]).to.equal(100);
+    });
+
+    it("Should revert if caller to update royaltyFraction is not admin", async function () {
+      const { owner, user, admin, elementalRaidersVials, proxy } =
+        await loadFixture(deployContracts);
+
+      await expect(elementalRaidersVials.connect(user).setTokenRoyalty(10000))
+        .to.be.reverted;
     });
   });
 });

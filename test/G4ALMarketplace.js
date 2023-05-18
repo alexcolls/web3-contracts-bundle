@@ -49,7 +49,8 @@ describe("GFALMarketplace", function () {
     );
     const elementalRaidersSkill = await ElementalRaidersSkill.deploy(
       proxy.address,
-      "ipfs://"
+      "ipfs://",
+      ROYALTIES_IN_BASIS_POINTS
     );
     await elementalRaidersSkill.deployed();
 
@@ -58,12 +59,17 @@ describe("GFALMarketplace", function () {
     );
     const elementalRaidersSkin = await ElementalRaidersSkin.deploy(
       proxy.address,
-      "ipfs://"
+      "ipfs://",
+      ROYALTIES_IN_BASIS_POINTS
     );
     await elementalRaidersSkill.deployed();
 
     const Erc1155MockUp = await ethers.getContractFactory("Erc1155MockUp");
-    const erc1155MockUp = await Erc1155MockUp.deploy(proxy.address, "ipfs://");
+    const erc1155MockUp = await Erc1155MockUp.deploy(
+      proxy.address,
+      "ipfs://",
+      ROYALTIES_IN_BASIS_POINTS
+    );
     await erc1155MockUp.deployed();
 
     // Massive approvals of GFAL token for ERC721s when minting (ONE LIFE TIME)
@@ -2257,6 +2263,27 @@ describe("GFALMarketplace", function () {
       expect(NFTsSaleAfter_3.price).to.equal(0);
       expect(NFTsSaleAfter_4.price).to.equal(0);
       expect(NFTsSaleAfter_5.price).to.equal(0);
+    });
+
+    it("Should revert if not seller and updates price", async function () {
+      const {
+        seller,
+        buyer,
+        erc1155MockUp,
+        gfalToken,
+        gfalMarketplace,
+        proxy,
+      } = await loadFixture(deployContracts);
+
+      await gfalMarketplace
+        .connect(seller)
+        .sellToken(erc1155MockUp.address, 0, 1, 100, false);
+
+      await expect(
+        gfalMarketplace
+          .connect(buyer)
+          .updatePrice(erc1155MockUp.address, 0, 10, true)
+      ).to.be.reverted;
     });
   });
 });
