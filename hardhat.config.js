@@ -18,6 +18,9 @@ module.exports = {
       gas: 2100000,
       // gasPrice: 10000000000,
     },
+    localhost: {
+      url: "http://127.0.0.1:8545",
+    },
     bsctest: {
       url: process.env.WEB3_HTTP_PROVIDER_TEST,
       // accounts: [process.env.OWNER_PRIVATE_KEY, process.env.ADMIN_PRIVATE_KEY], // Testing
