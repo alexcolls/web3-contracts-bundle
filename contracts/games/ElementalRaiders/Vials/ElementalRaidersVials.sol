@@ -13,12 +13,6 @@ import "../../../utils/G4ALProxy/IG4ALProxy.sol";
 contract ElementalRaidersVials is ERC1155URIStorage {
     using SafeERC20 for IERC20;
 
-    IG4ALProxy private immutable g4alProxy;
-    uint256 public vialCounter; // counter for the total collections of Vials created
-
-    mapping(uint256 => Vial) public vials; // vialId => Vial details
-    mapping(uint256 => mapping(address => bool)) public isMinted; // Tracker for minted Vial ID. (tokenID => wallet => claimed)
-
     struct Vial {
         uint256 price; // Price must be set in USD
         uint256 maxSupplySale;
@@ -26,6 +20,28 @@ contract ElementalRaidersVials is ERC1155URIStorage {
         uint256 maxClaimableSupply;
         uint256 totalClaimed;
         bytes32 hashRoot;
+    }
+
+    IG4ALProxy private immutable g4alProxy;
+    uint256 public vialCounter; // counter for the total collections of Vials created
+
+    mapping(uint256 => Vial) public vials; // vialId => Vial details
+    mapping(uint256 => mapping(address => bool)) public isMinted; // Tracker for minted Vial ID. (tokenID => wallet => claimed)
+
+    modifier onlyAdmin() {
+        require(msg.sender == g4alProxy.getAdmin(), "Not admin");
+        _;
+    }
+
+    modifier isWhitelist(uint256 vialId, bytes32[] calldata proof) {
+        require(!isMinted[vialId][msg.sender], "Vial already claimed");
+        bool success = MerkleProof.verify(
+            proof,
+            vials[vialId].hashRoot,
+            keccak256(abi.encodePacked(msg.sender))
+        );
+        require(success, "You are not in the whitelist for minting");
+        _;
     }
 
     event MintWhitelisted(
@@ -49,22 +65,6 @@ contract ElementalRaidersVials is ERC1155URIStorage {
         bytes32 hashRoot
     );
     event vialBurned(address indexed owner, uint256 vialId);
-
-    modifier onlyAdmin() {
-        require(msg.sender == g4alProxy.getAdmin(), "Not admin");
-        _;
-    }
-
-    modifier isWhitelist(uint256 vialId, bytes32[] calldata proof) {
-        require(!isMinted[vialId][msg.sender], "Vial already claimed");
-        bool success = MerkleProof.verify(
-            proof,
-            vials[vialId].hashRoot,
-            keccak256(abi.encodePacked(msg.sender))
-        );
-        require(success, "You are not in the whitelist for minting");
-        _;
-    }
 
     constructor(string memory _baseUri, address _g4alProxy) ERC1155(_baseUri) {
         require(_g4alProxy != address(0), "Use a valid address");
