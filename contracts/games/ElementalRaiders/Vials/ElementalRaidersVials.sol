@@ -8,8 +8,13 @@ import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155URIStorage.sol";
 import "../../../utils/OracleConsumer/IOracleConsumer.sol";
 import "../../../utils/G4ALProxy/IG4ALProxy.sol";
 
-// TODO! It is on process, needs to be finished based on the logic implementation we wish to have
-// https://docs.google.com/document/d/1Xkdv2X9bm5KvoHknzWSr8PZfBEmsWYLgb3joReZhpBE/edit
+/**
+
+@title ElementalRaidersVials
+@dev This smart contract implements a collection of vials represented as ERC1155 tokens.
+Users can mint vials either by being whitelisted or by purchasing them using a payment method.
+The contract also supports burning vials and creating new vials.
+*/
 contract ElementalRaidersVials is ERC1155URIStorage {
     using SafeERC20 for IERC20;
 
@@ -28,11 +33,19 @@ contract ElementalRaidersVials is ERC1155URIStorage {
     mapping(uint256 => Vial) public vials; // vialId => Vial details
     mapping(uint256 => mapping(address => bool)) public isMinted; // Tracker for minted Vial ID. (tokenID => wallet => claimed)
 
+    /**
+     * @dev Modifier to restrict access to only the admin set in the G4ALProxy contract.
+     */
     modifier onlyAdmin() {
         require(msg.sender == g4alProxy.getAdmin(), "Not admin");
         _;
     }
 
+    /**
+     * @dev Modifier to check if the user is whitelisted for minting the a specific Vial ID.
+     * @param vialId The ID of the vial being minted.
+     * @param proof The Merkle proof for verifying the user's eligibility.
+     */
     modifier isWhitelist(uint256 vialId, bytes32[] calldata proof) {
         require(!isMinted[vialId][msg.sender], "Vial already claimed");
         bool success = MerkleProof.verify(
@@ -66,13 +79,24 @@ contract ElementalRaidersVials is ERC1155URIStorage {
     );
     event vialBurned(address indexed owner, uint256 vialId);
 
+    /**
+     * @dev Initializes the ElementalRaidersVials contract.
+     * @param _baseUri The base URI for the vial URIs.
+     * @param _g4alProxy The address of the G4ALProxy contract.
+     */
     constructor(string memory _baseUri, address _g4alProxy) ERC1155(_baseUri) {
         require(_g4alProxy != address(0), "Use a valid address");
         g4alProxy = IG4ALProxy(_g4alProxy);
         _setBaseURI(_baseUri);
     }
 
-    // Users should mint 1 if they are in the whitelist
+    /**
+     * @dev Mints a whitelisted vial to the specified recipient.
+     * @param to The address of the recipient.
+     * @param vialId The ID of the vial to be minted.
+     * @param proof The Merkle proof for verifying the user's eligibility.
+     * Note: Users should mint 1 if they are in the whitelist.
+     */
     function mintWhitelisted(
         address to,
         uint256 vialId,
@@ -85,7 +109,12 @@ contract ElementalRaidersVials is ERC1155URIStorage {
         emit MintWhitelisted(address(0), to, vialId, 1);
     }
 
-    //Users should mint 1 Vial by buying with card or GFAL. If they buy with card we will mint for them
+    /**
+     * @dev Mints a vial to the specified recipient.
+     * @param to The address of the recipient.
+     * @param vialId The ID of the vial to be minted.
+     * Note: Users should mint 1 Vial by buying with card or GFAL. If they buy with card we will mint for them.
+     */
     function mint(address to, uint256 vialId) external {
         require(vialCounter > vialId, "Invalid vialId");
         uint256 vialPrice;
@@ -113,15 +142,24 @@ contract ElementalRaidersVials is ERC1155URIStorage {
         emit Mint(address(0), to, vialId, 1, vialPrice);
     }
 
-    // function to burn NFT
+    /**
+     * @dev Burns a vial owned by the caller.
+     * @param vialId The ID of the vial to be burned.
+     */
     function burn(uint256 vialId) external {
         _burn(msg.sender, vialId, 1);
         emit vialBurned(msg.sender, vialId);
     }
 
-    // function to create a new vial
+    /**
+     * @dev Creates a new vial collection with the specified parameters.
+     * @param price The price of the vial in USD. It will be exchanged to GFAL by the rate set in the OracleConsumer contract.
+     * @param maxSupplySale The maximum supply of vials available for sale.
+     * @param maxClaimableSupply The maximum supply of vials that can be claimed.
+     * @param hashRoot The Merkle root for whitelisted addresses.
+     */
     function createVial(
-        uint256 price, // Price must be set in USD
+        uint256 price,
         uint256 maxSupplySale,
         uint256 maxClaimableSupply,
         bytes32 hashRoot
