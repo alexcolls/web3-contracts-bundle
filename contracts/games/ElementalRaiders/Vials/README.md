@@ -67,11 +67,17 @@ Burns a vial, removing it from the owner's inventory.
 
 Creates a new vial with the specified details. Requires the caller to be the contract's admin.
 
+### setTokenRoyalty
+
+Sets the new feeNumerator for the royaltyAmount.(ERC2981)
+
 ## Getters
 
 - vials: Returns the details of a specific vial, including price, supply, and ownership.
 
 - isMinted: Returns if an address claimed or not a specific vial collection, requiring as parameters the VialId and the public address.
+
+- royaltyInfo: Returns the Royalty receiver and the the royaltyAmount. (ERC2981)
 
 ## Solidity Version
 
