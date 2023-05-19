@@ -6,7 +6,7 @@ This smart contract represents an ERC721 token for the Elemental Raiders Skill g
 
 Bundler safely mints an ERC721 token for a user if the user has approved the required amount of GFAL tokens (Price by rarity).
 Allows the admin (set in the proxy contract) to update minting prices and the base URI.
-Implements the ERC721, ERC721Enumerable, and ERC721Burnable interfaces.
+Implements the ERC721, ERC721Enumerable, and ERC721Burnable interfaces & ERC2981 functionalities for royalty compatibality.
 Allows querying of the owner of a token by token ID or array of token IDs.
 
 ## Usage
@@ -25,6 +25,8 @@ If the ERC721 token is minted successfully, the user's address is set as the own
 - The safeMint function safely mints an ERC721 token for a user if the user has approved the required amount of GFAL tokens.
 - The getOwnersByTokens function returns the address of the token owner for the provided array of token ids.
 - The getMintingPricesByRarity function returns the price for the provided array of rarity ids.
+- The royaltyInfo function returns the Royalty receiver and the the royaltyAmount. (ERC2981)
+- The setTokenRoyalty function sets the new feeNumerator for the royaltyAmount.(ERC2981)
 
 ## License
 
